@@ -1,17 +1,20 @@
 import axios from 'axios';
 
+/*
+ * EMULADOR ANDROID:
+ * http://10.0.2.2:3333
+ *
+ * CELULAR FÍSICO:
+ * substitua 10.0.2.2 pelo IPv4 do computador.
+ */
+export const API_BASE_URL = 'http://10.0.2.2:3333';
 
-// ALTERE PARA O IP DO SEU BACKEND
 const api = axios.create({
-
-  baseURL: 'http://10.0.2.2:3333',
-
-  timeout: 10000,
-
+  baseURL: API_BASE_URL,
+  timeout: 20000,
   headers: {
-    'Content-Type': 'application/json',
+    Accept: 'application/json',
   },
 });
-
 
 export default api;

@@ -1,6 +1,4 @@
-import React, {
-  useState,
-} from 'react';
+import React, { useState } from 'react';
 
 import {
   View,
@@ -13,211 +11,215 @@ import {
 } from 'react-native';
 
 import * as ImagePicker from 'expo-image-picker';
-
-import {
-  Ionicons,
-} from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 
 import Header from '../../components/Header';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 
-import {
-  useTheme,
-} from '../../hooks/useTheme';
+import { useTheme } from '../../hooks/useTheme';
 
 import api from '../../services/api';
 
 import styles from './styles';
 
-export default function PublishScreen() {
-  const { theme } =
-    useTheme();
+function createFileData(asset, index) {
+  const uri = asset.uri;
 
-  const [images, setImages] =
-    useState([]);
+  const uriFileName = uri
+    ? uri.split('/').pop()
+    : null;
 
-  const [
-    description,
-    setDescription,
-  ] = useState('');
+  const fileName =
+    asset.fileName ||
+    uriFileName ||
+    `imagem-${Date.now()}-${index}.jpg`;
 
-  const [loading, setLoading] =
-    useState(false);
+  const extension = fileName
+    .split('.')
+    .pop()
+    .toLowerCase();
 
-  // SELECIONAR IMAGENS
-  async function handlePickImages() {
-    const result =
-      await ImagePicker.launchImageLibraryAsync({
-        mediaTypes:
-          ImagePicker.MediaTypeOptions.Images,
-        allowsMultipleSelection: true,
-        quality: 0.7,
-      });
+  let mimeType = asset.mimeType;
 
-    if (!result.canceled) {
-      const selectedImages =
-        result.assets.map(
-          (item) => item.uri
-        );
-
-      setImages(selectedImages);
+  if (!mimeType) {
+    if (extension === 'png') {
+      mimeType = 'image/png';
+    } else if (extension === 'webp') {
+      mimeType = 'image/webp';
+    } else {
+      mimeType = 'image/jpeg';
     }
   }
 
-  // UPLOAD DAS IMAGENS
-  async function uploadImages() {
-    const uploadedUrls = [];
+  return {
+    uri:
+      Platform.OS === 'ios'
+        ? uri.replace('file://', '')
+        : uri,
+    name: fileName,
+    type: mimeType,
+  };
+}
 
-    for (const uri of images) {
-      const fileName =
-        uri.split('/').pop();
+export default function PublishScreen() {
+  const { theme } = useTheme();
 
-      const extension =
-        fileName
-          ?.split('.')
-          .pop()
-          ?.toLowerCase();
+  const [images, setImages] = useState([]);
+  const [description, setDescription] = useState('');
+  const [loading, setLoading] = useState(false);
 
-      let mimeType =
-        'image/jpeg';
+  async function handlePickImages() {
+    try {
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-      if (extension === 'png') {
-        mimeType =
-          'image/png';
-      }
-
-      if (extension === 'webp') {
-        mimeType =
-          'image/webp';
-      }
-
-      const formData =
-        new FormData();
-
-      formData.append(
-        'file',
-        {
-          uri:
-            Platform.OS ===
-            'android'
-              ? uri
-              : uri.replace(
-                  'file://',
-                  ''
-                ),
-
-          name:
-            fileName ||
-            `image.${extension}`,
-
-          type:
-            mimeType,
-        }
-      );
-
-      console.log(
-        'UPLOAD URL:',
-        `${api.defaults.baseURL}/upload`
-      );
-
-      console.log(
-        'ENVIANDO:',
-        {
-          uri,
-          name:
-            fileName,
-          type:
-            mimeType,
-        }
-      );
-
-      const response =
-        await api.post(
-          '/upload',
-          formData,
-          {
-            headers: {
-              'Content-Type':
-                'multipart/form-data',
-            },
-            transformRequest:
-              (data) => data,
-          }
+      if (!permission.granted) {
+        Alert.alert(
+          'Permissão necessária',
+          'Permita que o Doalize acesse suas imagens.'
         );
 
+        return;
+      }
+
+      const result =
+        await ImagePicker.launchImageLibraryAsync({
+          mediaTypes:
+            ImagePicker.MediaTypeOptions.Images,
+          allowsMultipleSelection: true,
+          quality: 0.8,
+        });
+
+      if (!result.canceled) {
+        setImages(result.assets || []);
+      }
+    } catch (error) {
       console.log(
-        'UPLOAD OK:',
+        'ERRO AO SELECIONAR IMAGEM:',
+        error
+      );
+
+      Alert.alert(
+        'Erro',
+        'Não foi possível selecionar as imagens.'
+      );
+    }
+  }
+
+  function handleRemoveImage(indexToRemove) {
+    setImages((currentImages) =>
+      currentImages.filter(
+        (_, index) => index !== indexToRemove
+      )
+    );
+  }
+
+  async function uploadImages() {
+    const uploadedImages = [];
+
+    for (let index = 0; index < images.length; index += 1) {
+      const asset = images[index];
+
+      const fileData = createFileData(
+        asset,
+        index
+      );
+
+      const formData = new FormData();
+
+      formData.append('file', fileData);
+
+      console.log(
+        'ENVIANDO ARQUIVO:',
+        fileData
+      );
+
+      const response = await api.post(
+        '/upload',
+        formData,
+        {
+          timeout: 30000,
+          headers: {
+            Accept: 'application/json',
+          },
+        }
+      );
+
+      console.log(
+        'RESPOSTA DO UPLOAD:',
         response.data
       );
 
-      uploadedUrls.push(
-        response.data.file.url
-      );
+      const imagePath =
+        response.data?.file?.path ||
+        response.data?.file?.url;
+
+      if (!imagePath) {
+        throw new Error(
+          'O servidor não retornou o caminho da imagem.'
+        );
+      }
+
+      uploadedImages.push(imagePath);
     }
 
-    return uploadedUrls;
+    return uploadedImages;
   }
 
-  // PUBLICAR
   async function handlePublish() {
-    if (
-      !description.trim()
-    ) {
-      return Alert.alert(
+    if (!description.trim()) {
+      Alert.alert(
         'Atenção',
         'Digite uma descrição.'
       );
+
+      return;
     }
 
     try {
       setLoading(true);
 
-      let uploadedImages =
-        [];
+      let uploadedImages = [];
 
-      if (
-        images.length > 0
-      ) {
+      if (images.length > 0) {
         uploadedImages =
           await uploadImages();
       }
 
-      await api.post(
+      const response = await api.post(
         '/posts',
         {
-          description,
-          images:
-            uploadedImages,
+          description: description.trim(),
+          images: uploadedImages,
         }
+      );
+
+      console.log(
+        'POST CRIADO:',
+        response.data
       );
 
       Alert.alert(
         'Sucesso',
-        'Publicação criada.'
+        'Publicação criada com sucesso.'
       );
 
       setImages([]);
       setDescription('');
-
     } catch (error) {
       console.log(
-        'ERRO:',
-        error.response?.data
-      );
-
-      console.log(
-        'MESSAGE:',
-        error.message
+        'ERRO AO PUBLICAR:',
+        error.response?.data ||
+          error.message
       );
 
       Alert.alert(
         'Erro',
-        error.response?.data
-          ?.message ||
-          error.message
+        error.response?.data?.message ||
+          error.message ||
+          'Não foi possível criar a publicação.'
       );
-
     } finally {
       setLoading(false);
     }
@@ -228,67 +230,52 @@ export default function PublishScreen() {
       style={[
         styles.container,
         {
-          backgroundColor:
-            theme.background,
+          backgroundColor: theme.background,
         },
       ]}
     >
-      <Header
-        title="Publicar"
-      />
+      <Header title="Publicar" />
 
       <ScrollView
-        showsVerticalScrollIndicator={
-          false
-        }
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <View
-          style={styles.section}
-        >
+        <View style={styles.section}>
           <Text
             style={[
               styles.label,
               {
-                color:
-                  theme.text,
+                color: theme.text,
               },
             ]}
           >
-            Imagens
-            (Opcional)
+            Imagens (opcional)
           </Text>
 
           <TouchableOpacity
-            activeOpacity={
-              0.8
-            }
-            onPress={
-              handlePickImages
-            }
+            activeOpacity={0.8}
+            onPress={handlePickImages}
+            disabled={loading}
             style={[
               styles.imagePicker,
               {
-                backgroundColor:
-                  theme.card,
+                backgroundColor: theme.card,
                 borderColor:
-                  theme.border,
+                  theme.border || '#cccccc',
               },
             ]}
           >
             <Ionicons
               name="image-outline"
               size={40}
-              color={
-                theme.primary
-              }
+              color={theme.primary}
             />
 
             <Text
               style={[
                 styles.imagePickerText,
                 {
-                  color:
-                    theme.textSecondary,
+                  color: theme.textSecondary,
                 },
               ]}
             >
@@ -298,42 +285,59 @@ export default function PublishScreen() {
 
           <ScrollView
             horizontal
-            showsHorizontalScrollIndicator={
-              false
-            }
-            style={
-              styles.previewContainer
-            }
+            showsHorizontalScrollIndicator={false}
+            style={styles.previewContainer}
           >
-            {images.map(
-              (
-                image,
-                index
-              ) => (
+            {images.map((image, index) => (
+              <View
+                key={`${image.uri}-${index}`}
+                style={{
+                  position: 'relative',
+                  marginRight: 10,
+                }}
+              >
                 <Image
-                  key={index}
                   source={{
-                    uri:
-                      image,
+                    uri: image.uri,
                   }}
-                  style={
-                    styles.previewImage
-                  }
+                  style={styles.previewImage}
                 />
-              )
-            )}
+
+                <TouchableOpacity
+                  onPress={() =>
+                    handleRemoveImage(index)
+                  }
+                  disabled={loading}
+                  style={{
+                    position: 'absolute',
+                    top: 5,
+                    right: 5,
+                    width: 28,
+                    height: 28,
+                    borderRadius: 14,
+                    backgroundColor:
+                      'rgba(0, 0, 0, 0.75)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Ionicons
+                    name="close"
+                    size={18}
+                    color="#ffffff"
+                  />
+                </TouchableOpacity>
+              </View>
+            ))}
           </ScrollView>
         </View>
 
-        <View
-          style={styles.section}
-        >
+        <View style={styles.section}>
           <Text
             style={[
               styles.label,
               {
-                color:
-                  theme.text,
+                color: theme.text,
               },
             ]}
           >
@@ -342,32 +346,19 @@ export default function PublishScreen() {
 
           <Input
             placeholder="Descreva sua publicação..."
-            value={
-              description
-            }
-            onChangeText={
-              setDescription
-            }
+            value={description}
+            onChangeText={setDescription}
             multiline
-            numberOfLines={
-              6
-            }
+            numberOfLines={6}
+            editable={!loading}
           />
         </View>
 
-        <View
-          style={
-            styles.buttonContainer
-          }
-        >
+        <View style={styles.buttonContainer}>
           <Button
             title="Publicar"
-            onPress={
-              handlePublish
-            }
-            loading={
-              loading
-            }
+            onPress={handlePublish}
+            loading={loading}
           />
         </View>
       </ScrollView>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import {
   View,
@@ -6,54 +6,63 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
+  Dimensions,
 } from 'react-native';
 
+import { Ionicons } from '@expo/vector-icons';
+
+import Header from '../../components/Header';
+
+import { useTheme } from '../../hooks/useTheme';
+
 import {
-  Ionicons,
-} from '@expo/vector-icons';
+  DEFAULT_AVATAR,
+  normalizePost,
+  parsePostImages,
+  resolveImageUrl,
+} from '../../utils/imageHelper';
 
-import Header
-  from '../../components/Header';
+import styles from './styles';
 
-import {
-  useTheme,
-} from '../../hooks/useTheme';
-
-import styles
-  from './styles';
-
+const { width: SCREEN_WIDTH } =
+  Dimensions.get('window');
 
 export default function DetailsScreen({
   route,
   navigation,
 }) {
+  const { theme } = useTheme();
 
-  const { post } =
-    route.params;
+  const post = useMemo(
+    () =>
+      normalizePost(
+        route?.params?.post
+      ),
+    [route?.params?.post]
+  );
 
-  const { theme } =
-    useTheme();
+  const images = useMemo(
+    () => parsePostImages(post?.images),
+    [post?.images]
+  );
 
+  const avatar =
+    resolveImageUrl(post?.user?.photo) ||
+    DEFAULT_AVATAR;
 
-  // ABRIR CHAT
   function handleOpenChat() {
+    if (!post?.user?.id) {
+      return;
+    }
 
-    navigation.navigate(
-      'Contatos',
-      {
-        screen: 'ChatScreen',
-
-        params: {
-          chatId:
-            post.user.id,
-
-          user:
-            post.user,
-        },
-      }
-    );
+    navigation.navigate('Contatos', {
+      screen: 'ChatScreen',
+      params: {
+        chatId: post.user.id,
+        user: post.user,
+      },
+    });
   }
-
 
   return (
     <View
@@ -65,57 +74,33 @@ export default function DetailsScreen({
         },
       ]}
     >
-
-      {/* HEADER */}
       <Header
         title="Detalhes"
-
         showBackButton
       />
 
-
       <ScrollView
-        showsVerticalScrollIndicator={
-          false
-        }
+        showsVerticalScrollIndicator={false}
       >
-
-        {/* USUÁRIO */}
-        <View
-          style={
-            styles.userContainer
-          }
-        >
-
+        <View style={styles.userContainer}>
           <Image
             source={{
-              uri:
-                post?.user?.photo ||
-                'https://i.pravatar.cc/150',
+              uri: avatar,
             }}
-
-            style={
-              styles.avatar
-            }
+            style={styles.avatar}
           />
 
-
-          <View
-            style={
-              styles.userInfo
-            }
-          >
-
+          <View style={styles.userInfo}>
             <Text
               style={[
                 styles.username,
                 {
-                  color:
-                    theme.text,
+                  color: theme.text,
                 },
               ]}
             >
-              {post?.user?.name}
+              {post?.user?.name ||
+                'Usuário'}
             </Text>
 
             <Text
@@ -127,104 +112,90 @@ export default function DetailsScreen({
                 },
               ]}
             >
-              {post?.createdAt}
+              {post?.created_at ||
+                post?.createdAt ||
+                ''}
             </Text>
-
           </View>
-
         </View>
 
+        {images.length > 0 ? (
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+          >
+            {images.map(
+              (image, index) => (
+                <Image
+                  key={`${image}-${index}`}
+                  source={{
+                    uri: image,
+                  }}
+                  style={[
+                    styles.image,
+                    {
+                      width: SCREEN_WIDTH,
+                    },
+                  ]}
+                  resizeMode="cover"
+                  onError={(event) => {
+                    console.log(
+                      'ERRO NA IMAGEM DOS DETALHES:',
+                      {
+                        image,
+                        error:
+                          event.nativeEvent,
+                      }
+                    );
+                  }}
+                />
+              )
+            )}
+          </ScrollView>
+        ) : null}
 
-        {/* IMAGENS */}
-        <ScrollView
-          horizontal
-
-          pagingEnabled
-
-          showsHorizontalScrollIndicator={
-            false
-          }
-        >
-
-          {post?.images?.map(
-            (image, index) => (
-
-              <Image
-                key={index}
-
-                source={{
-                  uri: image,
-                }}
-
-                style={
-                  styles.image
-                }
-              />
-            )
-          )}
-
-        </ScrollView>
-
-
-        {/* TEXTO */}
-        <View
-          style={
-            styles.content
-          }
-        >
-
+        <View style={styles.content}>
           <Text
             style={[
               styles.description,
               {
-                color:
-                  theme.text,
+                color: theme.text,
               },
             ]}
           >
-            {post?.description}
+            {post?.description || ''}
           </Text>
-
         </View>
 
-
-        {/* BOTÃO CHAT */}
         <TouchableOpacity
           activeOpacity={0.8}
-
-          onPress={
-            handleOpenChat
-          }
-
+          onPress={handleOpenChat}
+          disabled={!post?.user?.id}
           style={[
             styles.chatButton,
             {
               backgroundColor:
                 theme.primary,
+              opacity: post?.user?.id
+                ? 1
+                : 0.5,
             },
           ]}
         >
-
           <Ionicons
             name="chatbubble"
-
             size={22}
-
             color="#ffffff"
           />
 
           <Text
-            style={
-              styles.chatButtonText
-            }
+            style={styles.chatButtonText}
           >
             Conversar
           </Text>
-
         </TouchableOpacity>
-
       </ScrollView>
-
     </View>
   );
 }

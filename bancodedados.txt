@@ -27,5 +27,31 @@ SELECT * FROM posts;
 SELECT * FROM messages;
 
 
-git config --global user.name vinisaomtec-source
-git config --global user.email vinisaomtec@gmail.com
+git config --global user.name Vinicius
+git config --global user.email viniciusgodoy.martins@gmail.com
+
+
+XAMPP
+    ligar o mysql e o APACHE
+
+MYSQL Worchbenck
+    server
+    data import
+    segunda opção
+    escolher o arquivo
+    new --- doalize
+    start import
+
+    para salvar
+    server
+    data export
+    
+terminal 1
+    cd doalize-server
+    npm run dev
+
+terminal 2
+    cd mobile
+    npx expo start --android
+
+    continuar a partir do passo 13(13 não foi feito)

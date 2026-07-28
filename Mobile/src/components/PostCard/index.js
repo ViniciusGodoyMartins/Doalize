@@ -1,4 +1,7 @@
-import React from 'react';
+import React, {
+  useMemo,
+  useState,
+} from 'react';
 
 import {
   View,
@@ -13,38 +16,11 @@ import styles from './styles';
 
 import { useTheme } from '../../hooks/useTheme';
 
-import api from '../../services/api';
-
-const BASE_URL =
-  api.defaults.baseURL;
-
-function resolveImageUrl(uri) {
-
-  if (!uri) {
-    return null;
-  }
-
-  if (
-    uri.startsWith('http://') ||
-    uri.startsWith('https://')
-  ) {
-    return uri;
-  }
-
-  if (
-    uri.startsWith('/uploads')
-  ) {
-    return `${BASE_URL}${uri}`;
-  }
-
-  if (
-    uri.startsWith('file://')
-  ) {
-    return uri;
-  }
-
-  return uri;
-}
+import {
+  DEFAULT_AVATAR,
+  parsePostImages,
+  resolveImageUrl,
+} from '../../utils/imageHelper';
 
 export default function PostCard({
   post,
@@ -52,13 +28,44 @@ export default function PostCard({
   onShare,
   onPromote,
 }) {
+  const { theme } = useTheme();
 
-  const { theme } =
-    useTheme();
+  const [imageFailed, setImageFailed] =
+    useState(false);
 
-  const hasImages =
-    Array.isArray(post?.images) &&
-    post.images.length > 0;
+  const images = useMemo(
+    () => parsePostImages(post?.images),
+    [post?.images]
+  );
+
+  const firstImage =
+    images.length > 0
+      ? images[0]
+      : null;
+
+  const avatar =
+    resolveImageUrl(post?.user?.photo) ||
+    DEFAULT_AVATAR;
+
+  function handleShare(event) {
+    if (event?.stopPropagation) {
+      event.stopPropagation();
+    }
+
+    if (onShare) {
+      onShare(post);
+    }
+  }
+
+  function handlePromote(event) {
+    if (event?.stopPropagation) {
+      event.stopPropagation();
+    }
+
+    if (onPromote) {
+      onPromote(post);
+    }
+  }
 
   return (
     <TouchableOpacity
@@ -67,37 +74,25 @@ export default function PostCard({
       style={[
         styles.container,
         {
-          backgroundColor:
-            theme.card,
+          backgroundColor: theme.card,
         },
       ]}
     >
-
-      {/* HEADER */}
       <View style={styles.header}>
-
         <View style={styles.userInfo}>
-
           <Image
             source={{
-              uri:
-                post?.user?.photo
-                  ? resolveImageUrl(
-                      post.user.photo
-                    )
-                  : 'https://i.pravatar.cc/150',
+              uri: avatar,
             }}
             style={styles.avatar}
           />
 
           <View>
-
             <Text
               style={[
                 styles.username,
                 {
-                  color:
-                    theme.text,
+                  color: theme.text,
                 },
               ]}
             >
@@ -115,126 +110,123 @@ export default function PostCard({
               ]}
             >
               {post?.created_at ||
+                post?.createdAt ||
                 'Agora'}
             </Text>
-
           </View>
-
         </View>
-
       </View>
 
-      {/* IMAGEM */}
-      {hasImages && (
+      {firstImage && !imageFailed ? (
         <Image
           source={{
-            uri:
-              resolveImageUrl(
-                post.images[0]
-              ),
+            uri: firstImage,
           }}
           style={styles.postImage}
           resizeMode="cover"
-          onError={(e) => {
-
+          onError={(event) => {
             console.log(
-              'ERRO IMAGEM:',
-              e.nativeEvent
+              'ERRO NA IMAGEM DO POST:',
+              {
+                image: firstImage,
+                error:
+                  event.nativeEvent,
+              }
             );
 
-            console.log(
-              'URI:',
-              resolveImageUrl(
-                post.images[0]
-              )
-            );
+            setImageFailed(true);
           }}
         />
-      )}
+      ) : null}
 
-      {/* TEXTO */}
-      <View
-        style={styles.content}
-      >
+      {firstImage && imageFailed ? (
+        <View
+          style={[
+            styles.postImage,
+            {
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor:
+                theme.background,
+            },
+          ]}
+        >
+          <Ionicons
+            name="image-outline"
+            size={44}
+            color={theme.textSecondary}
+          />
 
+          <Text
+            style={{
+              marginTop: 8,
+              color: theme.textSecondary,
+            }}
+          >
+            Imagem indisponível
+          </Text>
+        </View>
+      ) : null}
+
+      <View style={styles.content}>
         <Text
           numberOfLines={4}
           style={[
             styles.description,
             {
-              color:
-                theme.text,
+              color: theme.text,
             },
           ]}
         >
           {post?.description}
         </Text>
-
       </View>
 
-      {/* AÇÕES */}
-      <View
-        style={styles.actions}
-      >
-
+      <View style={styles.actions}>
         <TouchableOpacity
-          style={
-            styles.actionButton
-          }
-          onPress={onShare}
+          style={styles.actionButton}
+          onPress={handleShare}
         >
           <Ionicons
             name="paper-plane-outline"
             size={24}
-            color={
-              theme.primary
-            }
+            color={theme.primary}
           />
 
           <Text
             style={[
               styles.actionText,
               {
-                color:
-                  theme.primary,
+                color: theme.primary,
               },
             ]}
           >
             Compartilhar
           </Text>
-
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={
-            styles.actionButton
-          }
-          onPress={onPromote}
+          style={styles.actionButton}
+          onPress={handlePromote}
         >
           <Ionicons
             name="rocket-outline"
             size={24}
-            color={
-              theme.primary
-            }
+            color={theme.primary}
           />
 
           <Text
             style={[
               styles.actionText,
               {
-                color:
-                  theme.primary,
+                color: theme.primary,
               },
             ]}
           >
             Promover
           </Text>
-
         </TouchableOpacity>
-
       </View>
-
     </TouchableOpacity>
   );
 }

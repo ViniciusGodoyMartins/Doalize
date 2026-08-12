@@ -6,9 +6,7 @@ import dotenv from 'dotenv';
 
 import User from '../models/User.js';
 
-
 dotenv.config();
-
 
 class AuthController {
 
@@ -30,6 +28,7 @@ class AuthController {
         !email ||
         !password
       ) {
+
         return res.status(400).json({
           message:
             'Preencha todos os campos',
@@ -54,7 +53,15 @@ class AuthController {
 
       // HASH SENHA
       const hashedPassword =
-        await bcrypt.hash(password, 10);
+        await bcrypt.hash(
+          password,
+          10
+        );
+
+
+      // FOTO PADRÃO
+      const defaultPhoto =
+        '/uploads/usuarioimage.png';
 
 
       // CRIA USUÁRIO
@@ -64,22 +71,33 @@ class AuthController {
 
         email,
 
-        password: hashedPassword,
+        password:
+          hashedPassword,
+
+        photo:
+          defaultPhoto,
+
+        description:
+          null,
+
+        location:
+          null,
       });
 
 
       // TOKEN
-      const token = jwt.sign(
-        {
-          id: user.id,
-        },
+      const token =
+        jwt.sign(
+          {
+            id: user.id,
+          },
 
-        process.env.JWT_SECRET,
+          process.env.JWT_SECRET,
 
-        {
-          expiresIn: '7d',
-        }
-      );
+          {
+            expiresIn: '7d',
+          }
+        );
 
 
       return res.status(201).json({
@@ -90,19 +108,26 @@ class AuthController {
         token,
 
         user: {
-          id: user.id,
 
-          name: user.name,
+          id:
+            user.id,
 
-          email: user.email,
+          name:
+            user.name,
 
-          photo: user.photo,
+          email:
+            user.email,
+
+          photo:
+            user.photo,
 
           description:
             user.description,
 
-          location: user.location,
+          location:
+            user.location,
         },
+
       });
 
     } catch (error) {
@@ -133,6 +158,7 @@ class AuthController {
         !email ||
         !password
       ) {
+
         return res.status(400).json({
           message:
             'Preencha todos os campos',
@@ -145,6 +171,7 @@ class AuthController {
         await User.findOne({
           where: { email },
         });
+
 
       if (!user) {
 
@@ -162,26 +189,29 @@ class AuthController {
           user.password
         );
 
+
       if (!passwordMatch) {
 
         return res.status(401).json({
-          message: 'Senha inválida',
+          message:
+            'Senha inválida',
         });
       }
 
 
       // TOKEN
-      const token = jwt.sign(
-        {
-          id: user.id,
-        },
+      const token =
+        jwt.sign(
+          {
+            id: user.id,
+          },
 
-        process.env.JWT_SECRET,
+          process.env.JWT_SECRET,
 
-        {
-          expiresIn: '7d',
-        }
-      );
+          {
+            expiresIn: '7d',
+          }
+        );
 
 
       return res.status(200).json({
@@ -189,19 +219,27 @@ class AuthController {
         token,
 
         user: {
-          id: user.id,
 
-          name: user.name,
+          id:
+            user.id,
 
-          email: user.email,
+          name:
+            user.name,
 
-          photo: user.photo,
+          email:
+            user.email,
+
+          photo:
+            user.photo ||
+            '/uploads/usuarioimage.png',
 
           description:
             user.description,
 
-          location: user.location,
+          location:
+            user.location,
         },
+
       });
 
     } catch (error) {

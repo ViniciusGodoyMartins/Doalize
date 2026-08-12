@@ -8,13 +8,23 @@ import {
   ScrollView,
 } from 'react-native';
 
-import { Ionicons } from '@expo/vector-icons';
+import {
+  Ionicons,
+} from '@expo/vector-icons';
 
 import Header from '../../components/Header';
 
-import { useTheme } from '../../hooks/useTheme';
+import {
+  useTheme,
+} from '../../hooks/useTheme';
 
-import { useAuth } from '../../hooks/useAuth';
+import {
+  useAuth,
+} from '../../hooks/useAuth';
+
+import {
+  resolveImageUrl,
+} from '../../utils/imageHelper';
 
 import styles from './style';
 
@@ -23,13 +33,39 @@ export default function ProfileScreen({
   navigation,
 }) {
 
-  const { theme, darkMode, toggleTheme } =
+  const {
+    theme,
+    darkMode,
+    toggleTheme,
+  } =
     useTheme();
 
-  const { user } = useAuth();
+
+  const {
+    user,
+  } =
+    useAuth();
+
+
+  const avatarSource =
+    user?.photo
+      ? {
+          uri:
+            resolveImageUrl(
+              user.photo
+            ),
+        }
+      : darkMode
+        ? require(
+            '../../../assets/imageuserdark.png'
+          )
+        : require(
+            '../../../assets/imageuserlight.png'
+          );
 
 
   return (
+
     <View
       style={[
         styles.container,
@@ -40,37 +76,46 @@ export default function ProfileScreen({
       ]}
     >
 
-      {/* HEADER */}
-      <Header title="Conta" />
+      <Header
+        title="Conta"
+      />
 
 
       <ScrollView
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={
+          false
+        }
       >
 
-        {/* PERFIL */}
-        <View style={styles.profileContainer}>
+        <View
+          style={
+            styles.profileContainer
+          }
+        >
 
           <Image
-            source={{
-              uri:
-                user?.photo ||
-                'https://i.pravatar.cc/150',
-            }}
-
-            style={styles.avatar}
+            source={
+              avatarSource
+            }
+            style={
+              styles.avatar
+            }
           />
+
 
           <Text
             style={[
               styles.name,
               {
-                color: theme.text,
+                color:
+                  theme.text,
               },
             ]}
           >
-            {user?.name || 'Usuário'}
+            {user?.name ||
+              'Usuário'}
           </Text>
+
 
           <Text
             style={[
@@ -88,10 +133,12 @@ export default function ProfileScreen({
         </View>
 
 
-        {/* BOTÕES */}
-        <View style={styles.actionsContainer}>
+        <View
+          style={
+            styles.actionsContainer
+          }
+        >
 
-          {/* PUBLICADOS */}
           <TouchableOpacity
             activeOpacity={0.8}
 
@@ -112,17 +159,19 @@ export default function ProfileScreen({
 
             <Ionicons
               name="images-outline"
-
               size={22}
-
-              color={theme.primary}
+              color={
+                theme.primary
+              }
             />
+
 
             <Text
               style={[
                 styles.actionText,
                 {
-                  color: theme.text,
+                  color:
+                    theme.text,
                 },
               ]}
             >
@@ -132,11 +181,12 @@ export default function ProfileScreen({
           </TouchableOpacity>
 
 
-          {/* TEMA */}
           <TouchableOpacity
             activeOpacity={0.8}
 
-            onPress={toggleTheme}
+            onPress={
+              toggleTheme
+            }
 
             style={[
               styles.actionButton,
@@ -153,17 +203,19 @@ export default function ProfileScreen({
                   ? 'sunny-outline'
                   : 'moon-outline'
               }
-
               size={22}
-
-              color={theme.primary}
+              color={
+                theme.primary
+              }
             />
+
 
             <Text
               style={[
                 styles.actionText,
                 {
-                  color: theme.text,
+                  color:
+                    theme.text,
                 },
               ]}
             >
@@ -175,7 +227,6 @@ export default function ProfileScreen({
           </TouchableOpacity>
 
 
-          {/* CONFIGURAÇÕES */}
           <TouchableOpacity
             activeOpacity={0.8}
 
@@ -196,17 +247,19 @@ export default function ProfileScreen({
 
             <Ionicons
               name="settings-outline"
-
               size={22}
-
-              color={theme.primary}
+              color={
+                theme.primary
+              }
             />
+
 
             <Text
               style={[
                 styles.actionText,
                 {
-                  color: theme.text,
+                  color:
+                    theme.text,
                 },
               ]}
             >

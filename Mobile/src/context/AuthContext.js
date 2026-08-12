@@ -9,19 +9,25 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 
 
-// CONTEXT
-export const AuthContext = createContext({});
+export const AuthContext =
+  createContext({});
 
 
-// PROVIDER
-export function AuthProvider({ children }) {
+export function AuthProvider({
+  children,
+}) {
 
-  const [user, setUser] = useState(null);
+  const [user, setUser] =
+    useState(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
 
+  // =========================
   // CARREGAR USUÁRIO
+  // =========================
+
   async function loadUser() {
 
     try {
@@ -31,21 +37,72 @@ export function AuthProvider({ children }) {
           '@doalize_token'
         );
 
-      const userData =
-        await AsyncStorage.getItem(
-          '@doalize_user'
+
+      if (!token) {
+        return;
+      }
+
+
+      api.defaults.headers.Authorization =
+        `Bearer ${token}`;
+
+
+      // BUSCA O USUÁRIO ATUAL NO BACKEND
+      // Isso evita usar dados antigos do AsyncStorage
+      try {
+
+        const response =
+          await api.get(
+            '/users/profile'
+          );
+
+
+        const currentUser =
+          response.data;
+
+
+        await AsyncStorage.setItem(
+          '@doalize_user',
+          JSON.stringify(
+            currentUser
+          )
         );
 
-
-      if (token && userData) {
-
-        api.defaults.headers.Authorization =
-          `Bearer ${token}`;
 
         setUser(
-          JSON.parse(userData)
+          currentUser
         );
+
+
+      } catch (
+        profileError
+      ) {
+
+        console.log(
+          'Erro ao buscar perfil:',
+          profileError.response?.data ||
+          profileError.message
+        );
+
+
+        // FALLBACK:
+        // se a API falhar, usa o usuário salvo localmente
+        const userData =
+          await AsyncStorage.getItem(
+            '@doalize_user'
+          );
+
+
+        if (userData) {
+
+          setUser(
+            JSON.parse(
+              userData
+            )
+          );
+        }
       }
+
 
     } catch (error) {
 
@@ -61,7 +118,10 @@ export function AuthProvider({ children }) {
   }
 
 
+  // =========================
   // LOGIN
+  // =========================
+
   async function signIn(
     email,
     password
@@ -78,32 +138,31 @@ export function AuthProvider({ children }) {
           }
         );
 
+
       const {
         token,
         user,
-      } = response.data;
+      } =
+        response.data;
 
 
-      // SALVAR TOKEN
       await AsyncStorage.setItem(
         '@doalize_token',
         token
       );
 
 
-      // SALVAR USER
+      api.defaults.headers.Authorization =
+        `Bearer ${token}`;
+
+
+      // SALVA O USUÁRIO NOVO
       await AsyncStorage.setItem(
         '@doalize_user',
         JSON.stringify(user)
       );
 
 
-      // HEADER GLOBAL
-      api.defaults.headers.Authorization =
-        `Bearer ${token}`;
-
-
-      // ATUALIZAR USER
       setUser({
         ...user,
       });
@@ -113,6 +172,7 @@ export function AuthProvider({ children }) {
         success: true,
         user,
       };
+
 
     } catch (error) {
 
@@ -127,8 +187,13 @@ export function AuthProvider({ children }) {
   }
 
 
+  // =========================
   // CADASTRO
-  async function signUp(data) {
+  // =========================
+
+  async function signUp(
+    data
+  ) {
 
     try {
 
@@ -138,10 +203,13 @@ export function AuthProvider({ children }) {
           data
         );
 
+
       return {
         success: true,
-        data: response.data,
+        data:
+          response.data,
       };
+
 
     } catch (error) {
 
@@ -156,7 +224,10 @@ export function AuthProvider({ children }) {
   }
 
 
+  // =========================
   // LOGOUT
+  // =========================
+
   async function signOut() {
 
     await AsyncStorage.removeItem(
@@ -167,25 +238,40 @@ export function AuthProvider({ children }) {
       '@doalize_user'
     );
 
+
+    delete api.defaults.headers.Authorization;
+
+
     setUser(null);
   }
 
 
-  // UPDATE USER
+  // =========================
+  // ATUALIZAR USUÁRIO
+  // =========================
+
   async function updateUser(
     userData
   ) {
 
-    setUser(userData);
+    setUser(
+      userData
+    );
+
 
     await AsyncStorage.setItem(
       '@doalize_user',
-      JSON.stringify(userData)
+      JSON.stringify(
+        userData
+      )
     );
   }
 
 
+  // =========================
   // INIT
+  // =========================
+
   useEffect(() => {
 
     loadUser();
@@ -197,11 +283,10 @@ export function AuthProvider({ children }) {
 
     <AuthContext.Provider
       value={{
-
         user,
         loading,
-
-        signed: !!user,
+        signed:
+          !!user,
 
         signIn,
         signUp,

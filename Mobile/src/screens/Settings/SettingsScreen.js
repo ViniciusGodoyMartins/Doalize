@@ -1,4 +1,6 @@
 import React, {
+  useEffect,
+  useMemo,
   useState,
 } from 'react';
 
@@ -9,69 +11,90 @@ import {
   Alert,
   Image,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 
-import * as ImagePicker
-  from 'expo-image-picker';
+import * as ImagePicker from 'expo-image-picker';
 
 import Header from '../../components/Header';
-
 import Input from '../../components/Input';
-
 import Button from '../../components/Button';
 
-import {
-  useTheme,
-} from '../../hooks/useTheme';
-
-import {
-  useAuth,
-} from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
+import { useAuth } from '../../hooks/useAuth';
 
 import api from '../../services/api';
 
 import {
-  DEFAULT_AVATAR,
   resolveImageUrl,
 } from '../../utils/imageHelper';
 
+import imageUserLight from '../../../assets/imageuserlight.png';
+import imageUserDark from '../../../assets/imageuserdark.png';
+
 import styles from './styles';
 
+function createPhotoFile(asset) {
+  const uri = asset?.uri;
+
+  const fileName =
+    asset?.fileName ||
+    uri?.split('/').pop() ||
+    `profile-${Date.now()}.jpg`;
+
+  const extension = fileName
+    .split('.')
+    .pop()
+    ?.toLowerCase();
+
+  let mimeType = asset?.mimeType;
+
+  if (!mimeType) {
+    if (extension === 'png') {
+      mimeType = 'image/png';
+    } else if (extension === 'webp') {
+      mimeType = 'image/webp';
+    } else {
+      mimeType = 'image/jpeg';
+    }
+  }
+
+  return {
+    uri:
+      Platform.OS === 'ios'
+        ? uri.replace('file://', '')
+        : uri,
+    name: fileName,
+    type: mimeType,
+  };
+}
 
 export default function SettingsScreen() {
-
-  const { theme } =
-    useTheme();
+  const {
+    theme,
+    darkMode,
+  } = useTheme();
 
   const {
     user,
     updateUser,
     signOut,
-  } =
-    useAuth();
+  } = useAuth();
 
-
-  const [
-    name,
-    setName,
-  ] = useState(
+  const [name, setName] = useState(
     user?.name || ''
   );
 
-
-  const [
-    email,
-    setEmail,
-  ] = useState(
+  const [email, setEmail] = useState(
     user?.email || ''
   );
 
-
   const [
-    password,
-    setPassword,
-  ] = useState('');
-
+    description,
+    setDescription,
+  ] = useState(
+    user?.description || ''
+  );
 
   const [
     location,
@@ -80,82 +103,164 @@ export default function SettingsScreen() {
     user?.location || ''
   );
 
-
   const [
     selectedPhoto,
     setSelectedPhoto,
-  ] = useState(
-    null
-  );
-
+  ] = useState(null);
 
   const [
-    loading,
-    setLoading,
+    remotePhotoFailed,
+    setRemotePhotoFailed,
   ] = useState(false);
 
+  const [
+    profileLoading,
+    setProfileLoading,
+  ] = useState(false);
 
-  // FOTO ATUAL
-  const currentPhoto =
-    selectedPhoto ||
-    (
-      user?.photo
-        ? resolveImageUrl(
-            user.photo
-          )
-        : null
+  const [
+    passwordSectionVisible,
+    setPasswordSectionVisible,
+  ] = useState(false);
+
+  const [
+    verificationCode,
+    setVerificationCode,
+  ] = useState('');
+
+  const [
+    newPassword,
+    setNewPassword,
+  ] = useState('');
+
+  const [
+    confirmPassword,
+    setConfirmPassword,
+  ] = useState('');
+
+  const [
+    requestingCode,
+    setRequestingCode,
+  ] = useState(false);
+
+  const [
+    changingPassword,
+    setChangingPassword,
+  ] = useState(false);
+
+  const [
+    deletingAccount,
+    setDeletingAccount,
+  ] = useState(false);
+
+  useEffect(() => {
+    setName(user?.name || '');
+    setEmail(user?.email || '');
+    setDescription(
+      user?.description || ''
     );
+    setLocation(
+      user?.location || ''
+    );
+    setRemotePhotoFailed(false);
+  }, [user]);
 
+  const defaultAvatar = useMemo(() => {
+    return darkMode
+      ? imageUserLight
+      : imageUserDark;
+  }, [darkMode]);
 
-  // ESCOLHER NOVA FOTO
+  const remotePhotoUrl = useMemo(() => {
+    if (
+      !user?.photo ||
+      typeof user.photo !== 'string' ||
+      !user.photo.trim()
+    ) {
+      return null;
+    }
+
+    return resolveImageUrl(
+      user.photo
+    );
+  }, [user?.photo]);
+
+  const avatarSource = useMemo(() => {
+    if (selectedPhoto?.uri) {
+      return {
+        uri: selectedPhoto.uri,
+      };
+    }
+
+    if (
+      remotePhotoUrl &&
+      !remotePhotoFailed
+    ) {
+      return {
+        uri: remotePhotoUrl,
+      };
+    }
+
+    return defaultAvatar;
+  }, [
+    selectedPhoto,
+    remotePhotoUrl,
+    remotePhotoFailed,
+    defaultAvatar,
+  ]);
+
+  const isUsingDefaultAvatar =
+    !selectedPhoto?.uri &&
+    (!remotePhotoUrl ||
+      remotePhotoFailed);
+
   async function handlePickPhoto() {
-
     try {
+      const permission =
+        await ImagePicker
+          .requestMediaLibraryPermissionsAsync();
+
+      if (!permission.granted) {
+        Alert.alert(
+          'Permissão necessária',
+          'Permita que o Doalize acesse suas imagens.'
+        );
+
+        return;
+      }
 
       const result =
-        await ImagePicker.launchImageLibraryAsync({
+        await ImagePicker
+          .launchImageLibraryAsync({
+            mediaTypes:
+              ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+          });
 
-          mediaTypes:
-            ImagePicker.MediaTypeOptions.Images,
-
-          allowsEditing:
-            true,
-
-          aspect:
-            [1, 1],
-
-          quality:
-            0.8,
-        });
-
-
-      if (
-        result.canceled
-      ) {
+      if (result.canceled) {
         return;
       }
 
+      const asset =
+        result.assets?.[0];
 
-      const imageUri =
-        result.assets?.[0]?.uri;
+      if (!asset?.uri) {
+        Alert.alert(
+          'Erro',
+          'A imagem selecionada é inválida.'
+        );
 
-
-      if (!imageUri) {
         return;
       }
 
-
-      setSelectedPhoto(
-        imageUri
-      );
-
+      setSelectedPhoto(asset);
     } catch (error) {
-
       console.log(
         'ERRO AO ESCOLHER FOTO:',
         error
       );
-
 
       Alert.alert(
         'Erro',
@@ -164,257 +269,290 @@ export default function SettingsScreen() {
     }
   }
 
-
-  // UPLOAD DA FOTO
   async function uploadProfilePhoto(
-    uri
+    asset
   ) {
-
-    const fileName =
-      uri
-        .split('/')
-        .pop() ||
-      `profile-${Date.now()}.jpg`;
-
-
-    const extension =
-      fileName
-        .split('.')
-        .pop()
-        ?.toLowerCase();
-
-
-    let mimeType =
-      'image/jpeg';
-
-
-    if (
-      extension === 'png'
-    ) {
-      mimeType =
-        'image/png';
-    }
-
-
-    if (
-      extension === 'webp'
-    ) {
-      mimeType =
-        'image/webp';
-    }
-
-
-    const formData =
-      new FormData();
-
+    const formData = new FormData();
 
     formData.append(
       'file',
+      createPhotoFile(asset)
+    );
+
+    const response = await api.post(
+      '/upload/user',
+      formData,
       {
-        uri,
-
-        name:
-          fileName,
-
-        type:
-          mimeType,
+        timeout: 30000,
+        headers: {
+          Accept: 'application/json',
+        },
       }
     );
 
-
-    const response =
-      await api.post(
-        '/upload',
-        formData,
-        {
-          timeout:
-            30000,
-
-          headers: {
-            Accept:
-              'application/json',
-          },
-        }
-      );
-
-
-    return response
-      .data
-      ?.file
-      ?.url;
+    return (
+      response.data?.file?.path ||
+      response.data?.file?.url ||
+      null
+    );
   }
 
+  async function handleSaveProfile() {
+    if (!name.trim()) {
+      Alert.alert(
+        'Atenção',
+        'Digite seu nome.'
+      );
 
-  // SALVAR
-  async function handleSave() {
+      return;
+    }
+
+    if (!email.trim()) {
+      Alert.alert(
+        'Atenção',
+        'Digite seu e-mail.'
+      );
+
+      return;
+    }
 
     try {
-
-      setLoading(true);
-
+      setProfileLoading(true);
 
       let photo =
-        user?.photo ||
-        null;
+        user?.photo || null;
 
-
-      // SE ESCOLHEU NOVA FOTO
-      if (
-        selectedPhoto
-      ) {
-
+      if (selectedPhoto) {
         photo =
           await uploadProfilePhoto(
             selectedPhoto
           );
 
-
         if (!photo) {
-
           throw new Error(
-            'O servidor não retornou a foto.'
+            'O servidor não retornou o caminho da foto.'
           );
         }
       }
 
-
-      const response =
-        await api.put(
-          '/users/update',
-          {
-            name:
-              name.trim(),
-
-            email:
-              email.trim(),
-
-            password:
-              password.trim()
-                ? password.trim()
-                : undefined,
-
-            photo,
-
-            location:
-              location.trim(),
-          }
-        );
-
+      const response = await api.put(
+        '/users/update',
+        {
+          name: name.trim(),
+          email:
+            email.trim().toLowerCase(),
+          photo,
+          description:
+            description.trim(),
+          location:
+            location.trim(),
+        }
+      );
 
       const updatedUser =
         response.data?.user;
 
-
       if (!updatedUser) {
-
         throw new Error(
-          'Usuário atualizado não foi retornado pela API.'
+          'O servidor não retornou o usuário atualizado.'
         );
       }
 
+      await updateUser(updatedUser);
 
-      await updateUser(
-        updatedUser
-      );
-
-
-      setSelectedPhoto(
-        null
-      );
-
-      setPassword('');
-
+      setSelectedPhoto(null);
+      setRemotePhotoFailed(false);
 
       Alert.alert(
         'Sucesso',
-        'Dados atualizados.'
+        'Perfil atualizado com sucesso.'
       );
-
-
     } catch (error) {
-
       console.log(
         'ERRO AO ATUALIZAR PERFIL:',
         error.response?.data ||
-        error.message
+          error.message
       );
-
 
       Alert.alert(
         'Erro',
-        error.response?.data
-          ?.message ||
+        error.response?.data?.message ||
           error.message ||
-          'Não foi possível salvar.'
+          'Não foi possível atualizar o perfil.'
       );
-
-
     } finally {
-
-      setLoading(false);
+      setProfileLoading(false);
     }
   }
 
+  async function handleRequestCode() {
+    try {
+      setRequestingCode(true);
 
-  // SAIR
+      const response = await api.post(
+        '/users/password/request-code'
+      );
+
+      setPasswordSectionVisible(true);
+
+      Alert.alert(
+        'Código enviado',
+        response.data?.message ||
+          'Verifique seu e-mail.'
+      );
+    } catch (error) {
+      console.log(
+        'ERRO AO SOLICITAR CÓDIGO:',
+        error.response?.data ||
+          error.message
+      );
+
+      Alert.alert(
+        'Erro',
+        error.response?.data?.message ||
+          'Não foi possível enviar o código.'
+      );
+    } finally {
+      setRequestingCode(false);
+    }
+  }
+
+  async function handleChangePassword() {
+    if (
+      !verificationCode.trim()
+    ) {
+      Alert.alert(
+        'Atenção',
+        'Digite o código enviado ao seu e-mail.'
+      );
+
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      Alert.alert(
+        'Atenção',
+        'A nova senha deve possuir pelo menos 6 caracteres.'
+      );
+
+      return;
+    }
+
+    if (
+      newPassword !==
+      confirmPassword
+    ) {
+      Alert.alert(
+        'Atenção',
+        'As senhas não coincidem.'
+      );
+
+      return;
+    }
+
+    try {
+      setChangingPassword(true);
+
+      const response = await api.post(
+        '/users/password/confirm',
+        {
+          code:
+            verificationCode.trim(),
+          newPassword,
+          confirmPassword,
+        }
+      );
+
+      setVerificationCode('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordSectionVisible(false);
+
+      Alert.alert(
+        'Sucesso',
+        response.data?.message ||
+          'Senha alterada com sucesso.'
+      );
+    } catch (error) {
+      console.log(
+        'ERRO AO ALTERAR SENHA:',
+        error.response?.data ||
+          error.message
+      );
+
+      Alert.alert(
+        'Erro',
+        error.response?.data?.message ||
+          'Não foi possível alterar a senha.'
+      );
+    } finally {
+      setChangingPassword(false);
+    }
+  }
+
   function handleLogout() {
-
     Alert.alert(
       'Sair da conta',
       'Deseja realmente sair?',
       [
         {
-          text:
-            'Cancelar',
-
-          style:
-            'cancel',
+          text: 'Cancelar',
+          style: 'cancel',
         },
-
         {
-          text:
-            'Sair',
-
-          onPress:
-            signOut,
+          text: 'Sair',
+          onPress: signOut,
         },
       ]
     );
   }
 
-
-  // EXCLUIR
   function handleDeleteAccount() {
-
     Alert.alert(
       'Excluir conta',
-      'Essa ação não poderá ser desfeita.',
+      'Todos os dados da conta serão removidos. Essa ação não poderá ser desfeita.',
       [
         {
-          text:
-            'Cancelar',
-
-          style:
-            'cancel',
+          text: 'Cancelar',
+          style: 'cancel',
         },
-
         {
-          text:
-            'Excluir',
-
-          style:
-            'destructive',
-
+          text: 'Excluir',
+          style: 'destructive',
           onPress:
-            signOut,
+            confirmDeleteAccount,
         },
       ]
     );
   }
 
+  async function confirmDeleteAccount() {
+    try {
+      setDeletingAccount(true);
+
+      await api.delete(
+        '/users/delete'
+      );
+
+      await signOut();
+    } catch (error) {
+      console.log(
+        'ERRO AO EXCLUIR CONTA:',
+        error.response?.data ||
+          error.message
+      );
+
+      Alert.alert(
+        'Erro',
+        error.response?.data?.message ||
+          'Não foi possível excluir a conta.'
+      );
+    } finally {
+      setDeletingAccount(false);
+    }
+  }
 
   return (
-
     <View
       style={[
         styles.container,
@@ -424,272 +562,383 @@ export default function SettingsScreen() {
         },
       ]}
     >
-
-      {/* HEADER */}
-
       <Header
         title="Configurações"
         showBackButton
       />
 
-
       <ScrollView
         contentContainerStyle={
           styles.content
         }
-        showsVerticalScrollIndicator={
-          false
-        }
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-
-        {/* FOTO */}
-
         <Text
           style={[
-            styles.label,
+            styles.sectionTitle,
             {
-              color:
-                theme.text,
+              color: theme.text,
             },
           ]}
         >
-          Foto de perfil
+          Perfil
         </Text>
 
-
         <View
-          style={{
-            alignItems:
-              'center',
-
-            marginBottom:
-              24,
-          }}
+          style={
+            styles.photoContainer
+          }
         >
-
-          <Image
-            source={
-              currentPhoto
-                ? {
-                    uri:
-                      currentPhoto,
-                  }
-                : DEFAULT_AVATAR
+          <View
+            style={
+              styles.avatarContainer
             }
-            style={{
-              width:
-                120,
-
-              height:
-                120,
-
-              borderRadius:
-                60,
-
-              marginBottom:
-                12,
-            }}
-          />
-
+          >
+            <Image
+              source={avatarSource}
+              style={
+                isUsingDefaultAvatar
+                  ? styles.defaultAvatar
+                  : styles.avatar
+              }
+              resizeMode={
+                isUsingDefaultAvatar
+                  ? 'contain'
+                  : 'cover'
+              }
+              onError={() =>
+                setRemotePhotoFailed(
+                  true
+                )
+              }
+            />
+          </View>
 
           <TouchableOpacity
-            activeOpacity={
-              0.8
-            }
-            onPress={
-              handlePickPhoto
-            }
-            style={{
-              paddingHorizontal:
-                18,
-
-              paddingVertical:
-                10,
-
-              borderRadius:
-                10,
-
-              backgroundColor:
-                theme.primary,
-            }}
+            activeOpacity={0.8}
+            onPress={handlePickPhoto}
+            disabled={profileLoading}
+            style={[
+              styles.changePhotoButton,
+              {
+                backgroundColor:
+                  theme.primary,
+              },
+            ]}
           >
-
             <Text
-              style={{
-                color:
-                  '#ffffff',
-
-                fontWeight:
-                  '700',
-              }}
+              style={
+                styles.changePhotoText
+              }
             >
               Alterar foto
             </Text>
-
           </TouchableOpacity>
 
+          {selectedPhoto ? (
+            <TouchableOpacity
+              onPress={() =>
+                setSelectedPhoto(null)
+              }
+              style={
+                styles.cancelPhotoButton
+              }
+            >
+              <Text
+                style={{
+                  color:
+                    theme.textSecondary,
+                }}
+              >
+                Cancelar nova foto
+              </Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
-
-
-        {/* NOME */}
 
         <Text
           style={[
             styles.label,
             {
-              color:
-                theme.text,
+              color: theme.text,
             },
           ]}
         >
           Nome
         </Text>
 
-
         <Input
-          placeholder="Nome"
-
-          value={
-            name
-          }
-
-          onChangeText={
-            setName
-          }
+          placeholder="Seu nome"
+          value={name}
+          onChangeText={setName}
+          editable={!profileLoading}
+          maxLength={120}
         />
-
-
-        {/* EMAIL */}
 
         <Text
           style={[
             styles.label,
             {
-              color:
-                theme.text,
+              color: theme.text,
             },
           ]}
         >
           E-mail
         </Text>
 
-
         <Input
-          placeholder="E-mail"
-
-          value={
-            email
-          }
-
-          onChangeText={
-            setEmail
-          }
-
-          keyboardType=
-            "email-address"
+          placeholder="Seu e-mail"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          editable={!profileLoading}
+          maxLength={255}
         />
-
-
-        {/* SENHA */}
 
         <Text
           style={[
             styles.label,
             {
-              color:
-                theme.text,
+              color: theme.text,
             },
           ]}
         >
-          Nova senha
+          Descrição
         </Text>
 
-
         <Input
-          placeholder="Nova senha"
-
-          value={
-            password
-          }
-
-          onChangeText={
-            setPassword
-          }
-
-          secureTextEntry
+          placeholder="Conte um pouco sobre você..."
+          value={description}
+          onChangeText={setDescription}
+          multiline
+          numberOfLines={5}
+          editable={!profileLoading}
+          maxLength={500}
+          textAlignVertical="top"
         />
 
-
-        {/* LOCALIZAÇÃO */}
+        <Text
+          style={[
+            styles.characterCount,
+            {
+              color:
+                theme.textSecondary,
+            },
+          ]}
+        >
+          {description.length}/500
+        </Text>
 
         <Text
           style={[
             styles.label,
             {
-              color:
-                theme.text,
+              color: theme.text,
             },
           ]}
         >
           Localização
         </Text>
 
-
         <Input
-          placeholder="Sua localização"
-
-          value={
-            location
-          }
-
-          onChangeText={
-            setLocation
-          }
+          placeholder="Cidade, estado ou região"
+          value={location}
+          onChangeText={setLocation}
+          editable={!profileLoading}
+          maxLength={255}
         />
-
-
-        {/* SALVAR */}
 
         <Button
           title="Salvar alterações"
-
           onPress={
-            handleSave
+            handleSaveProfile
           }
-
-          loading={
-            loading
-          }
+          loading={profileLoading}
         />
 
+        <View
+          style={[
+            styles.divider,
+            {
+              backgroundColor:
+                theme.border,
+            },
+          ]}
+        />
 
-        {/* SAIR */}
+        <Text
+          style={[
+            styles.sectionTitle,
+            {
+              color: theme.text,
+            },
+          ]}
+        >
+          Segurança
+        </Text>
+
+        <Text
+          style={[
+            styles.helperText,
+            {
+              color:
+                theme.textSecondary,
+            },
+          ]}
+        >
+          Para alterar sua senha, enviaremos um código de verificação ao e-mail cadastrado.
+        </Text>
 
         <Button
-          title="Sair da conta"
-
-          onPress={
-            handleLogout
+          title="Enviar código por e-mail"
+          onPress={handleRequestCode}
+          loading={requestingCode}
+          disabled={
+            changingPassword
           }
-
           type="secondary"
         />
 
+        {passwordSectionVisible ? (
+          <View
+            style={
+              styles.passwordSection
+            }
+          >
+            <Text
+              style={[
+                styles.label,
+                {
+                  color: theme.text,
+                },
+              ]}
+            >
+              Código de verificação
+            </Text>
 
-        {/* EXCLUIR */}
+            <Input
+              placeholder="Digite o código de 6 dígitos"
+              value={verificationCode}
+              onChangeText={(value) =>
+                setVerificationCode(
+                  value.replace(
+                    /\D/g,
+                    ''
+                  )
+                )
+              }
+              keyboardType="number-pad"
+              maxLength={6}
+              editable={
+                !changingPassword
+              }
+            />
+
+            <Text
+              style={[
+                styles.label,
+                {
+                  color: theme.text,
+                },
+              ]}
+            >
+              Nova senha
+            </Text>
+
+            <Input
+              placeholder="Mínimo de 6 caracteres"
+              value={newPassword}
+              onChangeText={
+                setNewPassword
+              }
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={
+                !changingPassword
+              }
+            />
+
+            <Text
+              style={[
+                styles.label,
+                {
+                  color: theme.text,
+                },
+              ]}
+            >
+              Confirmar nova senha
+            </Text>
+
+            <Input
+              placeholder="Digite novamente"
+              value={
+                confirmPassword
+              }
+              onChangeText={
+                setConfirmPassword
+              }
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={
+                !changingPassword
+              }
+            />
+
+            <Button
+              title="Confirmar nova senha"
+              onPress={
+                handleChangePassword
+              }
+              loading={
+                changingPassword
+              }
+            />
+          </View>
+        ) : null}
+
+        <View
+          style={[
+            styles.divider,
+            {
+              backgroundColor:
+                theme.border,
+            },
+          ]}
+        />
+
+        <Text
+          style={[
+            styles.sectionTitle,
+            {
+              color: theme.text,
+            },
+          ]}
+        >
+          Conta
+        </Text>
+
+        <Button
+          title="Sair da conta"
+          onPress={handleLogout}
+          type="secondary"
+        />
 
         <Button
           title="Excluir conta"
-
           onPress={
             handleDeleteAccount
           }
-
+          loading={
+            deletingAccount
+          }
           type="danger"
         />
-
       </ScrollView>
-
     </View>
   );
 }

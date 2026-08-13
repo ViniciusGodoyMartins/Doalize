@@ -1,303 +1,213 @@
 import React, {
   createContext,
-  useState,
   useEffect,
+  useState,
 } from 'react';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import api from '../services/api';
 
-
 export const AuthContext =
-  createContext({});
-
+  createContext(null);
 
 export function AuthProvider({
   children,
 }) {
-
   const [user, setUser] =
     useState(null);
 
   const [loading, setLoading] =
     useState(true);
 
+  async function saveUser(userData) {
+    if (!userData) {
+      return;
+    }
 
-  // =========================
-  // CARREGAR USUÁRIO
-  // =========================
+    setUser(userData);
+
+    await AsyncStorage.setItem(
+      '@doalize_user',
+      JSON.stringify(userData)
+    );
+  }
 
   async function loadUser() {
-
     try {
-
       const token =
         await AsyncStorage.getItem(
           '@doalize_token'
         );
 
-
       if (!token) {
+        setUser(null);
         return;
       }
-
 
       api.defaults.headers.Authorization =
         `Bearer ${token}`;
 
-
-      // BUSCA O USUÁRIO ATUAL NO BACKEND
-      // Isso evita usar dados antigos do AsyncStorage
       try {
-
         const response =
           await api.get(
             '/users/profile'
           );
 
-
-        const currentUser =
-          response.data;
-
-
-        await AsyncStorage.setItem(
-          '@doalize_user',
-          JSON.stringify(
-            currentUser
-          )
+        await saveUser(
+          response.data
         );
-
-
-        setUser(
-          currentUser
-        );
-
-
-      } catch (
-        profileError
-      ) {
-
+      } catch (profileError) {
         console.log(
-          'Erro ao buscar perfil:',
+          'ERRO AO BUSCAR PERFIL:',
           profileError.response?.data ||
-          profileError.message
+            profileError.message
         );
 
+        if (
+          profileError.response?.status ===
+          401
+        ) {
+          await signOut();
+          return;
+        }
 
-        // FALLBACK:
-        // se a API falhar, usa o usuário salvo localmente
-        const userData =
+        const savedUser =
           await AsyncStorage.getItem(
             '@doalize_user'
           );
 
-
-        if (userData) {
-
+        if (savedUser) {
           setUser(
-            JSON.parse(
-              userData
-            )
+            JSON.parse(savedUser)
           );
         }
       }
-
-
     } catch (error) {
-
       console.log(
-        'Erro ao carregar usuário:',
+        'ERRO AO CARREGAR USUÁRIO:',
         error
       );
-
     } finally {
-
       setLoading(false);
     }
   }
-
-
-  // =========================
-  // LOGIN
-  // =========================
 
   async function signIn(
     email,
     password
   ) {
-
     try {
-
       const response =
         await api.post(
           '/auth/login',
           {
-            email,
+            email:
+              email.trim().toLowerCase(),
             password,
           }
         );
 
-
       const {
         token,
-        user,
-      } =
-        response.data;
-
+        user: loggedUser,
+      } = response.data;
 
       await AsyncStorage.setItem(
         '@doalize_token',
         token
       );
 
-
       api.defaults.headers.Authorization =
         `Bearer ${token}`;
 
-
-      // SALVA O USUÁRIO NOVO
-      await AsyncStorage.setItem(
-        '@doalize_user',
-        JSON.stringify(user)
-      );
-
-
-      setUser({
-        ...user,
-      });
-
+      await saveUser(loggedUser);
 
       return {
         success: true,
-        user,
+        user: loggedUser,
       };
-
-
     } catch (error) {
-
       return {
         success: false,
-
         message:
           error.response?.data?.message ||
-          'Erro ao fazer login',
+          'Erro ao fazer login.',
       };
     }
   }
 
-
-  // =========================
-  // CADASTRO
-  // =========================
-
-  async function signUp(
-    data
-  ) {
-
+  async function signUp(data) {
     try {
-
       const response =
         await api.post(
           '/auth/register',
           data
         );
 
-
       return {
         success: true,
-        data:
-          response.data,
+        data: response.data,
       };
-
-
     } catch (error) {
-
       return {
         success: false,
-
         message:
           error.response?.data?.message ||
-          'Erro ao cadastrar usuário',
+          'Erro ao cadastrar usuário.',
       };
     }
   }
 
-
-  // =========================
-  // LOGOUT
-  // =========================
-
   async function signOut() {
+    await AsyncStorage.multiRemove([
+      '@doalize_token',
+      '@doalize_user',
+    ]);
 
-    await AsyncStorage.removeItem(
-      '@doalize_token'
-    );
-
-    await AsyncStorage.removeItem(
-      '@doalize_user'
-    );
-
-
-    delete api.defaults.headers.Authorization;
-
+    delete api.defaults
+      .headers.Authorization;
 
     setUser(null);
   }
 
-
-  // =========================
-  // ATUALIZAR USUÁRIO
-  // =========================
-
   async function updateUser(
     userData
   ) {
-
-    setUser(
-      userData
-    );
-
-
-    await AsyncStorage.setItem(
-      '@doalize_user',
-      JSON.stringify(
-        userData
-      )
-    );
+    await saveUser(userData);
   }
 
+  async function refreshUser() {
+    const response =
+      await api.get(
+        '/users/profile'
+      );
 
-  // =========================
-  // INIT
-  // =========================
+    await saveUser(
+      response.data
+    );
+
+    return response.data;
+  }
 
   useEffect(() => {
-
     loadUser();
-
   }, []);
 
-
   return (
-
     <AuthContext.Provider
       value={{
         user,
         loading,
-        signed:
-          !!user,
-
+        signed: Boolean(user),
         signIn,
         signUp,
         signOut,
-
         updateUser,
+        refreshUser,
       }}
     >
-
       {children}
-
     </AuthContext.Provider>
   );
 }

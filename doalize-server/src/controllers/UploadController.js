@@ -1,36 +1,65 @@
-import dotenv from 'dotenv';
-
-dotenv.config();
-
 class UploadController {
+  async uploadPost(
+    req,
+    res
+  ) {
+    return UploadController
+      .sendResponse(
+        req,
+        res,
+        'posts'
+      );
+  }
 
-  // UPLOAD
-  async upload(req, res) {
+  async uploadUser(
+    req,
+    res
+  ) {
+    return UploadController
+      .sendResponse(
+        req,
+        res,
+        'users'
+      );
+  }
 
+  static sendResponse(
+    req,
+    res,
+    directory
+  ) {
     try {
-
-      // VERIFICA SE O ARQUIVO FOI ENVIADO
       if (!req.file) {
+        console.log(
+          'UPLOAD SEM ARQUIVO:',
+          {
+            directory,
 
-        return res.status(400).json({
-          message:
-            'Nenhum arquivo enviado',
-        });
+            body:
+              req.body,
+
+            contentType:
+              req.headers[
+                'content-type'
+              ],
+          }
+        );
+
+        return res
+          .status(400)
+          .json({
+            message:
+              'Nenhum arquivo enviado.',
+          });
       }
 
+      const publicPath =
+        `/uploads/${directory}/${req.file.filename}`;
 
-      // CAMINHO RELATIVO DO ARQUIVO
-      // NÃO SALVA localhost NEM IP NO BANCO
-      const fileUrl =
-        `/uploads/${req.file.filename}`;
-
-
-      return res.status(200).json({
-
-        message:
-          'Upload realizado com sucesso',
-
-        file: {
+      console.log(
+        'UPLOAD CONCLUÍDO:',
+        {
+          directory,
 
           filename:
             req.file.filename,
@@ -44,29 +73,56 @@ class UploadController {
           size:
             req.file.size,
 
-          url:
-            fileUrl,
-        },
+          path:
+            req.file.path,
 
-      });
+          publicPath,
+        }
+      );
 
+      return res
+        .status(200)
+        .json({
+          message:
+            'Upload realizado com sucesso.',
+
+          file: {
+            filename:
+              req.file.filename,
+
+            originalname:
+              req.file.originalname,
+
+            mimetype:
+              req.file.mimetype,
+
+            size:
+              req.file.size,
+
+            path:
+              publicPath,
+
+            url:
+              publicPath,
+          },
+        });
     } catch (error) {
-
-      console.log(
-        'ERRO UPLOAD:',
+      console.error(
+        'ERRO NO CONTROLLER DE UPLOAD:',
         error
       );
 
-      return res.status(500).json({
-        message:
-          'Erro no upload',
+      return res
+        .status(500)
+        .json({
+          message:
+            'Erro ao realizar upload.',
 
-        error:
-          error.message,
-      });
+          error:
+            error.message,
+        });
     }
   }
-
 }
 
 export default new UploadController();

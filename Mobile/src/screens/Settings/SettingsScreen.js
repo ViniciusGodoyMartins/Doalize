@@ -34,36 +34,122 @@ import imageUserDark from '../../../assets/imageuserdark.png';
 
 import styles from './styles';
 
-function createPhotoFile(asset) {
-  const uri = asset?.uri;
+function getFileExtension(
+  fileName,
+  mimeType
+) {
+  const extensionFromName =
+    fileName
+      ?.split('.')
+      .pop()
+      ?.toLowerCase();
 
-  const fileName =
-    asset?.fileName ||
-    uri?.split('/').pop() ||
+  const validExtensions = [
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+  ];
+
+  if (
+    extensionFromName &&
+    validExtensions.includes(
+      extensionFromName
+    )
+  ) {
+    return extensionFromName;
+  }
+
+  if (mimeType === 'image/png') {
+    return 'png';
+  }
+
+  if (mimeType === 'image/webp') {
+    return 'webp';
+  }
+
+  return 'jpg';
+}
+
+function getMimeType(
+  extension,
+  assetMimeType
+) {
+  const acceptedMimeTypes = [
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+  ];
+
+  if (
+    assetMimeType &&
+    acceptedMimeTypes.includes(
+      assetMimeType
+    )
+  ) {
+    return assetMimeType;
+  }
+
+  if (extension === 'png') {
+    return 'image/png';
+  }
+
+  if (extension === 'webp') {
+    return 'image/webp';
+  }
+
+  return 'image/jpeg';
+}
+
+function createPhotoFile(asset) {
+  if (!asset?.uri) {
+    throw new Error(
+      'A imagem selecionada não possui um endereço válido.'
+    );
+  }
+
+  const originalFileName =
+    asset.fileName ||
+    asset.uri
+      .split('/')
+      .pop()
+      ?.split('?')[0] ||
     `profile-${Date.now()}.jpg`;
 
-  const extension = fileName
-    .split('.')
-    .pop()
-    ?.toLowerCase();
+  const extension =
+    getFileExtension(
+      originalFileName,
+      asset.mimeType
+    );
 
-  let mimeType = asset?.mimeType;
+  const mimeType =
+    getMimeType(
+      extension,
+      asset.mimeType
+    );
 
-  if (!mimeType) {
-    if (extension === 'png') {
-      mimeType = 'image/png';
-    } else if (extension === 'webp') {
-      mimeType = 'image/webp';
-    } else {
-      mimeType = 'image/jpeg';
-    }
+  const fileName =
+    originalFileName
+      .toLowerCase()
+      .endsWith(`.${extension}`)
+      ? originalFileName
+      : `profile-${Date.now()}.${extension}`;
+
+  let fileUri = asset.uri;
+
+  if (
+    Platform.OS === 'ios' &&
+    fileUri.startsWith('file://')
+  ) {
+    fileUri = fileUri.replace(
+      'file://',
+      ''
+    );
   }
 
   return {
-    uri:
-      Platform.OS === 'ios'
-        ? uri.replace('file://', '')
-        : uri,
+    uri: fileUri,
     name: fileName,
     type: mimeType,
   };
@@ -81,13 +167,11 @@ export default function SettingsScreen() {
     signOut,
   } = useAuth();
 
-  const [name, setName] = useState(
-    user?.name || ''
-  );
+  const [name, setName] =
+    useState(user?.name || '');
 
-  const [email, setEmail] = useState(
-    user?.email || ''
-  );
+  const [email, setEmail] =
+    useState(user?.email || '');
 
   const [
     description,
@@ -156,63 +240,72 @@ export default function SettingsScreen() {
   useEffect(() => {
     setName(user?.name || '');
     setEmail(user?.email || '');
+
     setDescription(
       user?.description || ''
     );
+
     setLocation(
       user?.location || ''
     );
+
     setRemotePhotoFailed(false);
   }, [user]);
 
-  const defaultAvatar = useMemo(() => {
-    return darkMode
-      ? imageUserLight
-      : imageUserDark;
-  }, [darkMode]);
+  const defaultAvatar =
+    useMemo(() => {
+      return darkMode
+        ? imageUserLight
+        : imageUserDark;
+    }, [darkMode]);
 
-  const remotePhotoUrl = useMemo(() => {
-    if (
-      !user?.photo ||
-      typeof user.photo !== 'string' ||
-      !user.photo.trim()
-    ) {
-      return null;
-    }
+  const remotePhotoUrl =
+    useMemo(() => {
+      if (
+        !user?.photo ||
+        typeof user.photo !==
+          'string' ||
+        !user.photo.trim()
+      ) {
+        return null;
+      }
 
-    return resolveImageUrl(
-      user.photo
-    );
-  }, [user?.photo]);
+      return resolveImageUrl(
+        user.photo
+      );
+    }, [user?.photo]);
 
-  const avatarSource = useMemo(() => {
-    if (selectedPhoto?.uri) {
-      return {
-        uri: selectedPhoto.uri,
-      };
-    }
+  const avatarSource =
+    useMemo(() => {
+      if (selectedPhoto?.uri) {
+        return {
+          uri: selectedPhoto.uri,
+        };
+      }
 
-    if (
-      remotePhotoUrl &&
-      !remotePhotoFailed
-    ) {
-      return {
-        uri: remotePhotoUrl,
-      };
-    }
+      if (
+        remotePhotoUrl &&
+        !remotePhotoFailed
+      ) {
+        return {
+          uri: remotePhotoUrl,
+        };
+      }
 
-    return defaultAvatar;
-  }, [
-    selectedPhoto,
-    remotePhotoUrl,
-    remotePhotoFailed,
-    defaultAvatar,
-  ]);
+      return defaultAvatar;
+    }, [
+      selectedPhoto,
+      remotePhotoUrl,
+      remotePhotoFailed,
+      defaultAvatar,
+    ]);
 
   const isUsingDefaultAvatar =
     !selectedPhoto?.uri &&
-    (!remotePhotoUrl ||
-      remotePhotoFailed);
+    (
+      !remotePhotoUrl ||
+      remotePhotoFailed
+    );
 
   async function handlePickPhoto() {
     try {
@@ -233,9 +326,14 @@ export default function SettingsScreen() {
         await ImagePicker
           .launchImageLibraryAsync({
             mediaTypes:
-              ImagePicker.MediaTypeOptions.Images,
+              ImagePicker
+                .MediaTypeOptions
+                .Images,
+
             allowsEditing: true,
+
             aspect: [1, 1],
+
             quality: 0.8,
           });
 
@@ -255,6 +353,21 @@ export default function SettingsScreen() {
         return;
       }
 
+      console.log(
+        'FOTO SELECIONADA:',
+        {
+          uri: asset.uri,
+          fileName:
+            asset.fileName,
+          mimeType:
+            asset.mimeType,
+          width: asset.width,
+          height: asset.height,
+          fileSize:
+            asset.fileSize,
+        }
+      );
+
       setSelectedPhoto(asset);
     } catch (error) {
       console.log(
@@ -272,29 +385,133 @@ export default function SettingsScreen() {
   async function uploadProfilePhoto(
     asset
   ) {
-    const formData = new FormData();
+    const file =
+      createPhotoFile(asset);
+
+    const formData =
+      new FormData();
 
     formData.append(
       'file',
-      createPhotoFile(asset)
+      file
     );
 
-    const response = await api.post(
-      '/upload/user',
-      formData,
+    console.log(
+      'INICIANDO UPLOAD DA FOTO:',
       {
-        timeout: 30000,
-        headers: {
-          Accept: 'application/json',
+        url:
+          `${api.defaults.baseURL}/upload/user`,
+
+        file: {
+          uri: file.uri,
+          name: file.name,
+          type: file.type,
         },
+
+        hasAuthorization:
+          Boolean(
+            api.defaults
+              .headers
+              .Authorization
+          ),
       }
     );
 
-    return (
-      response.data?.file?.path ||
-      response.data?.file?.url ||
-      null
-    );
+    try {
+      const response =
+        await api.post(
+          '/upload/user',
+          formData,
+          {
+            timeout: 60000,
+
+            headers: {
+              Accept:
+                'application/json',
+
+              'Content-Type':
+                'multipart/form-data',
+            },
+
+            transformRequest: [
+              (data) => data,
+            ],
+          }
+        );
+
+      console.log(
+        'UPLOAD DA FOTO CONCLUÍDO:',
+        response.data
+      );
+
+      const photoPath =
+        response.data
+          ?.file
+          ?.path ||
+        response.data
+          ?.file
+          ?.url;
+
+      if (!photoPath) {
+        throw new Error(
+          'O servidor não retornou o caminho da foto.'
+        );
+      }
+
+      return photoPath;
+    } catch (error) {
+      console.log(
+        'ERRO DETALHADO DO UPLOAD:',
+        {
+          message:
+            error.message,
+
+          code:
+            error.code,
+
+          status:
+            error.response
+              ?.status,
+
+          response:
+            error.response
+              ?.data,
+
+          requestUrl:
+            `${api.defaults.baseURL}/upload/user`,
+
+          file: {
+            uri: file.uri,
+            name: file.name,
+            type: file.type,
+          },
+        }
+      );
+
+      if (
+        error.code ===
+        'ECONNABORTED'
+      ) {
+        throw new Error(
+          'O envio da foto demorou além do esperado. Tente uma imagem menor.'
+        );
+      }
+
+      if (
+        error.response?.data
+          ?.message
+      ) {
+        throw new Error(
+          error.response
+            .data
+            .message
+        );
+      }
+
+      throw new Error(
+        'Não foi possível enviar a foto. Verifique o terminal do servidor.'
+      );
+    }
   }
 
   async function handleSaveProfile() {
@@ -327,27 +544,29 @@ export default function SettingsScreen() {
           await uploadProfilePhoto(
             selectedPhoto
           );
-
-        if (!photo) {
-          throw new Error(
-            'O servidor não retornou o caminho da foto.'
-          );
-        }
       }
 
-      const response = await api.put(
-        '/users/update',
-        {
-          name: name.trim(),
-          email:
-            email.trim().toLowerCase(),
-          photo,
-          description:
-            description.trim(),
-          location:
-            location.trim(),
-        }
-      );
+      const response =
+        await api.put(
+          '/users/update',
+          {
+            name:
+              name.trim(),
+
+            email:
+              email
+                .trim()
+                .toLowerCase(),
+
+            photo,
+
+            description:
+              description.trim(),
+
+            location:
+              location.trim(),
+          }
+        );
 
       const updatedUser =
         response.data?.user;
@@ -358,7 +577,9 @@ export default function SettingsScreen() {
         );
       }
 
-      await updateUser(updatedUser);
+      await updateUser(
+        updatedUser
+      );
 
       setSelectedPhoto(null);
       setRemotePhotoFailed(false);
@@ -370,15 +591,27 @@ export default function SettingsScreen() {
     } catch (error) {
       console.log(
         'ERRO AO ATUALIZAR PERFIL:',
-        error.response?.data ||
-          error.message
+        {
+          message:
+            error.message,
+
+          response:
+            error.response
+              ?.data,
+
+          status:
+            error.response
+              ?.status,
+        }
       );
 
       Alert.alert(
         'Erro',
-        error.response?.data?.message ||
-          error.message ||
-          'Não foi possível atualizar o perfil.'
+        error.response
+          ?.data
+          ?.message ||
+        error.message ||
+        'Não foi possível atualizar o perfil.'
       );
     } finally {
       setProfileLoading(false);
@@ -389,11 +622,14 @@ export default function SettingsScreen() {
     try {
       setRequestingCode(true);
 
-      const response = await api.post(
-        '/users/password/request-code'
-      );
+      const response =
+        await api.post(
+          '/users/password/request-code'
+        );
 
-      setPasswordSectionVisible(true);
+      setPasswordSectionVisible(
+        true
+      );
 
       Alert.alert(
         'Código enviado',
@@ -409,8 +645,9 @@ export default function SettingsScreen() {
 
       Alert.alert(
         'Erro',
-        error.response?.data?.message ||
-          'Não foi possível enviar o código.'
+        error.response?.data
+          ?.message ||
+        'Não foi possível enviar o código.'
       );
     } finally {
       setRequestingCode(false);
@@ -429,7 +666,9 @@ export default function SettingsScreen() {
       return;
     }
 
-    if (newPassword.length < 6) {
+    if (
+      newPassword.length < 6
+    ) {
       Alert.alert(
         'Atenção',
         'A nova senha deve possuir pelo menos 6 caracteres.'
@@ -453,20 +692,27 @@ export default function SettingsScreen() {
     try {
       setChangingPassword(true);
 
-      const response = await api.post(
-        '/users/password/confirm',
-        {
-          code:
-            verificationCode.trim(),
-          newPassword,
-          confirmPassword,
-        }
-      );
+      const response =
+        await api.post(
+          '/users/password/confirm',
+          {
+            code:
+              verificationCode
+                .trim(),
+
+            newPassword,
+
+            confirmPassword,
+          }
+        );
 
       setVerificationCode('');
       setNewPassword('');
       setConfirmPassword('');
-      setPasswordSectionVisible(false);
+
+      setPasswordSectionVisible(
+        false
+      );
 
       Alert.alert(
         'Sucesso',
@@ -482,8 +728,9 @@ export default function SettingsScreen() {
 
       Alert.alert(
         'Erro',
-        error.response?.data?.message ||
-          'Não foi possível alterar a senha.'
+        error.response?.data
+          ?.message ||
+        'Não foi possível alterar a senha.'
       );
     } finally {
       setChangingPassword(false);
@@ -499,6 +746,7 @@ export default function SettingsScreen() {
           text: 'Cancelar',
           style: 'cancel',
         },
+
         {
           text: 'Sair',
           onPress: signOut,
@@ -516,6 +764,7 @@ export default function SettingsScreen() {
           text: 'Cancelar',
           style: 'cancel',
         },
+
         {
           text: 'Excluir',
           style: 'destructive',
@@ -544,8 +793,9 @@ export default function SettingsScreen() {
 
       Alert.alert(
         'Erro',
-        error.response?.data?.message ||
-          'Não foi possível excluir a conta.'
+        error.response?.data
+          ?.message ||
+        'Não foi possível excluir a conta.'
       );
     } finally {
       setDeletingAccount(false);
@@ -607,18 +857,26 @@ export default function SettingsScreen() {
                   ? 'contain'
                   : 'cover'
               }
-              onError={() =>
-                setRemotePhotoFailed(
-                  true
-                )
-              }
+              onError={() => {
+                if (
+                  !selectedPhoto
+                ) {
+                  setRemotePhotoFailed(
+                    true
+                  );
+                }
+              }}
             />
           </View>
 
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={handlePickPhoto}
-            disabled={profileLoading}
+            onPress={
+              handlePickPhoto
+            }
+            disabled={
+              profileLoading
+            }
             style={[
               styles.changePhotoButton,
               {
@@ -639,7 +897,9 @@ export default function SettingsScreen() {
           {selectedPhoto ? (
             <TouchableOpacity
               onPress={() =>
-                setSelectedPhoto(null)
+                setSelectedPhoto(
+                  null
+                )
               }
               style={
                 styles.cancelPhotoButton
@@ -672,7 +932,9 @@ export default function SettingsScreen() {
           placeholder="Seu nome"
           value={name}
           onChangeText={setName}
-          editable={!profileLoading}
+          editable={
+            !profileLoading
+          }
           maxLength={120}
         />
 
@@ -694,7 +956,9 @@ export default function SettingsScreen() {
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
-          editable={!profileLoading}
+          editable={
+            !profileLoading
+          }
           maxLength={255}
         />
 
@@ -712,10 +976,14 @@ export default function SettingsScreen() {
         <Input
           placeholder="Conte um pouco sobre você..."
           value={description}
-          onChangeText={setDescription}
+          onChangeText={
+            setDescription
+          }
           multiline
           numberOfLines={5}
-          editable={!profileLoading}
+          editable={
+            !profileLoading
+          }
           maxLength={500}
           textAlignVertical="top"
         />
@@ -746,8 +1014,12 @@ export default function SettingsScreen() {
         <Input
           placeholder="Cidade, estado ou região"
           value={location}
-          onChangeText={setLocation}
-          editable={!profileLoading}
+          onChangeText={
+            setLocation
+          }
+          editable={
+            !profileLoading
+          }
           maxLength={255}
         />
 
@@ -756,7 +1028,9 @@ export default function SettingsScreen() {
           onPress={
             handleSaveProfile
           }
-          loading={profileLoading}
+          loading={
+            profileLoading
+          }
         />
 
         <View
@@ -794,8 +1068,12 @@ export default function SettingsScreen() {
 
         <Button
           title="Enviar código por e-mail"
-          onPress={handleRequestCode}
-          loading={requestingCode}
+          onPress={
+            handleRequestCode
+          }
+          loading={
+            requestingCode
+          }
           disabled={
             changingPassword
           }
@@ -821,8 +1099,12 @@ export default function SettingsScreen() {
 
             <Input
               placeholder="Digite o código de 6 dígitos"
-              value={verificationCode}
-              onChangeText={(value) =>
+              value={
+                verificationCode
+              }
+              onChangeText={(
+                value
+              ) =>
                 setVerificationCode(
                   value.replace(
                     /\D/g,
@@ -850,7 +1132,9 @@ export default function SettingsScreen() {
 
             <Input
               placeholder="Mínimo de 6 caracteres"
-              value={newPassword}
+              value={
+                newPassword
+              }
               onChangeText={
                 setNewPassword
               }

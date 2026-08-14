@@ -1,36 +1,40 @@
-import { Router } from 'express';
+import {
+  Router,
+} from 'express';
 
 import UserController from '../controllers/UserController.js';
 
 import authMiddleware from '../middlewares/authMiddleware.js';
 
-
 const userRoutes = Router();
 
+userRoutes.use(
+  authMiddleware
+);
 
-// TODAS AS ROTAS PRIVADAS
-userRoutes.use(authMiddleware);
-
-
-// PERFIL
 userRoutes.get(
   '/profile',
   UserController.profile
 );
 
-
-// ATUALIZAR USUÁRIO
 userRoutes.put(
   '/update',
   UserController.update
 );
 
+userRoutes.post(
+  '/password/request-code',
+  UserController.requestPasswordCode
+);
 
-// EXCLUIR CONTA
+userRoutes.post(
+  '/password/confirm',
+  UserController.confirmPassword
+);
+
 userRoutes.delete(
   '/delete',
   UserController.delete
 );
-
 
 export default userRoutes;

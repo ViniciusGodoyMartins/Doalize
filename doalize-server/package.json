@@ -1,11 +1,12 @@
 {
   "name": "doalize-server",
   "version": "1.0.0",
+  "description": "Back-end do aplicativo Doalize",
   "type": "module",
-  "main": "src/server.js",
+  "main": "src/index.js",
   "scripts": {
-    "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -22,8 +23,11 @@
   "devDependencies": {
     "nodemon": "^3.1.14"
   },
-  "description": "",
-  "keywords": [],
+  "keywords": [
+    "doalize",
+    "tcc",
+    "campanhas-solidarias"
+  ],
   "author": "",
   "license": "ISC"
 }

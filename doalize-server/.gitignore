@@ -1,0 +1,17 @@
+# Variáveis privadas
+.env
+
+# Dependências
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Cache
+.cache/
+.tmp/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db

@@ -1,6 +1,7 @@
 import React, {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -9,13 +10,19 @@ import {
   Text,
   Image,
   TouchableOpacity,
+  FlatList,
+  StyleSheet,
 } from 'react-native';
 
-import { Ionicons } from '@expo/vector-icons';
+import {
+  Ionicons,
+} from '@expo/vector-icons';
 
 import styles from './styles';
 
-import { useTheme } from '../../hooks/useTheme';
+import {
+  useTheme,
+} from '../../hooks/useTheme';
 
 import {
   parsePostImages,
@@ -36,10 +43,23 @@ export default function PostCard({
     darkMode,
   } = useTheme();
 
+  const carouselRef =
+    useRef(null);
+
   const [
-    postImageFailed,
-    setPostImageFailed,
-  ] = useState(false);
+    imageWidth,
+    setImageWidth,
+  ] = useState(0);
+
+  const [
+    activeImageIndex,
+    setActiveImageIndex,
+  ] = useState(0);
+
+  const [
+    failedPostImages,
+    setFailedPostImages,
+  ] = useState({});
 
   const [
     remoteAvatarFailed,
@@ -47,75 +67,195 @@ export default function PostCard({
   ] = useState(false);
 
   /*
-   * IMAGEM PADRÃO DO USUÁRIO
+   * AVATAR PADRÃO
    *
-   * Modo claro:
-   * utiliza imageuserdark.png.
+   * Tema claro:
+   * imageuserdark.png
    *
-   * Modo escuro:
-   * utiliza imageuserlight.png.
+   * Tema escuro:
+   * imageuserlight.png
    */
-  const defaultAvatarSource = useMemo(() => {
-    return darkMode
-      ? imageUserLight
-      : imageUserDark;
-  }, [darkMode]);
+  const defaultAvatarSource =
+    useMemo(() => {
+      return darkMode
+        ? imageUserLight
+        : imageUserDark;
+    }, [darkMode]);
 
   /*
-   * Normaliza as imagens da publicação.
+   * NORMALIZAR TODAS AS IMAGENS
+   * DA PUBLICAÇÃO
    */
-  const postImages = useMemo(() => {
-    return parsePostImages(
-      post?.images
-    );
-  }, [post?.images]);
-
-  const firstPostImage =
-    postImages.length > 0
-      ? postImages[0]
-      : null;
+  const postImages =
+    useMemo(() => {
+      return parsePostImages(
+        post?.images
+      );
+    }, [post?.images]);
 
   /*
-   * Resolve a foto enviada pelo usuário.
+   * RESUMO EXIBIDO NO FEED
    *
-   * Se não existir foto, o resultado será null
-   * e o componente utilizará a imagem local.
+   * Para publicações novas:
+   * post.summary
+   *
+   * Para publicações antigas:
+   * post.description
    */
-  const remoteAvatarUrl = useMemo(() => {
-    if (
-      !post?.user?.photo ||
-      typeof post.user.photo !== 'string' ||
-      !post.user.photo.trim()
-    ) {
-      return null;
-    }
+  const feedSummary =
+    useMemo(() => {
+      if (
+        typeof post?.summary ===
+          'string' &&
+        post.summary.trim()
+      ) {
+        return post.summary.trim();
+      }
 
-    return resolveImageUrl(
-      post.user.photo
-    );
-  }, [post?.user?.photo]);
+      if (
+        typeof post?.description ===
+          'string' &&
+        post.description.trim()
+      ) {
+        return post.description.trim();
+      }
+
+      return '';
+    }, [
+      post?.summary,
+      post?.description,
+    ]);
 
   /*
-   * Quando a publicação mudar, permite uma nova
-   * tentativa de carregar sua imagem.
+   * RESOLVER FOTO REAL DO USUÁRIO
    */
-  useEffect(() => {
-    setPostImageFailed(false);
-  }, [firstPostImage]);
+  const remoteAvatarUrl =
+    useMemo(() => {
+      const photo =
+        post?.user?.photo;
+
+      if (
+        !photo ||
+        typeof photo !==
+          'string' ||
+        !photo.trim()
+      ) {
+        return null;
+      }
+
+      return resolveImageUrl(
+        photo
+      );
+    }, [post?.user?.photo]);
 
   /*
-   * Quando a foto do usuário mudar, permite uma
-   * nova tentativa de carregamento.
+   * REINICIA O AVATAR QUANDO
+   * A FOTO DO USUÁRIO MUDAR
    */
   useEffect(() => {
     setRemoteAvatarFailed(false);
   }, [remoteAvatarUrl]);
 
+  /*
+   * REINICIA O CARROSSEL QUANDO
+   * A PUBLICAÇÃO OU AS IMAGENS MUDAREM
+   */
+  useEffect(() => {
+    setActiveImageIndex(0);
+    setFailedPostImages({});
+
+    if (
+      carouselRef.current &&
+      postImages.length > 0
+    ) {
+      try {
+        carouselRef.current
+          .scrollToOffset({
+            offset: 0,
+            animated: false,
+          });
+      } catch (error) {
+        console.log(
+          'NÃO FOI POSSÍVEL REINICIAR O CARROSSEL:',
+          error.message
+        );
+      }
+    }
+  }, [
+    post?.id,
+    postImages.length,
+  ]);
+
   const hasRemoteAvatar =
     Boolean(remoteAvatarUrl) &&
     !remoteAvatarFailed;
 
-  function handleRemoteAvatarError(event) {
+  /*
+   * MEDIR A LARGURA REAL DO CARTÃO
+   *
+   * Não utilizamos a largura total da tela,
+   * porque o Feed possui espaçamentos laterais.
+   */
+  function handleCarouselLayout(
+    event
+  ) {
+    const measuredWidth =
+      event.nativeEvent
+        ?.layout
+        ?.width;
+
+    if (
+      measuredWidth &&
+      measuredWidth !== imageWidth
+    ) {
+      setImageWidth(
+        measuredWidth
+      );
+    }
+  }
+
+  /*
+   * ATUALIZAR A BOLINHA ATIVA
+   * APÓS O DESLIZE
+   */
+  function handleImageScrollEnd(
+    event
+  ) {
+    if (!imageWidth) {
+      return;
+    }
+
+    const offsetX =
+      event.nativeEvent
+        ?.contentOffset
+        ?.x || 0;
+
+    const calculatedIndex =
+      Math.round(
+        offsetX /
+        imageWidth
+      );
+
+    const safeIndex =
+      Math.max(
+        0,
+        Math.min(
+          calculatedIndex,
+          postImages.length - 1
+        )
+      );
+
+    setActiveImageIndex(
+      safeIndex
+    );
+  }
+
+  /*
+   * ERRO NA FOTO DO USUÁRIO
+   */
+  function handleRemoteAvatarError(
+    event
+  ) {
     console.log(
       'ERRO AO CARREGAR AVATAR NO FEED:',
       {
@@ -130,36 +270,67 @@ export default function PostCard({
       }
     );
 
-    /*
-     * Ao falhar, troca automaticamente para:
-     *
-     * imageuserdark no modo claro;
-     * imageuserlight no modo escuro.
-     */
     setRemoteAvatarFailed(true);
   }
 
-  function handlePostImageError(event) {
+  /*
+   * ERRO EM UMA IMAGEM ESPECÍFICA
+   *
+   * Uma imagem com erro não impede que
+   * as outras imagens sejam exibidas.
+   */
+  function handlePostImageError(
+    image,
+    index,
+    event
+  ) {
     console.log(
       'ERRO AO CARREGAR IMAGEM DO POST:',
       {
-        image:
-          firstPostImage,
+        postId:
+          post?.id,
+
+        image,
+
+        index,
 
         error:
           event?.nativeEvent,
       }
     );
 
-    setPostImageFailed(true);
+    setFailedPostImages(
+      (currentErrors) => {
+        const updatedErrors = {
+          ...currentErrors,
+        };
+
+        updatedErrors[index] =
+          true;
+
+        return updatedErrors;
+      }
+    );
   }
 
-  function handleSharePress(event) {
-    /*
-     * Evita que o botão Compartilhar também
-     * abra a tela de detalhes.
-     */
-    if (event?.stopPropagation) {
+  /*
+   * ABRIR DETALHES
+   */
+  function handleOpenPost() {
+    if (onPress) {
+      onPress(post);
+    }
+  }
+
+  /*
+   * COMPARTILHAR
+   */
+  function handleSharePress(
+    event
+  ) {
+    if (
+      event?.stopPropagation
+    ) {
       event.stopPropagation();
     }
 
@@ -168,12 +339,15 @@ export default function PostCard({
     }
   }
 
-  function handlePromotePress(event) {
-    /*
-     * Evita que o botão Promover também
-     * abra a tela de detalhes.
-     */
-    if (event?.stopPropagation) {
+  /*
+   * PROMOVER
+   */
+  function handlePromotePress(
+    event
+  ) {
+    if (
+      event?.stopPropagation
+    ) {
       event.stopPropagation();
     }
 
@@ -182,10 +356,100 @@ export default function PostCard({
     }
   }
 
+  /*
+   * ITEM DO CARROSSEL
+   */
+  function renderPostImage({
+    item,
+    index,
+  }) {
+    const imageFailed =
+      failedPostImages[
+        index
+      ] === true;
+
+    if (imageFailed) {
+      return (
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={
+            handleOpenPost
+          }
+          style={[
+            styles.postImage,
+            localStyles.unavailableImage,
+            {
+              width:
+                imageWidth ||
+                '100%',
+
+              backgroundColor:
+                theme.background,
+            },
+          ]}
+        >
+          <Ionicons
+            name="image-outline"
+            size={46}
+            color={
+              theme.textSecondary
+            }
+          />
+
+          <Text
+            style={[
+              localStyles.unavailableText,
+              {
+                color:
+                  theme.textSecondary,
+              },
+            ]}
+          >
+            Imagem indisponível
+          </Text>
+        </TouchableOpacity>
+      );
+    }
+
+    return (
+      <TouchableOpacity
+        activeOpacity={0.95}
+        onPress={
+          handleOpenPost
+        }
+        style={{
+          width:
+            imageWidth ||
+            '100%',
+        }}
+      >
+        <Image
+          source={{
+            uri: item,
+          }}
+          style={[
+            styles.postImage,
+            {
+              width:
+                imageWidth ||
+                '100%',
+            },
+          ]}
+          resizeMode="cover"
+          onError={(event) => {
+            handlePostImageError(
+              item,
+              index,
+              event
+            );
+          }}
+        />
+      </TouchableOpacity>
+    );
+  }
+
   return (
-    <TouchableOpacity
-      activeOpacity={0.9}
-      onPress={onPress}
+    <View
       style={[
         styles.container,
         {
@@ -194,15 +458,16 @@ export default function PostCard({
         },
       ]}
     >
-      <View style={styles.header}>
-        <View style={styles.userInfo}>
+      {/* CABEÇALHO */}
+      <TouchableOpacity
+        activeOpacity={0.88}
+        onPress={handleOpenPost}
+        style={styles.header}
+      >
+        <View
+          style={styles.userInfo}
+        >
           {hasRemoteAvatar ? (
-            /*
-             * FOTO REAL DO USUÁRIO
-             *
-             * A fotografia preenche normalmente
-             * a área circular de 48 × 48.
-             */
             <View
               style={
                 localStyles.remoteAvatarContainer
@@ -210,7 +475,8 @@ export default function PostCard({
             >
               <Image
                 source={{
-                  uri: remoteAvatarUrl,
+                  uri:
+                    remoteAvatarUrl,
                 }}
                 style={
                   localStyles.remoteAvatar
@@ -222,15 +488,6 @@ export default function PostCard({
               />
             </View>
           ) : (
-            /*
-             * ÍCONE PADRÃO
-             *
-             * Não possui fundo branco.
-             *
-             * O PNG é ampliado porque contém
-             * uma grande área transparente
-             * ao redor do desenho.
-             */
             <View
               style={
                 localStyles.defaultAvatarContainer
@@ -258,7 +515,8 @@ export default function PostCard({
               style={[
                 styles.username,
                 {
-                  color: theme.text,
+                  color:
+                    theme.text,
                 },
               ]}
             >
@@ -281,86 +539,252 @@ export default function PostCard({
                 'Agora'}
             </Text>
           </View>
-        </View>
-      </View>
 
-      {firstPostImage &&
-      !postImageFailed ? (
-        <Image
-          source={{
-            uri: firstPostImage,
-          }}
-          style={styles.postImage}
-          resizeMode="cover"
-          onError={
-            handlePostImageError
+          {post?.promoted ? (
+            <View
+              style={[
+                localStyles.promotedBadge,
+                {
+                  backgroundColor:
+                    `${theme.primary}20`,
+                },
+              ]}
+            >
+              <Ionicons
+                name="rocket"
+                size={15}
+                color={
+                  theme.primary
+                }
+              />
+
+              <Text
+                style={[
+                  localStyles.promotedText,
+                  {
+                    color:
+                      theme.primary,
+                  },
+                ]}
+              >
+                Promovido
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      </TouchableOpacity>
+
+      {/* CARROSSEL DE IMAGENS */}
+      {postImages.length > 0 ? (
+        <View
+          onLayout={
+            handleCarouselLayout
           }
-        />
+          style={
+            localStyles.carouselContainer
+          }
+        >
+          {imageWidth > 0 ? (
+            <FlatList
+              ref={carouselRef}
+              data={postImages}
+              horizontal
+              pagingEnabled
+              nestedScrollEnabled
+              showsHorizontalScrollIndicator={
+                false
+              }
+              bounces={false}
+              decelerationRate="fast"
+              keyExtractor={(
+                item,
+                index
+              ) =>
+                `${post?.id || 'post'}-${item}-${index}`
+              }
+              renderItem={
+                renderPostImage
+              }
+              onMomentumScrollEnd={
+                handleImageScrollEnd
+              }
+              getItemLayout={(
+                _,
+                index
+              ) => ({
+                length:
+                  imageWidth,
+
+                offset:
+                  imageWidth *
+                  index,
+
+                index,
+              })}
+              initialNumToRender={1}
+              windowSize={3}
+              removeClippedSubviews
+            />
+          ) : (
+            <View
+              style={[
+                styles.postImage,
+                {
+                  width: '100%',
+
+                  backgroundColor:
+                    theme.background,
+                },
+              ]}
+            />
+          )}
+
+          {/* CONTADOR 1/3 */}
+          {postImages.length > 1 ? (
+            <View
+              pointerEvents="none"
+              style={
+                localStyles.imageCounter
+              }
+            >
+              <Text
+                style={
+                  localStyles.imageCounterText
+                }
+              >
+                {activeImageIndex + 1}/
+                {postImages.length}
+              </Text>
+            </View>
+          ) : null}
+        </View>
       ) : null}
 
-      {firstPostImage &&
-      postImageFailed ? (
+      {/* BOLINHAS DO CARROSSEL */}
+      {postImages.length > 1 ? (
         <View
-          style={[
-            styles.postImage,
-            localStyles.unavailableImage,
-            {
-              backgroundColor:
-                theme.background,
-            },
-          ]}
+          style={
+            localStyles.pagination
+          }
         >
-          <Ionicons
-            name="image-outline"
-            size={44}
-            color={theme.textSecondary}
-          />
+          {postImages.map(
+            (
+              image,
+              index
+            ) => {
+              const isActive =
+                index ===
+                activeImageIndex;
 
+              return (
+                <View
+                  key={`dot-${post?.id}-${index}`}
+                  style={[
+                    localStyles.paginationDot,
+                    {
+                      width:
+                        isActive
+                          ? 18
+                          : 7,
+
+                      backgroundColor:
+                        isActive
+                          ? theme.primary
+                          : theme
+                              .textSecondary,
+
+                      opacity:
+                        isActive
+                          ? 1
+                          : 0.35,
+                    },
+                  ]}
+                />
+              );
+            }
+          )}
+        </View>
+      ) : null}
+
+      {/* RESUMO PARA O FEED */}
+      {feedSummary ? (
+        <TouchableOpacity
+          activeOpacity={0.88}
+          onPress={
+            handleOpenPost
+          }
+          style={styles.content}
+        >
           <Text
             style={[
-              localStyles.unavailableText,
+              localStyles.summaryLabel,
               {
                 color:
                   theme.textSecondary,
               },
             ]}
           >
-            Imagem indisponível
+            Resumo
           </Text>
-        </View>
+
+          <Text
+            numberOfLines={3}
+            style={[
+              styles.description,
+              {
+                color:
+                  theme.text,
+              },
+            ]}
+          >
+            {feedSummary}
+          </Text>
+
+          <Text
+            style={[
+              localStyles.detailsHint,
+              {
+                color:
+                  theme.primary,
+              },
+            ]}
+          >
+            Ver detalhes
+          </Text>
+        </TouchableOpacity>
       ) : null}
 
-      <View style={styles.content}>
-        <Text
-          numberOfLines={4}
-          style={[
-            styles.description,
-            {
-              color: theme.text,
-            },
-          ]}
-        >
-          {post?.description || ''}
-        </Text>
-      </View>
-
-      <View style={styles.actions}>
+      {/* AÇÕES */}
+      <View
+        style={[
+          styles.actions,
+          {
+            borderTopColor:
+              theme.border,
+          },
+        ]}
+      >
         <TouchableOpacity
           activeOpacity={0.7}
           style={styles.actionButton}
-          onPress={handleSharePress}
+          onPress={
+            handleSharePress
+          }
         >
           <Ionicons
             name="paper-plane-outline"
             size={24}
-            color={theme.primary}
+            color={
+              theme.primary
+            }
           />
 
           <Text
             style={[
               styles.actionText,
               {
-                color: theme.primary,
+                color:
+                  theme.primary,
               },
             ]}
           >
@@ -371,105 +795,242 @@ export default function PostCard({
         <TouchableOpacity
           activeOpacity={0.7}
           style={styles.actionButton}
-          onPress={handlePromotePress}
+          onPress={
+            handlePromotePress
+          }
         >
           <Ionicons
-            name="rocket-outline"
+            name={
+              post?.promoted
+                ? 'rocket'
+                : 'rocket-outline'
+            }
             size={24}
-            color={theme.primary}
+            color={
+              theme.primary
+            }
           />
 
           <Text
             style={[
               styles.actionText,
               {
-                color: theme.primary,
+                color:
+                  theme.primary,
               },
             ]}
           >
-            Promover
+            {post?.promoted
+              ? 'Promovido'
+              : 'Promover'}
           </Text>
         </TouchableOpacity>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 
-const localStyles = {
-  /*
-   * ÁREA DO ÍCONE PADRÃO
-   *
-   * O contêiner não possui fundo nem borda.
-   * O overflow impede que o PNG ampliado
-   * ultrapasse a área do avatar.
-   */
-  defaultAvatarContainer: {
-    width: 48,
-    height: 48,
+const localStyles =
+  StyleSheet.create({
+    /*
+     * AVATAR PADRÃO
+     */
+    defaultAvatarContainer: {
+      width: 48,
 
-    marginRight: 12,
+      height: 48,
 
-    alignItems: 'center',
-    justifyContent: 'center',
+      marginRight: 12,
 
-    overflow: 'hidden',
+      alignItems: 'center',
 
-    backgroundColor: 'transparent',
-  },
+      justifyContent: 'center',
 
-  /*
-   * Os PNGs possuem grande área transparente.
-   *
-   * A escala aumenta somente a imagem padrão,
-   * fazendo o desenho ocupar aproximadamente
-   * toda a área de 48 × 48.
-   */
-  defaultAvatar: {
-    width: 48,
-    height: 48,
+      overflow: 'hidden',
 
-    transform: [
-      {
-        scale: 4.2,
-      },
-    ],
-  },
+      backgroundColor:
+        'transparent',
+    },
 
-  /*
-   * FOTO REAL
-   *
-   * Uma fotografia real não recebe o aumento
-   * usado nos PNGs padrão.
-   */
-  remoteAvatarContainer: {
-    width: 48,
-    height: 48,
+    defaultAvatar: {
+      width: 48,
 
-    marginRight: 12,
+      height: 48,
 
-    borderRadius: 24,
+      transform: [
+        {
+          scale: 4.2,
+        },
+      ],
+    },
 
-    overflow: 'hidden',
+    /*
+     * FOTO REAL DO USUÁRIO
+     */
+    remoteAvatarContainer: {
+      width: 48,
 
-    backgroundColor: 'transparent',
-  },
+      height: 48,
 
-  remoteAvatar: {
-    width: '100%',
-    height: '100%',
-  },
+      marginRight: 12,
 
-  userTextContainer: {
-    flex: 1,
-  },
+      borderRadius: 24,
 
-  unavailableImage: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+      overflow: 'hidden',
 
-  unavailableText: {
-    marginTop: 8,
-    fontSize: 14,
-  },
-};
+      backgroundColor:
+        'transparent',
+    },
+
+    remoteAvatar: {
+      width: '100%',
+
+      height: '100%',
+    },
+
+    userTextContainer: {
+      flex: 1,
+
+      minWidth: 0,
+    },
+
+    /*
+     * PUBLICAÇÃO PROMOVIDA
+     */
+    promotedBadge: {
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      paddingHorizontal: 8,
+
+      paddingVertical: 5,
+
+      borderRadius: 12,
+
+      marginLeft: 8,
+    },
+
+    promotedText: {
+      marginLeft: 4,
+
+      fontSize: 11,
+
+      fontWeight: '700',
+    },
+
+    /*
+     * CARROSSEL
+     */
+    carouselContainer: {
+      position: 'relative',
+
+      width: '100%',
+
+      overflow: 'hidden',
+    },
+
+    unavailableImage: {
+      alignItems: 'center',
+
+      justifyContent: 'center',
+    },
+
+    unavailableText: {
+      marginTop: 8,
+
+      fontSize: 14,
+
+      fontWeight: '600',
+    },
+
+    /*
+     * CONTADOR DA IMAGEM
+     *
+     * Exemplo:
+     * 1/3
+     */
+    imageCounter: {
+      position: 'absolute',
+
+      top: 12,
+
+      right: 12,
+
+      minWidth: 42,
+
+      height: 28,
+
+      borderRadius: 14,
+
+      alignItems: 'center',
+
+      justifyContent: 'center',
+
+      paddingHorizontal: 9,
+
+      backgroundColor:
+        'rgba(0, 0, 0, 0.62)',
+    },
+
+    imageCounterText: {
+      color: '#ffffff',
+
+      fontSize: 12,
+
+      fontWeight: '800',
+    },
+
+    /*
+     * PAGINAÇÃO
+     */
+    pagination: {
+      minHeight: 26,
+
+      flexDirection: 'row',
+
+      alignItems: 'center',
+
+      justifyContent: 'center',
+
+      paddingHorizontal: 12,
+
+      paddingTop: 9,
+
+      paddingBottom: 5,
+    },
+
+    paginationDot: {
+      height: 7,
+
+      borderRadius: 4,
+
+      marginHorizontal: 3,
+    },
+
+    /*
+     * RESUMO
+     */
+    summaryLabel: {
+      marginBottom: 5,
+
+      fontSize: 12,
+
+      fontWeight: '700',
+
+      textTransform:
+        'uppercase',
+
+      letterSpacing: 0.4,
+    },
+
+    detailsHint: {
+      alignSelf: 'flex-start',
+
+      marginTop: 8,
+
+      fontSize: 13,
+
+      fontWeight: '700',
+    },
+  });

@@ -6,7 +6,8 @@ import UserController from '../controllers/UserController.js';
 
 import authMiddleware from '../middlewares/authMiddleware.js';
 
-const userRoutes = Router();
+const userRoutes =
+  Router();
 
 userRoutes.use(
   authMiddleware

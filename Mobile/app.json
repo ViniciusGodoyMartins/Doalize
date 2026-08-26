@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Doalize",
-    "slug": "Doalize",
+    "slug": "doalize",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,9 +13,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.doalize.app"
     },
     "android": {
+      "package": "com.doalize.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -24,6 +26,25 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "react-native-share",
+        {
+          "android": [
+            "com.whatsapp",
+            "com.whatsapp.w4b",
+            "org.telegram.messenger",
+            "com.google.android.gm",
+            "com.microsoft.office.outlook"
+          ]
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "fdc0a7a9-72d9-457f-8203-fcd7479966c3"
+      }
     }
   }
 }

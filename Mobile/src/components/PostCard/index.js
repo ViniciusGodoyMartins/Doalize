@@ -29,6 +29,10 @@ import {
   resolveImageUrl,
 } from '../../utils/imageHelper';
 
+import {
+  formatDate,
+} from '../../utils/dateHelper';
+
 import imageUserLight from '../../../assets/imageuserlight.png';
 import imageUserDark from '../../../assets/imageuserdark.png';
 
@@ -67,13 +71,38 @@ export default function PostCard({
   ] = useState(false);
 
   /*
+   * QUANTIDADE DE PESSOAS
+   * QUE PROMOVERAM
+   */
+  const promotionCount =
+    Math.max(
+      0,
+      Number(
+        post
+          ?.promotion_count ||
+          0
+      )
+    );
+
+  /*
+   * INFORMA SE O USUÁRIO
+   * LOGADO PROMOVEU O POST
+   */
+  const promotedByMe =
+    Boolean(
+      post?.promoted_by_me
+    );
+
+  /*
+   * TEXTO DO CONTADOR
+   */
+  const promotionCountText =
+    promotionCount === 1
+      ? '1 promoção'
+      : `${promotionCount} promoções`;
+
+  /*
    * AVATAR PADRÃO
-   *
-   * Tema claro:
-   * imageuserdark.png
-   *
-   * Tema escuro:
-   * imageuserlight.png
    */
   const defaultAvatarSource =
     useMemo(() => {
@@ -83,8 +112,7 @@ export default function PostCard({
     }, [darkMode]);
 
   /*
-   * NORMALIZAR TODAS AS IMAGENS
-   * DA PUBLICAÇÃO
+   * IMAGENS DO POST
    */
   const postImages =
     useMemo(() => {
@@ -94,13 +122,7 @@ export default function PostCard({
     }, [post?.images]);
 
   /*
-   * RESUMO EXIBIDO NO FEED
-   *
-   * Para publicações novas:
-   * post.summary
-   *
-   * Para publicações antigas:
-   * post.description
+   * RESUMO DO FEED
    */
   const feedSummary =
     useMemo(() => {
@@ -113,11 +135,14 @@ export default function PostCard({
       }
 
       if (
-        typeof post?.description ===
+        typeof post
+          ?.description ===
           'string' &&
         post.description.trim()
       ) {
-        return post.description.trim();
+        return post
+          .description
+          .trim();
       }
 
       return '';
@@ -127,7 +152,7 @@ export default function PostCard({
     ]);
 
   /*
-   * RESOLVER FOTO REAL DO USUÁRIO
+   * FOTO REAL DO USUÁRIO
    */
   const remoteAvatarUrl =
     useMemo(() => {
@@ -148,20 +173,15 @@ export default function PostCard({
       );
     }, [post?.user?.photo]);
 
-  /*
-   * REINICIA O AVATAR QUANDO
-   * A FOTO DO USUÁRIO MUDAR
-   */
   useEffect(() => {
-    setRemoteAvatarFailed(false);
+    setRemoteAvatarFailed(
+      false
+    );
   }, [remoteAvatarUrl]);
 
-  /*
-   * REINICIA O CARROSSEL QUANDO
-   * A PUBLICAÇÃO OU AS IMAGENS MUDAREM
-   */
   useEffect(() => {
     setActiveImageIndex(0);
+
     setFailedPostImages({});
 
     if (
@@ -176,7 +196,7 @@ export default function PostCard({
           });
       } catch (error) {
         console.log(
-          'NÃO FOI POSSÍVEL REINICIAR O CARROSSEL:',
+          'ERRO AO REINICIAR CARROSSEL:',
           error.message
         );
       }
@@ -190,12 +210,6 @@ export default function PostCard({
     Boolean(remoteAvatarUrl) &&
     !remoteAvatarFailed;
 
-  /*
-   * MEDIR A LARGURA REAL DO CARTÃO
-   *
-   * Não utilizamos a largura total da tela,
-   * porque o Feed possui espaçamentos laterais.
-   */
   function handleCarouselLayout(
     event
   ) {
@@ -206,7 +220,8 @@ export default function PostCard({
 
     if (
       measuredWidth &&
-      measuredWidth !== imageWidth
+      measuredWidth !==
+        imageWidth
     ) {
       setImageWidth(
         measuredWidth
@@ -214,14 +229,13 @@ export default function PostCard({
     }
   }
 
-  /*
-   * ATUALIZAR A BOLINHA ATIVA
-   * APÓS O DESLIZE
-   */
   function handleImageScrollEnd(
     event
   ) {
-    if (!imageWidth) {
+    if (
+      !imageWidth ||
+      postImages.length <= 1
+    ) {
       return;
     }
 
@@ -250,14 +264,11 @@ export default function PostCard({
     );
   }
 
-  /*
-   * ERRO NA FOTO DO USUÁRIO
-   */
   function handleRemoteAvatarError(
     event
   ) {
     console.log(
-      'ERRO AO CARREGAR AVATAR NO FEED:',
+      'ERRO AO CARREGAR AVATAR:',
       {
         originalPhoto:
           post?.user?.photo,
@@ -270,22 +281,18 @@ export default function PostCard({
       }
     );
 
-    setRemoteAvatarFailed(true);
+    setRemoteAvatarFailed(
+      true
+    );
   }
 
-  /*
-   * ERRO EM UMA IMAGEM ESPECÍFICA
-   *
-   * Uma imagem com erro não impede que
-   * as outras imagens sejam exibidas.
-   */
   function handlePostImageError(
     image,
     index,
     event
   ) {
     console.log(
-      'ERRO AO CARREGAR IMAGEM DO POST:',
+      'ERRO AO CARREGAR IMAGEM:',
       {
         postId:
           post?.id,
@@ -313,18 +320,12 @@ export default function PostCard({
     );
   }
 
-  /*
-   * ABRIR DETALHES
-   */
   function handleOpenPost() {
     if (onPress) {
       onPress(post);
     }
   }
 
-  /*
-   * COMPARTILHAR
-   */
   function handleSharePress(
     event
   ) {
@@ -339,9 +340,6 @@ export default function PostCard({
     }
   }
 
-  /*
-   * PROMOVER
-   */
   function handlePromotePress(
     event
   ) {
@@ -356,9 +354,6 @@ export default function PostCard({
     }
   }
 
-  /*
-   * ITEM DO CARROSSEL
-   */
   function renderPostImage({
     item,
     index,
@@ -401,7 +396,8 @@ export default function PostCard({
               localStyles.unavailableText,
               {
                 color:
-                  theme.textSecondary,
+                  theme
+                    .textSecondary,
               },
             ]}
           >
@@ -461,7 +457,9 @@ export default function PostCard({
       {/* CABEÇALHO */}
       <TouchableOpacity
         activeOpacity={0.88}
-        onPress={handleOpenPost}
+        onPress={
+          handleOpenPost
+        }
         style={styles.header}
       >
         <View
@@ -530,17 +528,20 @@ export default function PostCard({
                 styles.date,
                 {
                   color:
-                    theme.textSecondary,
+                    theme
+                      .textSecondary,
                 },
               ]}
             >
-              {post?.created_at ||
-                post?.createdAt ||
-                'Agora'}
+              {formatDate(
+                post?.created_at ||
+                  post?.createdAt
+              )}
             </Text>
           </View>
 
-          {post?.promoted ? (
+          {/* CONTADOR NO SELO */}
+          {promotionCount > 0 ? (
             <View
               style={[
                 localStyles.promotedBadge,
@@ -559,6 +560,7 @@ export default function PostCard({
               />
 
               <Text
+                numberOfLines={1}
                 style={[
                   localStyles.promotedText,
                   {
@@ -567,14 +569,14 @@ export default function PostCard({
                   },
                 ]}
               >
-                Promovido
+                {promotionCountText}
               </Text>
             </View>
           ) : null}
         </View>
       </TouchableOpacity>
 
-      {/* CARROSSEL DE IMAGENS */}
+      {/* CARROSSEL */}
       {postImages.length > 0 ? (
         <View
           onLayout={
@@ -591,11 +593,11 @@ export default function PostCard({
               horizontal
               pagingEnabled
               nestedScrollEnabled
+              bounces={false}
+              decelerationRate="fast"
               showsHorizontalScrollIndicator={
                 false
               }
-              bounces={false}
-              decelerationRate="fast"
               keyExtractor={(
                 item,
                 index
@@ -623,7 +625,6 @@ export default function PostCard({
               })}
               initialNumToRender={1}
               windowSize={3}
-              removeClippedSubviews
             />
           ) : (
             <View
@@ -639,7 +640,6 @@ export default function PostCard({
             />
           )}
 
-          {/* CONTADOR 1/3 */}
           {postImages.length > 1 ? (
             <View
               pointerEvents="none"
@@ -660,7 +660,7 @@ export default function PostCard({
         </View>
       ) : null}
 
-      {/* BOLINHAS DO CARROSSEL */}
+      {/* BOLINHAS */}
       {postImages.length > 1 ? (
         <View
           style={
@@ -669,7 +669,7 @@ export default function PostCard({
         >
           {postImages.map(
             (
-              image,
+              _,
               index
             ) => {
               const isActive =
@@ -706,7 +706,7 @@ export default function PostCard({
         </View>
       ) : null}
 
-      {/* RESUMO PARA O FEED */}
+      {/* RESUMO */}
       {feedSummary ? (
         <TouchableOpacity
           activeOpacity={0.88}
@@ -720,7 +720,8 @@ export default function PostCard({
               localStyles.summaryLabel,
               {
                 color:
-                  theme.textSecondary,
+                  theme
+                    .textSecondary,
               },
             ]}
           >
@@ -766,7 +767,9 @@ export default function PostCard({
       >
         <TouchableOpacity
           activeOpacity={0.7}
-          style={styles.actionButton}
+          style={
+            styles.actionButton
+          }
           onPress={
             handleSharePress
           }
@@ -794,14 +797,16 @@ export default function PostCard({
 
         <TouchableOpacity
           activeOpacity={0.7}
-          style={styles.actionButton}
+          style={
+            styles.actionButton
+          }
           onPress={
             handlePromotePress
           }
         >
           <Ionicons
             name={
-              post?.promoted
+              promotedByMe
                 ? 'rocket'
                 : 'rocket-outline'
             }
@@ -820,7 +825,7 @@ export default function PostCard({
               },
             ]}
           >
-            {post?.promoted
+            {promotedByMe
               ? 'Promovido'
               : 'Promover'}
           </Text>
@@ -832,9 +837,6 @@ export default function PostCard({
 
 const localStyles =
   StyleSheet.create({
-    /*
-     * AVATAR PADRÃO
-     */
     defaultAvatarContainer: {
       width: 48,
 
@@ -844,7 +846,8 @@ const localStyles =
 
       alignItems: 'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
       overflow: 'hidden',
 
@@ -864,9 +867,6 @@ const localStyles =
       ],
     },
 
-    /*
-     * FOTO REAL DO USUÁRIO
-     */
     remoteAvatarContainer: {
       width: 48,
 
@@ -894,34 +894,32 @@ const localStyles =
       minWidth: 0,
     },
 
-    /*
-     * PUBLICAÇÃO PROMOVIDA
-     */
     promotedBadge: {
+      maxWidth: 120,
+
       flexDirection: 'row',
 
       alignItems: 'center',
 
-      paddingHorizontal: 8,
+      paddingHorizontal: 9,
 
-      paddingVertical: 5,
+      paddingVertical: 6,
 
-      borderRadius: 12,
+      borderRadius: 14,
 
       marginLeft: 8,
     },
 
     promotedText: {
-      marginLeft: 4,
+      flexShrink: 1,
+
+      marginLeft: 5,
 
       fontSize: 11,
 
       fontWeight: '700',
     },
 
-    /*
-     * CARROSSEL
-     */
     carouselContainer: {
       position: 'relative',
 
@@ -933,7 +931,8 @@ const localStyles =
     unavailableImage: {
       alignItems: 'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
     },
 
     unavailableText: {
@@ -944,12 +943,6 @@ const localStyles =
       fontWeight: '600',
     },
 
-    /*
-     * CONTADOR DA IMAGEM
-     *
-     * Exemplo:
-     * 1/3
-     */
     imageCounter: {
       position: 'absolute',
 
@@ -965,7 +958,8 @@ const localStyles =
 
       alignItems: 'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
       paddingHorizontal: 9,
 
@@ -981,9 +975,6 @@ const localStyles =
       fontWeight: '800',
     },
 
-    /*
-     * PAGINAÇÃO
-     */
     pagination: {
       minHeight: 26,
 
@@ -991,7 +982,8 @@ const localStyles =
 
       alignItems: 'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
       paddingHorizontal: 12,
 
@@ -1008,9 +1000,6 @@ const localStyles =
       marginHorizontal: 3,
     },
 
-    /*
-     * RESUMO
-     */
     summaryLabel: {
       marginBottom: 5,
 
@@ -1025,7 +1014,8 @@ const localStyles =
     },
 
     detailsHint: {
-      alignSelf: 'flex-start',
+      alignSelf:
+        'flex-start',
 
       marginTop: 8,
 

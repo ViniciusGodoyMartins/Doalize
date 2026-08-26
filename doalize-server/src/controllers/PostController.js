@@ -1,31 +1,16 @@
 import Post from '../models/Post.js';
 import User from '../models/User.js';
 
-/*
- * LIMITES DOS TEXTOS
- *
- * summary:
- * resumo curto exibido no Feed.
- *
- * description:
- * descrição completa exibida nos Detalhes.
- */
-const SUMMARY_MAX_LENGTH = 160;
-const DESCRIPTION_MAX_LENGTH = 2000;
+import PostPromotion from '../models/PostPromotion.js';
+
+const SUMMARY_MAX_LENGTH =
+  160;
+
+const DESCRIPTION_MAX_LENGTH =
+  2000;
 
 /*
- * NORMALIZAR IMAGENS
- *
- * O campo images pode chegar como:
- *
- * - array;
- * - string JSON;
- * - string com um único caminho;
- * - null;
- * - undefined.
- *
- * Esta função garante que o resultado
- * seja sempre uma lista de strings.
+ * NORMALIZAR O CAMPO DE IMAGENS
  */
 function parseImages(images) {
   if (!images) {
@@ -36,7 +21,8 @@ function parseImages(images) {
     return images
       .filter(
         (image) =>
-          typeof image === 'string' &&
+          typeof image ===
+            'string' &&
           image.trim()
       )
       .map(
@@ -46,7 +32,8 @@ function parseImages(images) {
   }
 
   if (
-    typeof images === 'string'
+    typeof images ===
+    'string'
   ) {
     const value =
       images.trim();
@@ -75,7 +62,7 @@ function parseImages(images) {
 
       if (
         typeof parsed ===
-        'string' &&
+          'string' &&
         parsed.trim()
       ) {
         return [
@@ -93,73 +80,13 @@ function parseImages(images) {
 }
 
 /*
- * NORMALIZAR POST
- *
- * Mantém compatibilidade com publicações
- * antigas que ainda não possuem summary.
- *
- * Para essas publicações, summary receberá
- * temporariamente o início de description
- * apenas na resposta da API.
- *
- * Isso não altera o registro antigo no banco.
- */
-function normalizePost(post) {
-  if (!post) {
-    return null;
-  }
-
-  const plainPost =
-    typeof post.toJSON ===
-    'function'
-      ? post.toJSON()
-      : post;
-
-  const normalizedDescription =
-    typeof plainPost.description ===
-    'string'
-      ? plainPost.description.trim()
-      : '';
-
-  const normalizedSummary =
-    typeof plainPost.summary ===
-      'string' &&
-    plainPost.summary.trim()
-      ? plainPost.summary.trim()
-      : normalizedDescription
-          .slice(
-            0,
-            SUMMARY_MAX_LENGTH
-          );
-
-  return {
-    ...plainPost,
-
-    summary:
-      normalizedSummary,
-
-    description:
-      normalizedDescription,
-
-    images:
-      parseImages(
-        plainPost.images
-      ),
-  };
-}
-
-/*
- * DADOS DO USUÁRIO ENVIADOS
- * JUNTO COM A PUBLICAÇÃO
+ * ASSOCIAÇÃO DO USUÁRIO
  *
  * description:
  * biografia do usuário.
  *
  * location:
- * localização informada pelo usuário.
- *
- * Esses dois dados poderão ser exibidos
- * na página de Detalhes.
+ * localização do usuário.
  */
 const userAssociation = {
   model: User,
@@ -174,6 +101,103 @@ const userAssociation = {
     'location',
   ],
 };
+
+/*
+ * NORMALIZAR UMA PUBLICAÇÃO
+ *
+ * A função também consulta:
+ *
+ * - quantidade total de promoções;
+ * - se o usuário autenticado promoveu.
+ */
+async function normalizePost(
+  post,
+  currentUserId
+) {
+  if (!post) {
+    return null;
+  }
+
+  const plainPost =
+    typeof post.toJSON ===
+    'function'
+      ? post.toJSON()
+      : post;
+
+  const normalizedDescription =
+    typeof plainPost.description ===
+      'string'
+      ? plainPost.description.trim()
+      : '';
+
+  const normalizedSummary =
+    typeof plainPost.summary ===
+      'string' &&
+    plainPost.summary.trim()
+      ? plainPost.summary.trim()
+      : normalizedDescription.slice(
+          0,
+          SUMMARY_MAX_LENGTH
+        );
+
+  const promotionCount =
+    await PostPromotion.count({
+      where: {
+        post_id:
+          plainPost.id,
+      },
+    });
+
+  let promotedByMe = false;
+
+  if (currentUserId) {
+    const myPromotion =
+      await PostPromotion.findOne({
+        where: {
+          post_id:
+            plainPost.id,
+
+          user_id:
+            currentUserId,
+        },
+
+        attributes: [
+          'id',
+        ],
+      });
+
+    promotedByMe =
+      Boolean(myPromotion);
+  }
+
+  return {
+    ...plainPost,
+
+    summary:
+      normalizedSummary,
+
+    description:
+      normalizedDescription,
+
+    images:
+      parseImages(
+        plainPost.images
+      ),
+
+    /*
+     * Mantém promoted para compatibilidade
+     * com componentes antigos.
+     */
+    promoted:
+      promotionCount > 0,
+
+    promotion_count:
+      promotionCount,
+
+    promoted_by_me:
+      promotedByMe,
+  };
+}
 
 class PostController {
   /*
@@ -203,17 +227,22 @@ class PostController {
         });
 
       const normalizedPosts =
-        posts
-          .map(
+        await Promise.all(
+          posts.map(
             (post) =>
-              normalizePost(post)
+              normalizePost(
+                post,
+                req.userId
+              )
           )
-          .filter(Boolean);
+        );
 
       return res
         .status(200)
         .json(
-          normalizedPosts
+          normalizedPosts.filter(
+            Boolean
+          )
         );
     } catch (error) {
       console.error(
@@ -247,17 +276,6 @@ class PostController {
    * CRIAR PUBLICAÇÃO
    *
    * POST /posts
-   *
-   * Recebe:
-   *
-   * summary:
-   * resumo curto para o Feed.
-   *
-   * description:
-   * descrição completa para os Detalhes.
-   *
-   * images:
-   * lista opcional de imagens.
    */
   async store(req, res) {
     try {
@@ -280,19 +298,17 @@ class PostController {
       }
 
       const normalizedSummary =
-        typeof summary === 'string'
+        typeof summary ===
+          'string'
           ? summary.trim()
           : '';
 
       const normalizedDescription =
         typeof description ===
-        'string'
+          'string'
           ? description.trim()
           : '';
 
-      /*
-       * RESUMO OBRIGATÓRIO
-       */
       if (!normalizedSummary) {
         return res
           .status(400)
@@ -302,9 +318,6 @@ class PostController {
           });
       }
 
-      /*
-       * LIMITE DO RESUMO
-       */
       if (
         normalizedSummary.length >
         SUMMARY_MAX_LENGTH
@@ -317,9 +330,6 @@ class PostController {
           });
       }
 
-      /*
-       * DESCRIÇÃO COMPLETA OBRIGATÓRIA
-       */
       if (
         !normalizedDescription
       ) {
@@ -331,9 +341,6 @@ class PostController {
           });
       }
 
-      /*
-       * LIMITE DA DESCRIÇÃO COMPLETA
-       */
       if (
         normalizedDescription.length >
         DESCRIPTION_MAX_LENGTH
@@ -345,9 +352,6 @@ class PostController {
               `A descrição completa deve possuir no máximo ${DESCRIPTION_MAX_LENGTH} caracteres.`,
           });
       }
-
-      const normalizedImages =
-        parseImages(images);
 
       const post =
         await Post.create({
@@ -361,16 +365,12 @@ class PostController {
             normalizedDescription,
 
           images:
-            normalizedImages,
+            parseImages(images),
 
           promoted:
             false,
         });
 
-      /*
-       * Busca novamente para devolver
-       * também as informações do usuário.
-       */
       const createdPost =
         await Post.findByPk(
           post.id,
@@ -393,8 +393,9 @@ class PostController {
       return res
         .status(201)
         .json(
-          normalizePost(
-            createdPost
+          await normalizePost(
+            createdPost,
+            userId
           )
         );
     } catch (error) {
@@ -416,12 +417,6 @@ class PostController {
         }
       );
 
-      /*
-       * Caso o modelo tenha sido alterado,
-       * mas a coluna summary ainda não exista
-       * no banco, o terminal mostrará o erro
-       * SQL completo.
-       */
       return res
         .status(500)
         .json({
@@ -438,8 +433,9 @@ class PostController {
    */
   async show(req, res) {
     try {
-      const { id } =
-        req.params;
+      const {
+        id,
+      } = req.params;
 
       const post =
         await Post.findByPk(
@@ -463,7 +459,10 @@ class PostController {
       return res
         .status(200)
         .json(
-          normalizePost(post)
+          await normalizePost(
+            post,
+            req.userId
+          )
         );
     } catch (error) {
       console.error(
@@ -471,6 +470,153 @@ class PostController {
         {
           postId:
             req.params?.id,
+
+          name:
+            error.name,
+
+          message:
+            error.message,
+        }
+      );
+
+      return res
+        .status(500)
+        .json({
+          message:
+            'Erro ao buscar post.',
+        });
+    }
+  }
+
+  /*
+   * PROMOVER OU REMOVER PROMOÇÃO
+   *
+   * Cada usuário pode promover uma
+   * publicação uma única vez.
+   *
+   * POST /posts/promote/:id
+   */
+  async promote(req, res) {
+    try {
+      const userId =
+        Number(req.userId);
+
+      const postId =
+        Number(req.params.id);
+
+      if (
+        !Number.isInteger(
+          userId
+        )
+      ) {
+        return res
+          .status(401)
+          .json({
+            message:
+              'Usuário não autenticado.',
+          });
+      }
+
+      if (
+        !Number.isInteger(
+          postId
+        )
+      ) {
+        return res
+          .status(400)
+          .json({
+            message:
+              'Publicação inválida.',
+          });
+      }
+
+      const post =
+        await Post.findByPk(
+          postId
+        );
+
+      if (!post) {
+        return res
+          .status(404)
+          .json({
+            message:
+              'Post não encontrado.',
+          });
+      }
+
+      const existingPromotion =
+        await PostPromotion.findOne({
+          where: {
+            post_id:
+              postId,
+
+            user_id:
+              userId,
+          },
+        });
+
+      let promotedByMe;
+
+      if (existingPromotion) {
+        await existingPromotion
+          .destroy();
+
+        promotedByMe = false;
+      } else {
+        await PostPromotion.create({
+          post_id:
+            postId,
+
+          user_id:
+            userId,
+        });
+
+        promotedByMe = true;
+      }
+
+      const promotionCount =
+        await PostPromotion.count({
+          where: {
+            post_id:
+              postId,
+          },
+        });
+
+      /*
+       * Atualiza o campo antigo promoted
+       * para manter compatibilidade.
+       */
+      await post.update({
+        promoted:
+          promotionCount > 0,
+      });
+
+      return res
+        .status(200)
+        .json({
+          message:
+            promotedByMe
+              ? 'Publicação promovida.'
+              : 'Promoção removida.',
+
+          promoted:
+            promotionCount > 0,
+
+          promoted_by_me:
+            promotedByMe,
+
+          promotion_count:
+            promotionCount,
+        });
+    } catch (error) {
+      console.error(
+        'ERRO AO PROMOVER POST:',
+        {
+          postId:
+            req.params?.id,
+
+          userId:
+            req.userId,
 
           name:
             error.name,
@@ -491,90 +637,7 @@ class PostController {
         .status(500)
         .json({
           message:
-            'Erro ao buscar post.',
-        });
-    }
-  }
-
-  /*
-   * PROMOVER OU REMOVER PROMOÇÃO
-   *
-   * Somente o proprietário da publicação
-   * pode alterar esse estado.
-   */
-  async promote(req, res) {
-    try {
-      const userId =
-        req.userId;
-
-      const { id } =
-        req.params;
-
-      const post =
-        await Post.findByPk(id);
-
-      if (!post) {
-        return res
-          .status(404)
-          .json({
-            message:
-              'Post não encontrado.',
-          });
-      }
-
-      if (
-        Number(post.user_id) !==
-        Number(userId)
-      ) {
-        return res
-          .status(403)
-          .json({
-            message:
-              'Sem permissão para promover esta publicação.',
-          });
-      }
-
-      const newPromotedState =
-        !Boolean(
-          post.promoted
-        );
-
-      await post.update({
-        promoted:
-          newPromotedState,
-      });
-
-      return res
-        .status(200)
-        .json({
-          message:
-            newPromotedState
-              ? 'Post promovido.'
-              : 'Promoção removida.',
-
-          promoted:
-            newPromotedState,
-        });
-    } catch (error) {
-      console.error(
-        'ERRO AO PROMOVER POST:',
-        {
-          postId:
-            req.params?.id,
-
-          name:
-            error.name,
-
-          message:
-            error.message,
-        }
-      );
-
-      return res
-        .status(500)
-        .json({
-          message:
-            'Erro ao promover post.',
+            'Erro ao promover publicação.',
         });
     }
   }
@@ -582,15 +645,16 @@ class PostController {
   /*
    * EXCLUIR PUBLICAÇÃO
    *
-   * Somente o proprietário pode excluir.
+   * DELETE /posts/:id
    */
   async delete(req, res) {
     try {
       const userId =
         req.userId;
 
-      const { id } =
-        req.params;
+      const {
+        id,
+      } = req.params;
 
       const post =
         await Post.findByPk(id);
@@ -616,6 +680,19 @@ class PostController {
           });
       }
 
+      /*
+       * As promoções são removidas antes
+       * por segurança.
+       *
+       * A foreign key também utiliza CASCADE.
+       */
+      await PostPromotion.destroy({
+        where: {
+          post_id:
+            post.id,
+        },
+      });
+
       await post.destroy();
 
       return res
@@ -636,13 +713,6 @@ class PostController {
 
           message:
             error.message,
-
-          sql:
-            error.sql,
-
-          original:
-            error.original
-              ?.message,
         }
       );
 

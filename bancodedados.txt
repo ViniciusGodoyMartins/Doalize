@@ -52,6 +52,6 @@ terminal 1
 
 terminal 2
     cd mobile
-    npx expo start --android
+     npx expo start --go -c
 
     continuar a partir do passo 13(13 não foi feito)

@@ -14,6 +14,7 @@ import {
 
 import {
   useNavigation,
+  useRoute,
 } from '@react-navigation/native';
 
 import Input from '../../components/Input';
@@ -21,36 +22,44 @@ import Input from '../../components/Input';
 import Button from '../../components/Button';
 
 import {
-  useAuth,
-} from '../../hooks/useAuth';
-
-import {
   useTheme,
 } from '../../hooks/useTheme';
 
+import api from '../../services/api';
+
 import styles from './styles';
 
-export default function LoginScreen() {
+export default function ForgotPasswordScreen() {
   const navigation =
     useNavigation();
 
-  const {
-    signIn,
-  } = useAuth();
+  const route =
+    useRoute();
 
   const {
     theme,
   } = useTheme();
 
+  /*
+   * Se o usuário já tiver digitado
+   * o e-mail na tela de Login,
+   * o campo será preenchido
+   * automaticamente.
+   */
+  const initialEmail =
+    typeof route?.params?.email ===
+      'string'
+      ? route.params.email
+          .trim()
+          .toLowerCase()
+      : '';
+
   const [
     email,
     setEmail,
-  ] = useState('');
-
-  const [
-    password,
-    setPassword,
-  ] = useState('');
+  ] = useState(
+    initialEmail
+  );
 
   const [
     loading,
@@ -58,21 +67,54 @@ export default function LoginScreen() {
   ] = useState(false);
 
   /*
-   * REALIZAR LOGIN
+   * VALIDAR O FORMATO DO E-MAIL
    */
-  async function handleLogin() {
+  function isValidEmail(
+    emailValue
+  ) {
+    const emailPattern =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    return emailPattern.test(
+      emailValue
+    );
+  }
+
+  /*
+   * SOLICITAR O CÓDIGO
+   *
+   * Rota pública:
+   *
+   * POST
+   * /users/password/forgot/request-code
+   */
+  async function handleRequestCode() {
+    if (loading) {
+      return;
+    }
+
     const normalizedEmail =
       email
         .trim()
         .toLowerCase();
 
+    if (!normalizedEmail) {
+      Alert.alert(
+        'Atenção',
+        'Informe o e-mail da sua conta.'
+      );
+
+      return;
+    }
+
     if (
-      !normalizedEmail ||
-      !password
+      !isValidEmail(
+        normalizedEmail
+      )
     ) {
       Alert.alert(
         'Atenção',
-        'Preencha todos os campos.'
+        'Informe um endereço de e-mail válido.'
       );
 
       return;
@@ -82,32 +124,52 @@ export default function LoginScreen() {
       setLoading(true);
 
       const response =
-        await signIn(
-          normalizedEmail,
-          password
+        await api.post(
+          '/users/password/forgot/request-code',
+          {
+            email:
+              normalizedEmail,
+          }
         );
 
       console.log(
-        'RESPOSTA DO LOGIN:',
-        response
+        'CÓDIGO DE RECUPERAÇÃO SOLICITADO:',
+        {
+          email:
+            normalizedEmail,
+
+          response:
+            response.data,
+        }
       );
 
-      if (!response?.success) {
-        Alert.alert(
-          'Erro',
-          response?.message ||
-            'E-mail ou senha inválidos.'
-        );
+      Alert.alert(
+        'Código solicitado',
+        response.data?.message ||
+          'Se o e-mail estiver cadastrado, você receberá um código de verificação.',
+        [
+          {
+            text:
+              'Continuar',
 
-        return;
-      }
-
-      console.log(
-        'LOGIN REALIZADO'
+            onPress: () => {
+              navigation.navigate(
+                'ResetPasswordScreen',
+                {
+                  email:
+                    normalizedEmail,
+                }
+              );
+            },
+          },
+        ],
+        {
+          cancelable: false,
+        }
       );
     } catch (error) {
       console.log(
-        'ERRO AO FAZER LOGIN:',
+        'ERRO AO SOLICITAR CÓDIGO DE RECUPERAÇÃO:',
         {
           message:
             error.message,
@@ -126,7 +188,7 @@ export default function LoginScreen() {
         'Erro',
         error.response?.data
           ?.message ||
-          'Não foi possível fazer login.'
+          'Não foi possível solicitar o código de recuperação.'
       );
     } finally {
       setLoading(false);
@@ -134,31 +196,31 @@ export default function LoginScreen() {
   }
 
   /*
-   * ABRIR A RECUPERAÇÃO DE SENHA
-   *
-   * Se o usuário já tiver digitado
-   * o e-mail, o endereço será enviado
-   * para a próxima tela.
+   * VOLTAR PARA O LOGIN
    */
-  function handleForgotPassword() {
-    navigation.navigate(
-      'ForgotPasswordScreen',
-      {
-        email:
-          email
-            .trim()
-            .toLowerCase(),
-      }
-    );
-  }
+  function handleBackToLogin() {
+    if (loading) {
+      return;
+    }
 
-  /*
-   * ABRIR O CADASTRO
-   */
-  function handleOpenRegister() {
-    navigation.navigate(
-      'RegisterScreen'
-    );
+    if (
+      navigation.canGoBack()
+    ) {
+      navigation.goBack();
+
+      return;
+    }
+
+    navigation.reset({
+      index: 0,
+
+      routes: [
+        {
+          name:
+            'LoginScreen',
+        },
+      ],
+    });
   }
 
   return (
@@ -212,7 +274,7 @@ export default function LoginScreen() {
               },
             ]}
           >
-            Conectando pessoas para ajudar.
+            Recupere o acesso à sua conta.
           </Text>
         </View>
 
@@ -222,8 +284,32 @@ export default function LoginScreen() {
             styles.form
           }
         >
+          <Text
+            style={[
+              localStyles.title,
+              {
+                color:
+                  theme.text,
+              },
+            ]}
+          >
+            Esqueci minha senha
+          </Text>
+
+          <Text
+            style={[
+              localStyles.description,
+              {
+                color:
+                  theme.textSecondary,
+              },
+            ]}
+          >
+            Informe o e-mail cadastrado na sua conta. Se o endereço estiver registrado, enviaremos um código de seis dígitos para redefinir a senha.
+          </Text>
+
           <Input
-            placeholder="E-mail"
+            placeholder="E-mail da conta"
             value={email}
             onChangeText={
               setEmail
@@ -232,70 +318,23 @@ export default function LoginScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             editable={!loading}
-            returnKeyType="next"
-          />
-
-          <Input
-            placeholder="Senha"
-            value={password}
-            onChangeText={
-              setPassword
-            }
-            secureTextEntry
-            autoCapitalize="none"
-            autoCorrect={false}
-            editable={!loading}
-            returnKeyType="done"
+            returnKeyType="send"
             onSubmitEditing={
-              handleLogin
+              handleRequestCode
             }
           />
-
-          {/* ESQUECI MINHA SENHA */}
-          <View
-            style={
-              styles.forgotPasswordContainer
-            }
-          >
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={
-                handleForgotPassword
-              }
-              disabled={loading}
-              accessibilityRole="button"
-              accessibilityLabel="Esqueci minha senha"
-            >
-              <Text
-                style={[
-                  styles.forgotPasswordText,
-                  {
-                    color:
-                      theme.primary,
-
-                    opacity:
-                      loading
-                        ? 0.6
-                        : 1,
-                  },
-                ]}
-              >
-                Esqueci minha senha
-              </Text>
-            </TouchableOpacity>
-          </View>
 
           <Button
-            title="Entrar"
+            title="Enviar código"
             onPress={
-              handleLogin
+              handleRequestCode
             }
             loading={loading}
             disabled={loading}
           />
         </View>
 
-        {/* CADASTRO */}
+        {/* VOLTAR PARA O LOGIN */}
         <View
           style={
             styles.footer
@@ -310,13 +349,13 @@ export default function LoginScreen() {
               },
             ]}
           >
-            Não possui uma conta?
+            Lembrou sua senha?
           </Text>
 
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={
-              handleOpenRegister
+              handleBackToLogin
             }
             disabled={loading}
           >
@@ -334,7 +373,7 @@ export default function LoginScreen() {
                 },
               ]}
             >
-              Criar conta
+              Fazer login
             </Text>
           </TouchableOpacity>
         </View>
@@ -342,3 +381,27 @@ export default function LoginScreen() {
     </KeyboardAvoidingView>
   );
 }
+
+const localStyles = {
+  title: {
+    marginBottom: 10,
+
+    fontSize: 24,
+
+    fontWeight: '800',
+
+    textAlign: 'center',
+  },
+
+  description: {
+    marginBottom: 24,
+
+    paddingHorizontal: 4,
+
+    fontSize: 14,
+
+    lineHeight: 21,
+
+    textAlign: 'center',
+  },
+};

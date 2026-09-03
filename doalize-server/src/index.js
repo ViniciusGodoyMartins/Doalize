@@ -17,6 +17,13 @@ import {
   initializeSocket,
 } from './config/socket.js';
 
+/*
+ * IMPORTAÇÃO DOS MODELOS
+ *
+ * Garante que o Sequelize conheça
+ * todos os modelos antes de realizar
+ * a sincronização das tabelas.
+ */
 import './models/User.js';
 import './models/Post.js';
 import './models/Chat.js';
@@ -25,14 +32,25 @@ import './models/PasswordVerification.js';
 
 dotenv.config();
 
+/*
+ * CONFIGURAÇÃO DO __dirname
+ *
+ * Necessária porque o servidor utiliza
+ * módulos ES.
+ */
 const __filename =
   fileURLToPath(
     import.meta.url
   );
 
 const __dirname =
-  path.dirname(__filename);
+  path.dirname(
+    __filename
+  );
 
+/*
+ * DIRETÓRIO DE UPLOADS
+ */
 const uploadsDirectory =
   path.resolve(
     __dirname,
@@ -51,41 +69,76 @@ const usersDirectory =
     'users'
   );
 
-fs.mkdirSync(postsDirectory, {
-  recursive: true,
-});
+/*
+ * CRIAR DIRETÓRIOS CASO
+ * AINDA NÃO EXISTAM
+ */
+fs.mkdirSync(
+  postsDirectory,
+  {
+    recursive: true,
+  }
+);
 
-fs.mkdirSync(usersDirectory, {
-  recursive: true,
-});
+fs.mkdirSync(
+  usersDirectory,
+  {
+    recursive: true,
+  }
+);
 
-const app = express();
+/*
+ * APLICAÇÃO EXPRESS
+ */
+const app =
+  express();
 
 const server =
-  http.createServer(app);
+  http.createServer(
+    app
+  );
 
-initializeSocket(server);
+/*
+ * SOCKET.IO
+ */
+initializeSocket(
+  server
+);
 
+/*
+ * CORS
+ */
 app.use(
   cors({
     origin: true,
+
     credentials: true,
   })
 );
 
+/*
+ * JSON
+ */
 app.use(
   express.json({
     limit: '10mb',
   })
 );
 
+/*
+ * FORMULÁRIOS
+ */
 app.use(
   express.urlencoded({
     extended: true,
+
     limit: '10mb',
   })
 );
 
+/*
+ * LOG DAS REQUISIÇÕES
+ */
 app.use(
   (
     req,
@@ -100,6 +153,9 @@ app.use(
   }
 );
 
+/*
+ * ARQUIVOS DE UPLOAD
+ */
 app.use(
   '/uploads',
   express.static(
@@ -107,9 +163,15 @@ app.use(
   )
 );
 
+/*
+ * ROTA DE TESTE
+ */
 app.get(
   '/',
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
     return res
       .status(200)
       .json({
@@ -119,8 +181,30 @@ app.get(
   }
 );
 
-app.use(routes);
+/*
+ * ROTAS DA APLICAÇÃO
+ *
+ * Inclui:
+ *
+ * /auth
+ * /users
+ * /posts
+ * /chat
+ * /upload
+ *
+ * As rotas públicas de recuperação
+ * ficam disponíveis em:
+ *
+ * POST /users/password/forgot/request-code
+ * POST /users/password/forgot/confirm
+ */
+app.use(
+  routes
+);
 
+/*
+ * ROTA NÃO ENCONTRADA
+ */
 app.use(
   (
     req,
@@ -135,6 +219,9 @@ app.use(
   }
 );
 
+/*
+ * TRATAMENTO GLOBAL DE ERROS
+ */
 app.use(
   (
     error,
@@ -147,8 +234,12 @@ app.use(
       error
     );
 
-    if (res.headersSent) {
-      return next(error);
+    if (
+      res.headersSent
+    ) {
+      return next(
+        error
+      );
     }
 
     return res
@@ -161,11 +252,17 @@ app.use(
   }
 );
 
+/*
+ * PORTA DO SERVIDOR
+ */
 const PORT =
   Number(
     process.env.PORT
   ) || 3333;
 
+/*
+ * ERROS DO SERVIDOR HTTP
+ */
 server.on(
   'error',
   (error) => {
@@ -189,14 +286,23 @@ server.on(
   }
 );
 
+/*
+ * INICIAR SERVIDOR
+ */
 async function startServer() {
   try {
+    /*
+     * TESTAR CONEXÃO COM O MYSQL
+     */
     await sequelize.authenticate();
 
     console.log(
       'MySQL conectado.'
     );
 
+    /*
+     * SINCRONIZAR AS TABELAS
+     */
     await sequelize.sync({
       alter: true,
     });
@@ -205,6 +311,9 @@ async function startServer() {
       'Tabelas sincronizadas.'
     );
 
+    /*
+     * INICIAR API
+     */
     server.listen(
       PORT,
       '0.0.0.0',
@@ -216,12 +325,32 @@ async function startServer() {
         console.log(
           `Uploads: ${uploadsDirectory}`
         );
+
+        console.log(
+          'Recuperação de senha disponível.'
+        );
       }
     );
   } catch (error) {
     console.error(
       'ERRO AO INICIAR SERVIDOR:',
-      error
+      {
+        name:
+          error.name,
+
+        message:
+          error.message,
+
+        sql:
+          error.sql,
+
+        original:
+          error.original
+            ?.message,
+
+        stack:
+          error.stack,
+      }
     );
 
     process.exit(1);

@@ -32,7 +32,9 @@ import * as FileSystem from 'expo-file-system/legacy';
  * react-native-share permite compartilhar
  * texto e arquivo no mesmo menu nativo.
  */
-import Share from 'react-native-share';
+import {
+  Share,
+} from 'react-native';
 
 import Header from '../../components/Header';
 

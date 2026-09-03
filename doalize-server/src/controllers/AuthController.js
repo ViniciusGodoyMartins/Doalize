@@ -4,256 +4,498 @@ import jwt from 'jsonwebtoken';
 
 import dotenv from 'dotenv';
 
+import {
+  Op,
+} from 'sequelize';
+
 import User from '../models/User.js';
 
 dotenv.config();
 
+const MIN_PASSWORD_LENGTH = 6;
+
+const DEFAULT_USER_PHOTO =
+  '/uploads/usuarioimage.png';
+
+/*
+ * CRIAR TOKEN DO USUÁRIO
+ */
+function createUserToken(
+  userId
+) {
+  const jwtSecret =
+    process.env.JWT_SECRET;
+
+  if (!jwtSecret) {
+    throw new Error(
+      'JWT_SECRET não foi configurado no servidor.'
+    );
+  }
+
+  return jwt.sign(
+    {
+      id:
+        userId,
+    },
+    jwtSecret,
+    {
+      expiresIn:
+        '7d',
+    }
+  );
+}
+
+/*
+ * FORMATAR DADOS PÚBLICOS
+ * DO USUÁRIO
+ *
+ * A senha nunca é devolvida
+ * pela API.
+ */
+function formatUserResponse(
+  user
+) {
+  return {
+    id:
+      user.id,
+
+    name:
+      user.name,
+
+    email:
+      user.email,
+
+    photo:
+      user.photo ||
+      DEFAULT_USER_PHOTO,
+
+    description:
+      user.description,
+
+    location:
+      user.location,
+
+    created_at:
+      user.created_at,
+  };
+}
+
+/*
+ * VALIDAR FORMATO BÁSICO
+ * DO E-MAIL
+ */
+function isValidEmail(
+  email
+) {
+  const emailPattern =
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  return emailPattern.test(
+    email
+  );
+}
+
 class AuthController {
-
-  // REGISTER
-  async register(req, res) {
-
+  /*
+   * CADASTRAR USUÁRIO
+   *
+   * POST /auth/register
+   */
+  async register(
+    req,
+    res
+  ) {
     try {
-
       const {
         name,
         email,
         password,
       } = req.body;
 
+      const normalizedName =
+        typeof name ===
+          'string'
+          ? name.trim()
+          : '';
 
-      // VALIDAÇÃO
+      const normalizedEmail =
+        typeof email ===
+          'string'
+          ? email
+              .trim()
+              .toLowerCase()
+          : '';
+
+      const normalizedPassword =
+        typeof password ===
+          'string'
+          ? password
+          : '';
+
+      /*
+       * CAMPOS OBRIGATÓRIOS
+       */
       if (
-        !name ||
-        !email ||
-        !password
+        !normalizedName ||
+        !normalizedEmail ||
+        !normalizedPassword
       ) {
-
-        return res.status(400).json({
-          message:
-            'Preencha todos os campos',
-        });
+        return res
+          .status(400)
+          .json({
+            message:
+              'Preencha todos os campos.',
+          });
       }
 
+      /*
+       * TAMANHO DO NOME
+       */
+      if (
+        normalizedName.length <
+          2 ||
+        normalizedName.length >
+          120
+      ) {
+        return res
+          .status(400)
+          .json({
+            message:
+              'O nome deve possuir entre 2 e 120 caracteres.',
+          });
+      }
 
-      // VERIFICA EMAIL
+      /*
+       * FORMATO DO E-MAIL
+       */
+      if (
+        !isValidEmail(
+          normalizedEmail
+        )
+      ) {
+        return res
+          .status(400)
+          .json({
+            message:
+              'Informe um e-mail válido.',
+          });
+      }
+
+      /*
+       * TAMANHO DA SENHA
+       */
+      if (
+        normalizedPassword.length <
+        MIN_PASSWORD_LENGTH
+      ) {
+        return res
+          .status(400)
+          .json({
+            message:
+              `A senha deve possuir pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`,
+          });
+      }
+
+      /*
+       * VERIFICAR SE O E-MAIL
+       * JÁ ESTÁ CADASTRADO
+       */
       const userExists =
         await User.findOne({
-          where: { email },
+          where: {
+            email: {
+              [Op.eq]:
+                normalizedEmail,
+            },
+          },
         });
 
       if (userExists) {
-
-        return res.status(400).json({
-          message:
-            'E-mail já cadastrado',
-        });
+        return res
+          .status(400)
+          .json({
+            message:
+              'E-mail já cadastrado.',
+          });
       }
 
-
-      // HASH SENHA
+      /*
+       * CRIPTOGRAFAR SENHA
+       */
       const hashedPassword =
         await bcrypt.hash(
-          password,
+          normalizedPassword,
           10
         );
 
-
-      // FOTO PADRÃO
-      const defaultPhoto =
-        '/uploads/usuarioimage.png';
-
-
-      // CRIA USUÁRIO
-      const user = await User.create({
-
-        name,
-
-        email,
-
-        password:
-          hashedPassword,
-
-        photo:
-          defaultPhoto,
-
-        description:
-          null,
-
-        location:
-          null,
-      });
-
-
-      // TOKEN
-      const token =
-        jwt.sign(
-          {
-            id: user.id,
-          },
-
-          process.env.JWT_SECRET,
-
-          {
-            expiresIn: '7d',
-          }
-        );
-
-
-      return res.status(201).json({
-
-        message:
-          'Usuário criado com sucesso',
-
-        token,
-
-        user: {
-
-          id:
-            user.id,
-
+      /*
+       * CRIAR USUÁRIO
+       */
+      const user =
+        await User.create({
           name:
-            user.name,
+            normalizedName,
 
           email:
-            user.email,
+            normalizedEmail,
+
+          password:
+            hashedPassword,
 
           photo:
-            user.photo,
+            DEFAULT_USER_PHOTO,
 
           description:
-            user.description,
+            null,
 
           location:
-            user.location,
-        },
+            null,
+        });
 
-      });
+      /*
+       * CRIAR TOKEN
+       */
+      const token =
+        createUserToken(
+          user.id
+        );
 
+      return res
+        .status(201)
+        .json({
+          message:
+            'Usuário criado com sucesso.',
+
+          token,
+
+          user:
+            formatUserResponse(
+              user
+            ),
+        });
     } catch (error) {
+      console.error(
+        'ERRO AO CADASTRAR USUÁRIO:',
+        {
+          name:
+            error.name,
 
-      console.log(error);
+          message:
+            error.message,
 
-      return res.status(500).json({
-        message:
-          'Erro interno no servidor',
-      });
+          sql:
+            error.sql,
+
+          original:
+            error.original
+              ?.message,
+        }
+      );
+
+      /*
+       * Tratamento de e-mail duplicado
+       * identificado pelo Sequelize.
+       */
+      if (
+        error.name ===
+        'SequelizeUniqueConstraintError'
+      ) {
+        return res
+          .status(400)
+          .json({
+            message:
+              'E-mail já cadastrado.',
+          });
+      }
+
+      /*
+       * Tratamento das validações
+       * definidas no modelo User.
+       */
+      if (
+        error.name ===
+        'SequelizeValidationError'
+      ) {
+        return res
+          .status(400)
+          .json({
+            message:
+              error.errors?.[0]
+                ?.message ||
+              'Os dados informados são inválidos.',
+          });
+      }
+
+      return res
+        .status(500)
+        .json({
+          message:
+            error.message ===
+            'JWT_SECRET não foi configurado no servidor.'
+              ? error.message
+              : 'Erro interno no servidor.',
+        });
     }
   }
 
-
-  // LOGIN
-  async login(req, res) {
-
+  /*
+   * REALIZAR LOGIN
+   *
+   * POST /auth/login
+   */
+  async login(
+    req,
+    res
+  ) {
     try {
-
       const {
         email,
         password,
       } = req.body;
 
+      const normalizedEmail =
+        typeof email ===
+          'string'
+          ? email
+              .trim()
+              .toLowerCase()
+          : '';
 
-      // VALIDAÇÃO
+      const normalizedPassword =
+        typeof password ===
+          'string'
+          ? password
+          : '';
+
+      /*
+       * CAMPOS OBRIGATÓRIOS
+       */
       if (
-        !email ||
-        !password
+        !normalizedEmail ||
+        !normalizedPassword
       ) {
-
-        return res.status(400).json({
-          message:
-            'Preencha todos os campos',
-        });
+        return res
+          .status(400)
+          .json({
+            message:
+              'Preencha todos os campos.',
+          });
       }
 
+      /*
+       * FORMATO DO E-MAIL
+       */
+      if (
+        !isValidEmail(
+          normalizedEmail
+        )
+      ) {
+        return res
+          .status(400)
+          .json({
+            message:
+              'Informe um e-mail válido.',
+          });
+      }
 
-      // BUSCA USUÁRIO
+      /*
+       * BUSCAR USUÁRIO
+       */
       const user =
         await User.findOne({
-          where: { email },
+          where: {
+            email:
+              normalizedEmail,
+          },
         });
 
-
+      /*
+       * Utiliza uma mensagem genérica
+       * para não revelar se o e-mail
+       * possui uma conta cadastrada.
+       */
       if (!user) {
-
-        return res.status(404).json({
-          message:
-            'Usuário não encontrado',
-        });
+        return res
+          .status(401)
+          .json({
+            message:
+              'E-mail ou senha inválidos.',
+          });
       }
 
-
-      // VALIDA SENHA
+      /*
+       * VALIDAR SENHA
+       *
+       * Funciona também com senhas
+       * redefinidas pelo fluxo
+       * "Esqueci minha senha".
+       */
       const passwordMatch =
         await bcrypt.compare(
-          password,
+          normalizedPassword,
           user.password
         );
 
-
       if (!passwordMatch) {
-
-        return res.status(401).json({
-          message:
-            'Senha inválida',
-        });
+        return res
+          .status(401)
+          .json({
+            message:
+              'E-mail ou senha inválidos.',
+          });
       }
 
-
-      // TOKEN
+      /*
+       * CRIAR TOKEN
+       */
       const token =
-        jwt.sign(
-          {
-            id: user.id,
-          },
-
-          process.env.JWT_SECRET,
-
-          {
-            expiresIn: '7d',
-          }
+        createUserToken(
+          user.id
         );
 
+      return res
+        .status(200)
+        .json({
+          message:
+            'Login realizado com sucesso.',
 
-      return res.status(200).json({
+          token,
 
-        token,
-
-        user: {
-
-          id:
-            user.id,
-
-          name:
-            user.name,
-
-          email:
-            user.email,
-
-          photo:
-            user.photo ||
-            '/uploads/usuarioimage.png',
-
-          description:
-            user.description,
-
-          location:
-            user.location,
-        },
-
-      });
-
+          user:
+            formatUserResponse(
+              user
+            ),
+        });
     } catch (error) {
+      console.error(
+        'ERRO AO REALIZAR LOGIN:',
+        {
+          name:
+            error.name,
 
-      console.log(error);
+          message:
+            error.message,
 
-      return res.status(500).json({
-        message:
-          'Erro interno no servidor',
-      });
+          sql:
+            error.sql,
+
+          original:
+            error.original
+              ?.message,
+        }
+      );
+
+      return res
+        .status(500)
+        .json({
+          message:
+            error.message ===
+            'JWT_SECRET não foi configurado no servidor.'
+              ? error.message
+              : 'Erro interno no servidor.',
+        });
     }
   }
-
 }
-
 
 export default new AuthController();

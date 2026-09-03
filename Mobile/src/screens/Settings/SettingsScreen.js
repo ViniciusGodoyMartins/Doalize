@@ -17,11 +17,18 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 
 import Header from '../../components/Header';
+
 import Input from '../../components/Input';
+
 import Button from '../../components/Button';
 
-import { useTheme } from '../../hooks/useTheme';
-import { useAuth } from '../../hooks/useAuth';
+import {
+  useTheme,
+} from '../../hooks/useTheme';
+
+import {
+  useAuth,
+} from '../../hooks/useAuth';
 
 import api from '../../services/api';
 
@@ -30,6 +37,7 @@ import {
 } from '../../utils/imageHelper';
 
 import imageUserLight from '../../../assets/imageuserlight.png';
+
 import imageUserDark from '../../../assets/imageuserdark.png';
 
 import styles from './styles';
@@ -60,11 +68,17 @@ function getFileExtension(
     return extensionFromName;
   }
 
-  if (mimeType === 'image/png') {
+  if (
+    mimeType ===
+    'image/png'
+  ) {
     return 'png';
   }
 
-  if (mimeType === 'image/webp') {
+  if (
+    mimeType ===
+    'image/webp'
+  ) {
     return 'webp';
   }
 
@@ -91,18 +105,26 @@ function getMimeType(
     return assetMimeType;
   }
 
-  if (extension === 'png') {
+  if (
+    extension ===
+    'png'
+  ) {
     return 'image/png';
   }
 
-  if (extension === 'webp') {
+  if (
+    extension ===
+    'webp'
+  ) {
     return 'image/webp';
   }
 
   return 'image/jpeg';
 }
 
-function createPhotoFile(asset) {
+function createPhotoFile(
+  asset
+) {
   if (!asset?.uri) {
     throw new Error(
       'A imagem selecionada não possui um endereço válido.'
@@ -132,26 +154,38 @@ function createPhotoFile(asset) {
   const fileName =
     originalFileName
       .toLowerCase()
-      .endsWith(`.${extension}`)
+      .endsWith(
+        `.${extension}`
+      )
       ? originalFileName
       : `profile-${Date.now()}.${extension}`;
 
-  let fileUri = asset.uri;
+  let fileUri =
+    asset.uri;
 
   if (
-    Platform.OS === 'ios' &&
-    fileUri.startsWith('file://')
+    Platform.OS ===
+      'ios' &&
+    fileUri.startsWith(
+      'file://'
+    )
   ) {
-    fileUri = fileUri.replace(
-      'file://',
-      ''
-    );
+    fileUri =
+      fileUri.replace(
+        'file://',
+        ''
+      );
   }
 
   return {
-    uri: fileUri,
-    name: fileName,
-    type: mimeType,
+    uri:
+      fileUri,
+
+    name:
+      fileName,
+
+    type:
+      mimeType,
   };
 }
 
@@ -167,11 +201,19 @@ export default function SettingsScreen() {
     signOut,
   } = useAuth();
 
-  const [name, setName] =
-    useState(user?.name || '');
+  const [
+    name,
+    setName,
+  ] = useState(
+    user?.name || ''
+  );
 
-  const [email, setEmail] =
-    useState(user?.email || '');
+  const [
+    email,
+    setEmail,
+  ] = useState(
+    user?.email || ''
+  );
 
   const [
     description,
@@ -233,13 +275,18 @@ export default function SettingsScreen() {
   ] = useState(false);
 
   const [
-    deletingAccount,
-    setDeletingAccount,
+    anonymizingAccount,
+    setAnonymizingAccount,
   ] = useState(false);
 
   useEffect(() => {
-    setName(user?.name || '');
-    setEmail(user?.email || '');
+    setName(
+      user?.name || ''
+    );
+
+    setEmail(
+      user?.email || ''
+    );
 
     setDescription(
       user?.description || ''
@@ -249,7 +296,9 @@ export default function SettingsScreen() {
       user?.location || ''
     );
 
-    setRemotePhotoFailed(false);
+    setRemotePhotoFailed(
+      false
+    );
   }, [user]);
 
   const defaultAvatar =
@@ -277,9 +326,12 @@ export default function SettingsScreen() {
 
   const avatarSource =
     useMemo(() => {
-      if (selectedPhoto?.uri) {
+      if (
+        selectedPhoto?.uri
+      ) {
         return {
-          uri: selectedPhoto.uri,
+          uri:
+            selectedPhoto.uri,
         };
       }
 
@@ -288,7 +340,8 @@ export default function SettingsScreen() {
         !remotePhotoFailed
       ) {
         return {
-          uri: remotePhotoUrl,
+          uri:
+            remotePhotoUrl,
         };
       }
 
@@ -313,7 +366,9 @@ export default function SettingsScreen() {
         await ImagePicker
           .requestMediaLibraryPermissionsAsync();
 
-      if (!permission.granted) {
+      if (
+        !permission.granted
+      ) {
         Alert.alert(
           'Permissão necessária',
           'Permita que o Doalize acesse suas imagens.'
@@ -330,14 +385,21 @@ export default function SettingsScreen() {
                 .MediaTypeOptions
                 .Images,
 
-            allowsEditing: true,
+            allowsEditing:
+              true,
 
-            aspect: [1, 1],
+            aspect: [
+              1,
+              1,
+            ],
 
-            quality: 0.8,
+            quality:
+              0.8,
           });
 
-      if (result.canceled) {
+      if (
+        result.canceled
+      ) {
         return;
       }
 
@@ -356,19 +418,29 @@ export default function SettingsScreen() {
       console.log(
         'FOTO SELECIONADA:',
         {
-          uri: asset.uri,
+          uri:
+            asset.uri,
+
           fileName:
             asset.fileName,
+
           mimeType:
             asset.mimeType,
-          width: asset.width,
-          height: asset.height,
+
+          width:
+            asset.width,
+
+          height:
+            asset.height,
+
           fileSize:
             asset.fileSize,
         }
       );
 
-      setSelectedPhoto(asset);
+      setSelectedPhoto(
+        asset
+      );
     } catch (error) {
       console.log(
         'ERRO AO ESCOLHER FOTO:',
@@ -386,7 +458,9 @@ export default function SettingsScreen() {
     asset
   ) {
     const file =
-      createPhotoFile(asset);
+      createPhotoFile(
+        asset
+      );
 
     const formData =
       new FormData();
@@ -403,9 +477,14 @@ export default function SettingsScreen() {
           `${api.defaults.baseURL}/upload/user`,
 
         file: {
-          uri: file.uri,
-          name: file.name,
-          type: file.type,
+          uri:
+            file.uri,
+
+          name:
+            file.name,
+
+          type:
+            file.type,
         },
 
         hasAuthorization:
@@ -423,7 +502,8 @@ export default function SettingsScreen() {
           '/upload/user',
           formData,
           {
-            timeout: 60000,
+            timeout:
+              60000,
 
             headers: {
               Accept:
@@ -434,7 +514,8 @@ export default function SettingsScreen() {
             },
 
             transformRequest: [
-              (data) => data,
+              (data) =>
+                data,
             ],
           }
         );
@@ -481,9 +562,14 @@ export default function SettingsScreen() {
             `${api.defaults.baseURL}/upload/user`,
 
           file: {
-            uri: file.uri,
-            name: file.name,
-            type: file.type,
+            uri:
+              file.uri,
+
+            name:
+              file.name,
+
+            type:
+              file.type,
           },
         }
       );
@@ -498,7 +584,8 @@ export default function SettingsScreen() {
       }
 
       if (
-        error.response?.data
+        error.response
+          ?.data
           ?.message
       ) {
         throw new Error(
@@ -534,7 +621,9 @@ export default function SettingsScreen() {
     }
 
     try {
-      setProfileLoading(true);
+      setProfileLoading(
+        true
+      );
 
       let photo =
         user?.photo || null;
@@ -581,8 +670,13 @@ export default function SettingsScreen() {
         updatedUser
       );
 
-      setSelectedPhoto(null);
-      setRemotePhotoFailed(false);
+      setSelectedPhoto(
+        null
+      );
+
+      setRemotePhotoFailed(
+        false
+      );
 
       Alert.alert(
         'Sucesso',
@@ -614,13 +708,17 @@ export default function SettingsScreen() {
         'Não foi possível atualizar o perfil.'
       );
     } finally {
-      setProfileLoading(false);
+      setProfileLoading(
+        false
+      );
     }
   }
 
   async function handleRequestCode() {
     try {
-      setRequestingCode(true);
+      setRequestingCode(
+        true
+      );
 
       const response =
         await api.post(
@@ -647,10 +745,12 @@ export default function SettingsScreen() {
         'Erro',
         error.response?.data
           ?.message ||
-        'Não foi possível enviar o código.'
+          'Não foi possível enviar o código.'
       );
     } finally {
-      setRequestingCode(false);
+      setRequestingCode(
+        false
+      );
     }
   }
 
@@ -667,7 +767,8 @@ export default function SettingsScreen() {
     }
 
     if (
-      newPassword.length < 6
+      newPassword.length <
+      6
     ) {
       Alert.alert(
         'Atenção',
@@ -690,7 +791,9 @@ export default function SettingsScreen() {
     }
 
     try {
-      setChangingPassword(true);
+      setChangingPassword(
+        true
+      );
 
       const response =
         await api.post(
@@ -730,10 +833,12 @@ export default function SettingsScreen() {
         'Erro',
         error.response?.data
           ?.message ||
-        'Não foi possível alterar a senha.'
+          'Não foi possível alterar a senha.'
       );
     } finally {
-      setChangingPassword(false);
+      setChangingPassword(
+        false
+      );
     }
   }
 
@@ -743,62 +848,123 @@ export default function SettingsScreen() {
       'Deseja realmente sair?',
       [
         {
-          text: 'Cancelar',
-          style: 'cancel',
+          text:
+            'Cancelar',
+
+          style:
+            'cancel',
         },
 
         {
-          text: 'Sair',
-          onPress: signOut,
+          text:
+            'Sair',
+
+          onPress:
+            signOut,
         },
       ]
     );
   }
 
-  function handleDeleteAccount() {
+  /*
+   * SOLICITAR CONFIRMAÇÃO
+   * DA ANONIMIZAÇÃO
+   */
+  function handleAnonymizeAccount() {
+    if (anonymizingAccount) {
+      return;
+    }
+
     Alert.alert(
-      'Excluir conta',
-      'Todos os dados da conta serão removidos. Essa ação não poderá ser desfeita.',
+      'Anonimizar conta',
+      'Seus dados pessoais serão removidos e você perderá definitivamente o acesso à conta. Suas publicações, mensagens e conversas serão preservadas de forma anônima. Essa ação não poderá ser desfeita.',
       [
         {
-          text: 'Cancelar',
-          style: 'cancel',
+          text:
+            'Cancelar',
+
+          style:
+            'cancel',
         },
 
         {
-          text: 'Excluir',
-          style: 'destructive',
+          text:
+            'Anonimizar',
+
+          style:
+            'destructive',
+
           onPress:
-            confirmDeleteAccount,
+            confirmAnonymizeAccount,
         },
-      ]
+      ],
+      {
+        cancelable:
+          true,
+      }
     );
   }
 
-  async function confirmDeleteAccount() {
-    try {
-      setDeletingAccount(true);
+  /*
+   * ANONIMIZAR A CONTA
+   *
+   * A rota continua com o mesmo
+   * endereço para manter compatibilidade
+   * com o backend.
+   */
+  async function confirmAnonymizeAccount() {
+    if (anonymizingAccount) {
+      return;
+    }
 
-      await api.delete(
-        '/users/delete'
+    try {
+      setAnonymizingAccount(
+        true
       );
 
+      const response =
+        await api.delete(
+          '/users/delete'
+        );
+
+      /*
+       * Limpa a sessão local depois que
+       * o servidor confirma a anonimização.
+       */
       await signOut();
+
+      Alert.alert(
+        'Conta anonimizada',
+        response.data?.message ||
+          'Seus dados pessoais foram removidos e sua conta foi anonimizada.'
+      );
     } catch (error) {
       console.log(
-        'ERRO AO EXCLUIR CONTA:',
-        error.response?.data ||
-          error.message
+        'ERRO AO ANONIMIZAR CONTA:',
+        {
+          message:
+            error.message,
+
+          status:
+            error.response
+              ?.status,
+
+          response:
+            error.response
+              ?.data,
+        }
       );
 
       Alert.alert(
         'Erro',
         error.response?.data
           ?.message ||
-        'Não foi possível excluir a conta.'
+          'Não foi possível anonimizar a conta.'
       );
     } finally {
-      setDeletingAccount(false);
+      setAnonymizingAccount(
+        false
+      );
     }
   }
 
@@ -822,13 +988,16 @@ export default function SettingsScreen() {
           styles.content
         }
         keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={
+          false
+        }
       >
         <Text
           style={[
             styles.sectionTitle,
             {
-              color: theme.text,
+              color:
+                theme.text,
             },
           ]}
         >
@@ -846,7 +1015,9 @@ export default function SettingsScreen() {
             }
           >
             <Image
-              source={avatarSource}
+              source={
+                avatarSource
+              }
               style={
                 isUsingDefaultAvatar
                   ? styles.defaultAvatar
@@ -921,7 +1092,8 @@ export default function SettingsScreen() {
           style={[
             styles.label,
             {
-              color: theme.text,
+              color:
+                theme.text,
             },
           ]}
         >
@@ -931,7 +1103,9 @@ export default function SettingsScreen() {
         <Input
           placeholder="Seu nome"
           value={name}
-          onChangeText={setName}
+          onChangeText={
+            setName
+          }
           editable={
             !profileLoading
           }
@@ -942,7 +1116,8 @@ export default function SettingsScreen() {
           style={[
             styles.label,
             {
-              color: theme.text,
+              color:
+                theme.text,
             },
           ]}
         >
@@ -952,7 +1127,9 @@ export default function SettingsScreen() {
         <Input
           placeholder="Seu e-mail"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={
+            setEmail
+          }
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
@@ -966,7 +1143,8 @@ export default function SettingsScreen() {
           style={[
             styles.label,
             {
-              color: theme.text,
+              color:
+                theme.text,
             },
           ]}
         >
@@ -975,7 +1153,9 @@ export default function SettingsScreen() {
 
         <Input
           placeholder="Conte um pouco sobre você..."
-          value={description}
+          value={
+            description
+          }
           onChangeText={
             setDescription
           }
@@ -1004,7 +1184,8 @@ export default function SettingsScreen() {
           style={[
             styles.label,
             {
-              color: theme.text,
+              color:
+                theme.text,
             },
           ]}
         >
@@ -1047,7 +1228,8 @@ export default function SettingsScreen() {
           style={[
             styles.sectionTitle,
             {
-              color: theme.text,
+              color:
+                theme.text,
             },
           ]}
         >
@@ -1090,7 +1272,8 @@ export default function SettingsScreen() {
               style={[
                 styles.label,
                 {
-                  color: theme.text,
+                  color:
+                    theme.text,
                 },
               ]}
             >
@@ -1123,7 +1306,8 @@ export default function SettingsScreen() {
               style={[
                 styles.label,
                 {
-                  color: theme.text,
+                  color:
+                    theme.text,
                 },
               ]}
             >
@@ -1150,7 +1334,8 @@ export default function SettingsScreen() {
               style={[
                 styles.label,
                 {
-                  color: theme.text,
+                  color:
+                    theme.text,
                 },
               ]}
             >
@@ -1199,7 +1384,8 @@ export default function SettingsScreen() {
           style={[
             styles.sectionTitle,
             {
-              color: theme.text,
+              color:
+                theme.text,
             },
           ]}
         >
@@ -1208,17 +1394,39 @@ export default function SettingsScreen() {
 
         <Button
           title="Sair da conta"
-          onPress={handleLogout}
+          onPress={
+            handleLogout
+          }
+          disabled={
+            anonymizingAccount
+          }
           type="secondary"
         />
 
+        <Text
+          style={[
+            styles.helperText,
+            {
+              color:
+                theme.textSecondary,
+            },
+          ]}
+        >
+          Ao anonimizar sua conta, seus dados pessoais serão removidos permanentemente. As publicações, mensagens e conversas permanecerão no Doalize sem identificar você.
+        </Text>
+
         <Button
-          title="Excluir conta"
+          title="Anonimizar conta"
           onPress={
-            handleDeleteAccount
+            handleAnonymizeAccount
           }
           loading={
-            deletingAccount
+            anonymizingAccount
+          }
+          disabled={
+            profileLoading ||
+            requestingCode ||
+            changingPassword
           }
           type="danger"
         />

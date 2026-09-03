@@ -5,12 +5,16 @@ import {
 import sequelize from '../config/database.js';
 
 import Post from './Post.js';
+
 import User from './User.js';
 
 const PostPromotion =
   sequelize.define(
     'PostPromotion',
     {
+      /*
+       * IDENTIFICADOR DA PROMOÇÃO
+       */
       id: {
         type:
           DataTypes.INTEGER,
@@ -22,6 +26,9 @@ const PostPromotion =
           true,
       },
 
+      /*
+       * PUBLICAÇÃO PROMOVIDA
+       */
       post_id: {
         type:
           DataTypes.INTEGER,
@@ -30,11 +37,18 @@ const PostPromotion =
           false,
 
         references: {
-          model: Post,
+          model:
+            Post,
 
-          key: 'id',
+          key:
+            'id',
         },
 
+        /*
+         * Se uma publicação for excluída
+         * individualmente pelo autor,
+         * suas promoções serão removidas.
+         */
         onDelete:
           'CASCADE',
 
@@ -42,6 +56,13 @@ const PostPromotion =
           'CASCADE',
       },
 
+      /*
+       * USUÁRIO QUE PROMOVEU
+       *
+       * Na anonimização, o usuário não
+       * é excluído. Portanto, este ID e
+       * a promoção serão preservados.
+       */
       user_id: {
         type:
           DataTypes.INTEGER,
@@ -50,9 +71,11 @@ const PostPromotion =
           false,
 
         references: {
-          model: User,
+          model:
+            User,
 
-          key: 'id',
+          key:
+            'id',
         },
 
         onDelete:
@@ -76,6 +99,11 @@ const PostPromotion =
         false,
 
       indexes: [
+        /*
+         * Impede o mesmo usuário de
+         * promover a mesma publicação
+         * mais de uma vez.
+         */
         {
           name:
             'post_promotions_post_user_unique',
@@ -89,6 +117,10 @@ const PostPromotion =
           ],
         },
 
+        /*
+         * Facilita a contagem de
+         * promoções de uma publicação.
+         */
         {
           name:
             'post_promotions_post_id_index',
@@ -98,6 +130,10 @@ const PostPromotion =
           ],
         },
 
+        /*
+         * Facilita a busca das promoções
+         * realizadas por um usuário.
+         */
         {
           name:
             'post_promotions_user_id_index',
@@ -111,9 +147,9 @@ const PostPromotion =
   );
 
 /*
- * RELACIONAMENTOS
+ * CADA PROMOÇÃO PERTENCE
+ * A UMA PUBLICAÇÃO
  */
-
 PostPromotion.belongsTo(
   Post,
   {
@@ -125,6 +161,10 @@ PostPromotion.belongsTo(
   }
 );
 
+/*
+ * CADA PROMOÇÃO PERTENCE
+ * A UM USUÁRIO
+ */
 PostPromotion.belongsTo(
   User,
   {
@@ -136,6 +176,10 @@ PostPromotion.belongsTo(
   }
 );
 
+/*
+ * UMA PUBLICAÇÃO PODE TER
+ * VÁRIAS PROMOÇÕES
+ */
 Post.hasMany(
   PostPromotion,
   {
@@ -147,6 +191,14 @@ Post.hasMany(
   }
 );
 
+/*
+ * UM USUÁRIO PODE PROMOVER
+ * VÁRIAS PUBLICAÇÕES
+ *
+ * Se a conta for anonimizada, o registro
+ * do usuário permanece no banco e esta
+ * relação também permanece válida.
+ */
 User.hasMany(
   PostPromotion,
   {

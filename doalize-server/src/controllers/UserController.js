@@ -15,9 +15,6 @@ import {
 import sequelize from '../config/database.js';
 
 import User from '../models/User.js';
-import Post from '../models/Post.js';
-import Chat from '../models/Chat.js';
-import Message from '../models/Message.js';
 
 import PasswordVerification from '../models/PasswordVerification.js';
 
@@ -26,10 +23,14 @@ import {
 } from '../services/emailService.js';
 
 const __filename =
-  fileURLToPath(import.meta.url);
+  fileURLToPath(
+    import.meta.url
+  );
 
 const __dirname =
-  path.dirname(__filename);
+  path.dirname(
+    __filename
+  );
 
 const uploadsDirectory =
   path.resolve(
@@ -38,50 +39,18 @@ const uploadsDirectory =
   );
 
 const MAX_CODE_ATTEMPTS = 5;
+
 const CODE_EXPIRATION_MINUTES = 10;
+
 const MIN_PASSWORD_LENGTH = 6;
 
-function parsePostImages(images) {
-  if (!images) {
-    return [];
-  }
-
-  if (Array.isArray(images)) {
-    return images.filter(Boolean);
-  }
-
-  if (typeof images === 'string') {
-    const value =
-      images.trim();
-
-    if (!value) {
-      return [];
-    }
-
-    try {
-      const parsed =
-        JSON.parse(value);
-
-      if (Array.isArray(parsed)) {
-        return parsed.filter(Boolean);
-      }
-
-      if (
-        typeof parsed ===
-        'string'
-      ) {
-        return [parsed];
-      }
-
-      return [];
-    } catch {
-      return [value];
-    }
-  }
-
-  return [];
-}
-
+/*
+ * TRANSFORMAR CAMINHO PÚBLICO
+ * EM CAMINHO FÍSICO
+ *
+ * URLs externas não são removidas
+ * por esta função.
+ */
 function getPhysicalUploadPath(
   publicPath
 ) {
@@ -154,6 +123,12 @@ function getPhysicalUploadPath(
   return physicalPath;
 }
 
+/*
+ * REMOVER UM ARQUIVO LOCAL
+ *
+ * Uma falha na remoção do arquivo
+ * não desfaz a anonimização.
+ */
 async function removeUploadFile(
   publicPath
 ) {
@@ -191,6 +166,7 @@ async function removeUploadFile(
       'ERRO AO REMOVER ARQUIVO:',
       {
         publicPath,
+
         message:
           error.message,
       }
@@ -198,33 +174,9 @@ async function removeUploadFile(
   }
 }
 
-async function removeUploadFiles(
-  publicPaths
-) {
-  const uniquePaths = [
-    ...new Set(
-      publicPaths.filter(
-        (item) =>
-          typeof item ===
-            'string' &&
-          item.trim()
-      )
-    ),
-  ];
-
-  await Promise.allSettled(
-    uniquePaths.map(
-      (publicPath) =>
-        removeUploadFile(
-          publicPath
-        )
-    )
-  );
-}
-
 /*
- * Cria e envia um código para
- * determinado usuário.
+ * CRIAR E ENVIAR CÓDIGO
+ * DE ALTERAÇÃO DE SENHA
  */
 async function createAndSendPasswordCode(
   user
@@ -251,6 +203,9 @@ async function createAndSendPasswordCode(
           1000
     );
 
+  /*
+   * INVALIDAR CÓDIGOS ANTERIORES
+   */
   await PasswordVerification.destroy({
     where: {
       user_id:
@@ -294,8 +249,8 @@ async function createAndSendPasswordCode(
 }
 
 /*
- * Validação básica dos campos
- * utilizados na redefinição.
+ * VALIDAR OS CAMPOS UTILIZADOS
+ * NA REDEFINIÇÃO DE SENHA
  */
 function validatePasswordFields({
   code,
@@ -308,7 +263,8 @@ function validatePasswordFields({
     !confirmPassword
   ) {
     return {
-      valid: false,
+      valid:
+        false,
 
       message:
         'Preencha o código e as duas senhas.',
@@ -324,7 +280,8 @@ function validatePasswordFields({
     )
   ) {
     return {
-      valid: false,
+      valid:
+        false,
 
       message:
         'O código deve possuir 6 dígitos.',
@@ -336,7 +293,8 @@ function validatePasswordFields({
     MIN_PASSWORD_LENGTH
   ) {
     return {
-      valid: false,
+      valid:
+        false,
 
       message:
         `A senha deve possuir pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`,
@@ -348,7 +306,8 @@ function validatePasswordFields({
     confirmPassword
   ) {
     return {
-      valid: false,
+      valid:
+        false,
 
       message:
         'As senhas não coincidem.',
@@ -356,15 +315,16 @@ function validatePasswordFields({
   }
 
   return {
-    valid: true,
+    valid:
+      true,
 
     normalizedCode,
   };
 }
 
 /*
- * Confirma o código e atualiza
- * a senha do usuário informado.
+ * CONFIRMAR CÓDIGO E
+ * ATUALIZAR SENHA
  */
 async function changePasswordWithCode({
   user,
@@ -382,9 +342,11 @@ async function changePasswordWithCode({
 
   if (!validation.valid) {
     return {
-      success: false,
+      success:
+        false,
 
-      status: 400,
+      status:
+        400,
 
       message:
         validation.message,
@@ -416,9 +378,11 @@ async function changePasswordWithCode({
 
   if (!verification) {
     return {
-      success: false,
+      success:
+        false,
 
-      status: 400,
+      status:
+        400,
 
       message:
         'Nenhum código válido foi solicitado.',
@@ -440,9 +404,11 @@ async function changePasswordWithCode({
     );
 
     return {
-      success: false,
+      success:
+        false,
 
-      status: 400,
+      status:
+        400,
 
       commit:
         true,
@@ -469,9 +435,11 @@ async function changePasswordWithCode({
     );
 
     return {
-      success: false,
+      success:
+        false,
 
-      status: 400,
+      status:
+        400,
 
       commit:
         true,
@@ -500,9 +468,11 @@ async function changePasswordWithCode({
     );
 
     return {
-      success: false,
+      success:
+        false,
 
-      status: 400,
+      status:
+        400,
 
       commit:
         true,
@@ -539,15 +509,72 @@ async function changePasswordWithCode({
   );
 
   return {
-    success: true,
+    success:
+      true,
   };
+}
+
+/*
+ * IDENTIFICAR UMA CONTA
+ * QUE JÁ FOI ANONIMIZADA
+ *
+ * O domínio .invalid é reservado
+ * para endereços que não recebem
+ * mensagens reais.
+ */
+function isAnonymousEmail(
+  email
+) {
+  return (
+    typeof email === 'string' &&
+    /^conta-removida-\d+-[a-f0-9]+@doalize\.invalid$/i.test(
+      email
+    )
+  );
+}
+
+/*
+ * CRIAR UM E-MAIL ÚNICO
+ * PARA A CONTA ANONIMIZADA
+ */
+function createAnonymousEmail(
+  userId
+) {
+  const randomIdentifier =
+    crypto
+      .randomBytes(12)
+      .toString('hex');
+
+  return (
+    `conta-removida-${userId}-` +
+    `${randomIdentifier}@doalize.invalid`
+  );
+}
+
+/*
+ * CRIAR UMA SENHA ALEATÓRIA
+ * QUE O ANTIGO USUÁRIO NÃO CONHECE
+ */
+async function createAnonymousPassword() {
+  const randomPassword =
+    crypto
+      .randomBytes(48)
+      .toString('hex');
+
+  return bcrypt.hash(
+    randomPassword,
+    12
+  );
 }
 
 class UserController {
   /*
    * BUSCAR PERFIL
    */
-  async profile(req, res) {
+  async profile(
+    req,
+    res
+  ) {
     try {
       const user =
         await User.findByPk(
@@ -561,7 +588,12 @@ class UserController {
           }
         );
 
-      if (!user) {
+      if (
+        !user ||
+        isAnonymousEmail(
+          user.email
+        )
+      ) {
         return res
           .status(404)
           .json({
@@ -591,7 +623,10 @@ class UserController {
   /*
    * ATUALIZAR PERFIL
    */
-  async update(req, res) {
+  async update(
+    req,
+    res
+  ) {
     try {
       const userId =
         req.userId;
@@ -609,7 +644,12 @@ class UserController {
           userId
         );
 
-      if (!user) {
+      if (
+        !user ||
+        isAnonymousEmail(
+          user.email
+        )
+      ) {
         return res
           .status(404)
           .json({
@@ -767,9 +807,6 @@ class UserController {
   /*
    * SOLICITAR CÓDIGO PELAS
    * CONFIGURAÇÕES DA CONTA
-   *
-   * Esta função continua usando
-   * req.userId e exige autenticação.
    */
   async requestPasswordCode(
     req,
@@ -781,7 +818,12 @@ class UserController {
           req.userId
         );
 
-      if (!user) {
+      if (
+        !user ||
+        isAnonymousEmail(
+          user.email
+        )
+      ) {
         return res
           .status(404)
           .json({
@@ -832,9 +874,7 @@ class UserController {
 
   /*
    * CONFIRMAR SENHA PELAS
-   * CONFIGURAÇÕES DA CONTA
-   *
-   * Esta função exige autenticação.
+   * CONFIGURAÇÕES
    */
   async confirmPassword(
     req,
@@ -861,7 +901,12 @@ class UserController {
           }
         );
 
-      if (!user) {
+      if (
+        !user ||
+        isAnonymousEmail(
+          user.email
+        )
+      ) {
         await transaction.rollback();
 
         return res
@@ -928,12 +973,8 @@ class UserController {
   }
 
   /*
-   * ESQUECI MINHA SENHA
-   *
-   * Rota pública.
-   *
-   * Localiza a conta pelo e-mail e
-   * envia um código de seis dígitos.
+   * SOLICITAR RECUPERAÇÃO
+   * PELO LOGIN
    */
   async requestForgotPasswordCode(
     req,
@@ -966,11 +1007,15 @@ class UserController {
         });
 
       /*
-       * Resposta genérica para não
-       * confirmar publicamente se um
-       * endereço possui conta.
+       * Resposta genérica para não revelar
+       * se o endereço possui uma conta.
        */
-      if (!user) {
+      if (
+        !user ||
+        isAnonymousEmail(
+          user.email
+        )
+      ) {
         return res
           .status(200)
           .json({
@@ -1021,15 +1066,7 @@ class UserController {
 
   /*
    * CONFIRMAR RECUPERAÇÃO
-   * DE SENHA
-   *
-   * Rota pública.
-   *
-   * Recebe:
-   * - e-mail;
-   * - código;
-   * - nova senha;
-   * - confirmação da senha.
+   * DE SENHA PELO LOGIN
    */
   async confirmForgotPassword(
     req,
@@ -1078,7 +1115,12 @@ class UserController {
             transaction.LOCK.UPDATE,
         });
 
-      if (!user) {
+      if (
+        !user ||
+        isAnonymousEmail(
+          user.email
+        )
+      ) {
         await transaction.rollback();
 
         return res
@@ -1145,17 +1187,33 @@ class UserController {
   }
 
   /*
-   * EXCLUIR CONTA
+   * ANONIMIZAR CONTA
+   *
+   * A rota continua sendo:
+   *
+   * DELETE /users/delete
+   *
+   * O registro do usuário, os posts,
+   * as mensagens e as conversas são
+   * preservados.
+   *
+   * Somente os dados pessoais e o
+   * acesso à conta são removidos.
    */
-  async delete(req, res) {
+  async delete(
+    req,
+    res
+  ) {
     const transaction =
       await sequelize.transaction();
 
-    let filesToDelete = [];
+    let previousPhoto = null;
 
     try {
       const userId =
-        Number(req.userId);
+        Number(
+          req.userId
+        );
 
       if (
         !Number.isInteger(
@@ -1194,183 +1252,135 @@ class UserController {
           });
       }
 
-      if (user.photo) {
-        filesToDelete.push(
-          user.photo
-        );
-      }
-
-      const userPosts =
-        await Post.findAll({
-          where: {
-            user_id:
-              userId,
-          },
-
-          attributes: [
-            'id',
-            'images',
-          ],
-
-          transaction,
-        });
-
-      for (
-        const post of userPosts
+      /*
+       * Evita anonimizar novamente
+       * uma conta já processada.
+       */
+      if (
+        isAnonymousEmail(
+          user.email
+        )
       ) {
-        filesToDelete.push(
-          ...parsePostImages(
-            post.images
-          )
+        await transaction.rollback();
+
+        return res
+          .status(400)
+          .json({
+            message:
+              'Esta conta já foi anonimizada.',
+          });
+      }
+
+      previousPhoto =
+        user.photo;
+
+      const anonymousEmail =
+        createAnonymousEmail(
+          user.id
         );
-      }
 
-      const userMessages =
-        await Message.findAll({
-          where: {
-            [Op.or]: [
-              {
-                sender_id:
-                  userId,
-              },
-              {
-                receiver_id:
-                  userId,
-              },
-            ],
-          },
+      const anonymousPassword =
+        await createAnonymousPassword();
 
-          attributes: [
-            'id',
-            'image',
-            'audio',
-          ],
-
-          transaction,
-        });
-
-      for (
-        const message of
-          userMessages
-      ) {
-        if (message.image) {
-          filesToDelete.push(
-            message.image
-          );
-        }
-
-        if (message.audio) {
-          filesToDelete.push(
-            message.audio
-          );
-        }
-      }
-
-      console.log(
-        'INICIANDO EXCLUSÃO DA CONTA:',
-        {
-          userId,
-
-          posts:
-            userPosts.length,
-
-          messages:
-            userMessages.length,
-        }
-      );
-
-      const deletedVerifications =
+      /*
+       * Remove todos os códigos de
+       * alteração ou recuperação.
+       */
+      const removedVerifications =
         await PasswordVerification.destroy({
           where: {
             user_id:
-              userId,
+              user.id,
           },
 
           transaction,
         });
 
-      const deletedMessages =
-        await Message.destroy({
-          where: {
-            [Op.or]: [
-              {
-                sender_id:
-                  userId,
-              },
-              {
-                receiver_id:
-                  userId,
-              },
-            ],
-          },
-
-          transaction,
-        });
-
-      const deletedChats =
-        await Chat.destroy({
-          where: {
-            [Op.or]: [
-              {
-                user_one_id:
-                  userId,
-              },
-              {
-                user_two_id:
-                  userId,
-              },
-            ],
-          },
-
-          transaction,
-        });
-
-      const deletedPosts =
-        await Post.destroy({
-          where: {
-            user_id:
-              userId,
-          },
-
-          transaction,
-        });
-
-      await user.destroy({
-        transaction,
-      });
-
-      await transaction.commit();
-
-      console.log(
-        'CONTA EXCLUÍDA DO BANCO:',
+      /*
+       * Substituir os dados pessoais.
+       *
+       * O ID é preservado para manter
+       * os relacionamentos existentes
+       * com posts, mensagens e chats.
+       */
+      await user.update(
         {
-          userId,
-          deletedVerifications,
-          deletedMessages,
-          deletedChats,
-          deletedPosts,
+          name:
+            'Usuário removido',
+
+          email:
+            anonymousEmail,
+
+          password:
+            anonymousPassword,
+
+          photo:
+            null,
+
+          description:
+            null,
+
+          location:
+            null,
+        },
+        {
+          transaction,
         }
       );
 
-      await removeUploadFiles(
-        filesToDelete
+      await transaction.commit();
+
+      /*
+       * A foto só é removida depois que
+       * o banco confirma a anonimização.
+       *
+       * Fotos externas não são apagadas
+       * por esta função.
+       */
+      if (previousPhoto) {
+        await removeUploadFile(
+          previousPhoto
+        );
+      }
+
+      console.log(
+        'CONTA ANONIMIZADA:',
+        {
+          userId:
+
+            user.id,
+
+          removedVerifications,
+
+          postsPreserved:
+            true,
+
+          messagesPreserved:
+            true,
+
+          chatsPreserved:
+            true,
+        }
       );
 
       return res
         .status(200)
         .json({
           message:
-            'Conta e dados relacionados removidos com sucesso.',
+            'Conta anonimizada com sucesso.',
 
-          deleted: {
+          anonymized:
+            true,
+
+          preserved: {
+            posts:
+              true,
+
             messages:
-              deletedMessages,
+              true,
 
             chats:
-              deletedChats,
-
-            posts:
-              deletedPosts,
+              true,
           },
         });
     } catch (error) {
@@ -1381,7 +1391,7 @@ class UserController {
       }
 
       console.error(
-        'ERRO DETALHADO AO EXCLUIR CONTA:',
+        'ERRO AO ANONIMIZAR CONTA:',
         {
           name:
             error.name,
@@ -1409,7 +1419,7 @@ class UserController {
         .status(500)
         .json({
           message:
-            'Não foi possível excluir a conta e os dados relacionados.',
+            'Não foi possível anonimizar a conta.',
 
           error:
             process.env

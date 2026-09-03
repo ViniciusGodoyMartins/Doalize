@@ -1,4 +1,5 @@
 import Post from '../models/Post.js';
+
 import User from '../models/User.js';
 
 import PostPromotion from '../models/PostPromotion.js';
@@ -10,14 +11,39 @@ const DESCRIPTION_MAX_LENGTH =
   2000;
 
 /*
+ * IDENTIFICAR CONTA ANONIMIZADA
+ *
+ * Contas anonimizadas utilizam um
+ * endereço interno no formato:
+ *
+ * conta-removida-ID-CODIGO@doalize.invalid
+ */
+function isAnonymousEmail(
+  email
+) {
+  return (
+    typeof email === 'string' &&
+    /^conta-removida-\d+-[a-f0-9]+@doalize\.invalid$/i.test(
+      email
+    )
+  );
+}
+
+/*
  * NORMALIZAR O CAMPO DE IMAGENS
  */
-function parseImages(images) {
+function parseImages(
+  images
+) {
   if (!images) {
     return [];
   }
 
-  if (Array.isArray(images)) {
+  if (
+    Array.isArray(
+      images
+    )
+  ) {
     return images
       .filter(
         (image) =>
@@ -44,9 +70,15 @@ function parseImages(images) {
 
     try {
       const parsed =
-        JSON.parse(value);
+        JSON.parse(
+          value
+        );
 
-      if (Array.isArray(parsed)) {
+      if (
+        Array.isArray(
+          parsed
+        )
+      ) {
         return parsed
           .filter(
             (image) =>
@@ -72,7 +104,9 @@ function parseImages(images) {
 
       return [];
     } catch {
-      return [value];
+      return [
+        value,
+      ];
     }
   }
 
@@ -82,20 +116,24 @@ function parseImages(images) {
 /*
  * ASSOCIAÇÃO DO USUÁRIO
  *
- * description:
- * biografia do usuário.
+ * O e-mail é consultado apenas para
+ * identificar internamente se a conta
+ * foi anonimizada.
  *
- * location:
- * localização do usuário.
+ * Antes da resposta, o e-mail é
+ * removido pelo normalizePostUser.
  */
 const userAssociation = {
-  model: User,
+  model:
+    User,
 
-  as: 'user',
+  as:
+    'user',
 
   attributes: [
     'id',
     'name',
+    'email',
     'photo',
     'description',
     'location',
@@ -103,12 +141,111 @@ const userAssociation = {
 };
 
 /*
+ * NORMALIZAR O AUTOR
+ *
+ * Usuário ativo:
+ * mantém os dados públicos atuais.
+ *
+ * Usuário anonimizado:
+ * mantém apenas o ID necessário para
+ * preservar os relacionamentos.
+ *
+ * O e-mail nunca é enviado ao mobile
+ * por esta função.
+ */
+function normalizePostUser(
+  user
+) {
+  if (!user) {
+    return {
+      id:
+        null,
+
+      name:
+        'Usuário removido',
+
+      photo:
+        null,
+
+      description:
+        null,
+
+      location:
+        null,
+
+      anonymized:
+        true,
+    };
+  }
+
+  const plainUser =
+    typeof user.toJSON ===
+      'function'
+      ? user.toJSON()
+      : user;
+
+  const accountIsAnonymous =
+    isAnonymousEmail(
+      plainUser.email
+    );
+
+  if (
+    accountIsAnonymous
+  ) {
+    return {
+      id:
+        plainUser.id,
+
+      name:
+        'Usuário removido',
+
+      photo:
+        null,
+
+      description:
+        null,
+
+      location:
+        null,
+
+      anonymized:
+        true,
+    };
+  }
+
+  return {
+    id:
+      plainUser.id,
+
+    name:
+      plainUser.name ||
+      'Usuário',
+
+    photo:
+      plainUser.photo ||
+      null,
+
+    description:
+      plainUser.description ||
+      null,
+
+    location:
+      plainUser.location ||
+      null,
+
+    anonymized:
+      false,
+  };
+}
+
+/*
  * NORMALIZAR UMA PUBLICAÇÃO
  *
  * A função também consulta:
  *
  * - quantidade total de promoções;
- * - se o usuário autenticado promoveu.
+ * - se o usuário autenticado promoveu;
+ * - situação anônima do autor.
  */
 async function normalizePost(
   post,
@@ -120,7 +257,7 @@ async function normalizePost(
 
   const plainPost =
     typeof post.toJSON ===
-    'function'
+      'function'
       ? post.toJSON()
       : post;
 
@@ -148,7 +285,8 @@ async function normalizePost(
       },
     });
 
-  let promotedByMe = false;
+  let promotedByMe =
+    false;
 
   if (currentUserId) {
     const myPromotion =
@@ -167,11 +305,25 @@ async function normalizePost(
       });
 
     promotedByMe =
-      Boolean(myPromotion);
+      Boolean(
+        myPromotion
+      );
   }
 
   return {
     ...plainPost,
+
+    /*
+     * Substitui o usuário original pela
+     * versão segura e normalizada.
+     *
+     * O e-mail consultado pelo Sequelize
+     * não é devolvido ao aplicativo.
+     */
+    user:
+      normalizePostUser(
+        plainPost.user
+      ),
 
     summary:
       normalizedSummary,
@@ -205,7 +357,10 @@ class PostController {
    *
    * GET /posts
    */
-  async index(req, res) {
+  async index(
+    req,
+    res
+  ) {
     try {
       const posts =
         await Post.findAll({
@@ -277,7 +432,10 @@ class PostController {
    *
    * POST /posts
    */
-  async store(req, res) {
+  async store(
+    req,
+    res
+  ) {
     try {
       const userId =
         req.userId;
@@ -309,7 +467,9 @@ class PostController {
           ? description.trim()
           : '';
 
-      if (!normalizedSummary) {
+      if (
+        !normalizedSummary
+      ) {
         return res
           .status(400)
           .json({
@@ -365,7 +525,9 @@ class PostController {
             normalizedDescription,
 
           images:
-            parseImages(images),
+            parseImages(
+              images
+            ),
 
           promoted:
             false,
@@ -381,7 +543,9 @@ class PostController {
           }
         );
 
-      if (!createdPost) {
+      if (
+        !createdPost
+      ) {
         return res
           .status(500)
           .json({
@@ -431,7 +595,10 @@ class PostController {
    *
    * GET /posts/:id
    */
-  async show(req, res) {
+  async show(
+    req,
+    res
+  ) {
     try {
       const {
         id,
@@ -496,13 +663,20 @@ class PostController {
    *
    * POST /posts/promote/:id
    */
-  async promote(req, res) {
+  async promote(
+    req,
+    res
+  ) {
     try {
       const userId =
-        Number(req.userId);
+        Number(
+          req.userId
+        );
 
       const postId =
-        Number(req.params.id);
+        Number(
+          req.params.id
+        );
 
       if (
         !Number.isInteger(
@@ -557,11 +731,13 @@ class PostController {
 
       let promotedByMe;
 
-      if (existingPromotion) {
-        await existingPromotion
-          .destroy();
+      if (
+        existingPromotion
+      ) {
+        await existingPromotion.destroy();
 
-        promotedByMe = false;
+        promotedByMe =
+          false;
       } else {
         await PostPromotion.create({
           post_id:
@@ -571,7 +747,8 @@ class PostController {
             userId,
         });
 
-        promotedByMe = true;
+        promotedByMe =
+          true;
       }
 
       const promotionCount =
@@ -646,8 +823,18 @@ class PostController {
    * EXCLUIR PUBLICAÇÃO
    *
    * DELETE /posts/:id
+   *
+   * Essa função continua removendo uma
+   * publicação quando o próprio autor
+   * solicita a exclusão.
+   *
+   * A anonimização da conta não utiliza
+   * esta função e não remove os posts.
    */
-  async delete(req, res) {
+  async delete(
+    req,
+    res
+  ) {
     try {
       const userId =
         req.userId;
@@ -657,7 +844,9 @@ class PostController {
       } = req.params;
 
       const post =
-        await Post.findByPk(id);
+        await Post.findByPk(
+          id
+        );
 
       if (!post) {
         return res
@@ -669,8 +858,12 @@ class PostController {
       }
 
       if (
-        Number(post.user_id) !==
-        Number(userId)
+        Number(
+          post.user_id
+        ) !==
+        Number(
+          userId
+        )
       ) {
         return res
           .status(403)
@@ -682,9 +875,10 @@ class PostController {
 
       /*
        * As promoções são removidas antes
-       * por segurança.
+       * da publicação.
        *
-       * A foreign key também utiliza CASCADE.
+       * A foreign key também utiliza
+       * CASCADE como proteção adicional.
        */
       await PostPromotion.destroy({
         where: {
@@ -713,6 +907,13 @@ class PostController {
 
           message:
             error.message,
+
+          sql:
+            error.sql,
+
+          original:
+            error.original
+              ?.message,
         }
       );
 

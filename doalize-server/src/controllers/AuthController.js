@@ -18,6 +18,25 @@ const DEFAULT_USER_PHOTO =
   '/uploads/usuarioimage.png';
 
 /*
+ * IDENTIFICAR CONTA ANONIMIZADA
+ *
+ * Quando uma conta é anonimizada,
+ * o e-mail passa a utilizar o formato:
+ *
+ * conta-removida-ID-CODIGO@doalize.invalid
+ */
+function isAnonymousEmail(
+  email
+) {
+  return (
+    typeof email === 'string' &&
+    /^conta-removida-\d+-[a-f0-9]+@doalize\.invalid$/i.test(
+      email
+    )
+  );
+}
+
+/*
  * CRIAR TOKEN DO USUÁRIO
  */
 function createUserToken(
@@ -182,6 +201,23 @@ class AuthController {
       }
 
       /*
+       * IMPEDE O USO DO DOMÍNIO INTERNO
+       * RESERVADO PARA ANONIMIZAÇÃO.
+       */
+      if (
+        normalizedEmail.endsWith(
+          '@doalize.invalid'
+        )
+      ) {
+        return res
+          .status(400)
+          .json({
+            message:
+              'Informe um e-mail válido.',
+          });
+      }
+
+      /*
        * TAMANHO DA SENHA
        */
       if (
@@ -293,8 +329,7 @@ class AuthController {
       );
 
       /*
-       * Tratamento de e-mail duplicado
-       * identificado pelo Sequelize.
+       * E-MAIL DUPLICADO
        */
       if (
         error.name ===
@@ -309,8 +344,7 @@ class AuthController {
       }
 
       /*
-       * Tratamento das validações
-       * definidas no modelo User.
+       * VALIDAÇÕES DO MODELO USER
        */
       if (
         error.name ===
@@ -410,9 +444,10 @@ class AuthController {
         });
 
       /*
-       * Utiliza uma mensagem genérica
-       * para não revelar se o e-mail
-       * possui uma conta cadastrada.
+       * MENSAGEM GENÉRICA
+       *
+       * Não informa se o endereço
+       * realmente possui uma conta.
        */
       if (!user) {
         return res
@@ -424,9 +459,37 @@ class AuthController {
       }
 
       /*
+       * BLOQUEAR CONTA ANONIMIZADA
+       *
+       * Uma conta anonimizada não pode
+       * gerar novos tokens nem voltar
+       * a acessar o aplicativo.
+       */
+      if (
+        isAnonymousEmail(
+          user.email
+        )
+      ) {
+        console.log(
+          'TENTATIVA DE LOGIN EM CONTA ANONIMIZADA:',
+          {
+            userId:
+              user.id,
+          }
+        );
+
+        return res
+          .status(401)
+          .json({
+            message:
+              'Esta conta foi anonimizada e não pode mais ser acessada.',
+          });
+      }
+
+      /*
        * VALIDAR SENHA
        *
-       * Funciona também com senhas
+       * Também funciona com senhas
        * redefinidas pelo fluxo
        * "Esqueci minha senha".
        */

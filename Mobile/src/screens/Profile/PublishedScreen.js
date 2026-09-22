@@ -23,7 +23,6 @@ import {
 } from '@react-navigation/native';
 
 import Header from '../../components/Header';
-
 import PostCard from '../../components/PostCard';
 
 import {
@@ -42,12 +41,150 @@ import {
 
 import styles from './style';
 
+/*
+ * EXTRAIR PUBLICAÇÕES
+ * DA RESPOSTA DA API
+ */
+function extractPostsFromResponse(
+  responseData
+) {
+  if (
+    Array.isArray(
+      responseData
+    )
+  ) {
+    return responseData;
+  }
+
+  if (
+    Array.isArray(
+      responseData?.posts
+    )
+  ) {
+    return responseData.posts;
+  }
+
+  if (
+    Array.isArray(
+      responseData?.data
+    )
+  ) {
+    return responseData.data;
+  }
+
+  if (
+    Array.isArray(
+      responseData
+        ?.data
+        ?.posts
+    )
+  ) {
+    return responseData
+      .data
+      .posts;
+  }
+
+  if (
+    Array.isArray(
+      responseData?.results
+    )
+  ) {
+    return responseData.results;
+  }
+
+  return [];
+}
+
+/*
+ * NORMALIZAR PUBLICAÇÃO
+ * COM SEGURANÇA
+ */
+function normalizeUserPost(
+  post
+) {
+  if (
+    !post ||
+    typeof post !==
+      'object'
+  ) {
+    return null;
+  }
+
+  try {
+    const normalizedPost =
+      normalizePost(
+        post
+      );
+
+    if (
+      normalizedPost &&
+      typeof normalizedPost ===
+        'object'
+    ) {
+      return {
+        ...post,
+        ...normalizedPost,
+
+        user: {
+          ...post?.user,
+          ...normalizedPost?.user,
+        },
+
+        promoted:
+          Boolean(
+            normalizedPost
+              ?.promoted ??
+            post?.promoted
+          ),
+
+        promoted_by_me:
+          Boolean(
+            normalizedPost
+              ?.promoted_by_me ??
+            post?.promoted_by_me
+          ),
+
+        promotion_count:
+          Math.max(
+            0,
+            Number(
+              normalizedPost
+                ?.promotion_count ??
+              post
+                ?.promotion_count ??
+              0
+            )
+          ),
+      };
+    }
+
+    return post;
+  } catch (error) {
+    console.log(
+      'ERRO AO NORMALIZAR PUBLICAÇÃO DO USUÁRIO:',
+      {
+        postId:
+          post?.id,
+
+        message:
+          error.message,
+      }
+    );
+
+    return post;
+  }
+}
+
 export default function PublishedScreen({
   navigation,
 }) {
-  const { theme } = useTheme();
+  const {
+    theme,
+  } = useTheme();
 
-  const { user } = useAuth();
+  const {
+    user,
+  } = useAuth();
 
   const [
     posts,
@@ -69,124 +206,203 @@ export default function PublishedScreen({
     setDeletingPostId,
   ] = useState(null);
 
+  const [
+    promotingPostId,
+    setPromotingPostId,
+  ] = useState(null);
+
+  const [
+    loadError,
+    setLoadError,
+  ] = useState(false);
+
   /*
-   * BUSCAR AS PUBLICAÇÕES
-   *
-   * A API atual retorna todos os posts.
-   * A tela filtra somente aqueles cujo
-   * user_id pertence ao usuário logado.
+   * BUSCAR PUBLICAÇÕES
+   * DO USUÁRIO LOGADO
    */
-  const loadPosts = useCallback(
-    async (
-      showLoading = true
-    ) => {
-      if (!user?.id) {
-        setPosts([]);
-        setLoading(false);
-        setRefreshing(false);
+  const loadPosts =
+    useCallback(
+      async (
+        showLoading = true
+      ) => {
+        if (!user?.id) {
+          setPosts([]);
+          setLoading(false);
+          setRefreshing(false);
+          setLoadError(false);
 
-        return;
-      }
-
-      try {
-        if (showLoading) {
-          setLoading(true);
+          return;
         }
 
-        const response =
-          await api.get('/posts');
+        try {
+          setLoadError(
+            false
+          );
 
-        const receivedPosts =
-          Array.isArray(
-            response.data
-          )
-            ? response.data
-            : response.data?.posts ||
-              [];
+          if (showLoading) {
+            setLoading(
+              true
+            );
+          }
 
-        const userPosts =
-          receivedPosts
-            .filter((post) => {
-              const postUserId =
-                post?.user_id ??
-                post?.userId ??
-                post?.user?.id;
-
-              return (
-                Number(postUserId) ===
-                Number(user.id)
-              );
-            })
-            .map((post) =>
-              normalizePost(post)
+          const response =
+            await api.get(
+              '/posts'
             );
 
-        console.log(
-          'PUBLICAÇÕES DO USUÁRIO:',
-          {
-            userId: user.id,
-            total:
-              userPosts.length,
-          }
-        );
+          const receivedPosts =
+            extractPostsFromResponse(
+              response.data
+            );
 
-        setPosts(userPosts);
-      } catch (error) {
-        console.log(
-          'ERRO AO BUSCAR PUBLICAÇÕES DO USUÁRIO:',
-          {
-            message:
-              error.message,
+          const userPosts =
+            receivedPosts
+              .filter(
+                (
+                  post
+                ) => {
+                  const postUserId =
+                    post?.user_id ??
+                    post?.userId ??
+                    post?.user?.id;
 
-            status:
-              error.response
-                ?.status,
+                  return (
+                    Number(
+                      postUserId
+                    ) ===
+                    Number(
+                      user.id
+                    )
+                  );
+                }
+              )
+              .map(
+                normalizeUserPost
+              )
+              .filter(
+                Boolean
+              );
 
-            response:
-              error.response
-                ?.data,
-          }
-        );
+          console.log(
+            'PUBLICAÇÕES DO USUÁRIO:',
+            {
+              userId:
+                user.id,
 
-        Alert.alert(
-          'Erro',
-          error.response?.data
-            ?.message ||
-            'Não foi possível carregar suas publicações.'
-        );
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    },
-    [user?.id]
-  );
+              total:
+                userPosts.length,
+            }
+          );
+
+          setPosts(
+            userPosts
+          );
+        } catch (error) {
+          console.log(
+            'ERRO AO BUSCAR PUBLICAÇÕES DO USUÁRIO:',
+            {
+              message:
+                error.message,
+
+              status:
+                error.response
+                  ?.status,
+
+              response:
+                error.response
+                  ?.data,
+            }
+          );
+
+          setLoadError(
+            true
+          );
+
+          Alert.alert(
+            'Erro',
+            error.response
+              ?.data
+              ?.message ||
+              'Não foi possível carregar suas publicações.'
+          );
+        } finally {
+          setLoading(
+            false
+          );
+
+          setRefreshing(
+            false
+          );
+        }
+      },
+      [
+        user?.id,
+      ]
+    );
 
   /*
-   * ATUALIZA SEMPRE QUE A TELA
-   * PUBLICADOS RECEBER FOCO.
-   *
-   * Assim, uma publicação recém-criada
-   * aparece quando o usuário abre a tela.
+   * ATUALIZAR QUANDO
+   * A TELA RECEBER FOCO
    */
   useFocusEffect(
     useCallback(() => {
-      loadPosts(true);
-    }, [loadPosts])
+      loadPosts(
+        true
+      );
+    }, [
+      loadPosts,
+    ])
   );
 
   /*
-   * ATUALIZAR ARRASTANDO A LISTA.
+   * ATUALIZAR ARRASTANDO
+   * PARA BAIXO
    */
   function handleRefresh() {
-    setRefreshing(true);
-    loadPosts(false);
+    if (
+      refreshing ||
+      loading
+    ) {
+      return;
+    }
+
+    setRefreshing(
+      true
+    );
+
+    loadPosts(
+      false
+    );
   }
 
   /*
-   * ABRIR DETALHES DA PUBLICAÇÃO.
+   * TENTAR CARREGAR
+   * NOVAMENTE
    */
-  function handleOpenPost(post) {
+  function handleRetry() {
+    if (
+      loading ||
+      refreshing
+    ) {
+      return;
+    }
+
+    loadPosts(
+      true
+    );
+  }
+
+  /*
+   * ABRIR DETALHES
+   * DA PUBLICAÇÃO
+   */
+  function handleOpenPost(
+    post
+  ) {
+    if (!post) {
+      return;
+    }
+
     navigation.navigate(
       'DetailsScreen',
       {
@@ -196,132 +412,110 @@ export default function PublishedScreen({
   }
 
   /*
-   * PROMOVER PUBLICAÇÃO.
+   * PROMOVER OU REMOVER
+   * A PROMOÇÃO
    */
-  async function handlePromote(post) {
+  async function handlePromote(
+    post
+  ) {
+    if (
+      !post?.id ||
+      promotingPostId !==
+        null ||
+      deletingPostId !==
+        null
+    ) {
+      return;
+    }
+
     try {
+      setPromotingPostId(
+        post.id
+      );
+
       const response =
         await api.post(
           `/posts/promote/${post.id}`
         );
 
+      const responseData =
+        response.data ||
+        {};
+
       const promoted =
         Boolean(
-          response.data?.promoted
+          responseData.promoted
+        );
+
+      const promotedByMe =
+        Boolean(
+          responseData
+            .promoted_by_me ??
+          promoted
+        );
+
+      const promotionCount =
+        Math.max(
+          0,
+          Number(
+            responseData
+              .promotion_count ??
+            post
+              ?.promotion_count ??
+            0
+          )
         );
 
       setPosts(
-        (currentPosts) =>
+        (
+          currentPosts
+        ) =>
           currentPosts.map(
-            (currentPost) =>
-              currentPost.id ===
-              post.id
-                ? {
-                    ...currentPost,
-                    promoted,
-                  }
-                : currentPost
+            (
+              currentPost
+            ) => {
+              if (
+                Number(
+                  currentPost.id
+                ) !==
+                Number(
+                  post.id
+                )
+              ) {
+                return currentPost;
+              }
+
+              return {
+                ...currentPost,
+
+                promoted,
+
+                promoted_by_me:
+                  promotedByMe,
+
+                promotion_count:
+                  promotionCount,
+              };
+            }
           )
       );
 
       Alert.alert(
         'Sucesso',
-        response.data?.message ||
-          (promoted
-            ? 'Publicação promovida.'
-            : 'Promoção removida.')
+        responseData
+          ?.message ||
+          (
+            promotedByMe
+              ? 'Publicação promovida.'
+              : 'Promoção removida.'
+          )
       );
     } catch (error) {
       console.log(
         'ERRO AO PROMOVER PUBLICAÇÃO:',
         {
-          postId: post?.id,
-
-          message:
-            error.message,
-
-          response:
-            error.response
-              ?.data,
-        }
-      );
-
-      Alert.alert(
-        'Erro',
-        error.response?.data
-          ?.message ||
-          'Não foi possível promover a publicação.'
-      );
-    }
-  }
-
-  /*
-   * CONFIRMAÇÃO DE EXCLUSÃO.
-   */
-  function handleDelete(post) {
-    Alert.alert(
-      'Excluir publicação',
-      'Deseja realmente excluir esta publicação? Essa ação não poderá ser desfeita.',
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-
-        {
-          text: 'Excluir',
-          style: 'destructive',
-
-          onPress: () => {
-            confirmDelete(post);
-          },
-        },
-      ]
-    );
-  }
-
-  /*
-   * EXCLUSÃO REAL PELA API.
-   */
-  async function confirmDelete(post) {
-    if (!post?.id) {
-      Alert.alert(
-        'Erro',
-        'A publicação selecionada é inválida.'
-      );
-
-      return;
-    }
-
-    try {
-      setDeletingPostId(
-        post.id
-      );
-
-      const response =
-        await api.delete(
-          `/posts/${post.id}`
-        );
-
-      setPosts(
-        (currentPosts) =>
-          currentPosts.filter(
-            (currentPost) =>
-              currentPost.id !==
-              post.id
-          )
-      );
-
-      Alert.alert(
-        'Sucesso',
-        response.data?.message ||
-          'Publicação excluída.'
-      );
-    } catch (error) {
-      console.log(
-        'ERRO AO EXCLUIR PUBLICAÇÃO:',
-        {
-          postId: post.id,
+          postId:
+            post?.id,
 
           message:
             error.message,
@@ -338,7 +532,146 @@ export default function PublishedScreen({
 
       Alert.alert(
         'Erro',
-        error.response?.data
+        error.response
+          ?.data
+          ?.message ||
+          'Não foi possível alterar a promoção.'
+      );
+    } finally {
+      setPromotingPostId(
+        null
+      );
+    }
+  }
+
+  /*
+   * CONFIRMAR EXCLUSÃO
+   */
+  function handleDelete(
+    post
+  ) {
+    if (
+      !post?.id ||
+      deletingPostId !==
+        null ||
+      promotingPostId !==
+        null
+    ) {
+      return;
+    }
+
+    Alert.alert(
+      'Excluir publicação',
+      'Deseja realmente excluir esta publicação? Essa ação não poderá ser desfeita.',
+      [
+        {
+          text:
+            'Cancelar',
+
+          style:
+            'cancel',
+        },
+
+        {
+          text:
+            'Excluir',
+
+          style:
+            'destructive',
+
+          onPress: () => {
+            confirmDelete(
+              post
+            );
+          },
+        },
+      ],
+      {
+        cancelable:
+          true,
+      }
+    );
+  }
+
+  /*
+   * EXCLUIR PUBLICAÇÃO
+   */
+  async function confirmDelete(
+    post
+  ) {
+    if (!post?.id) {
+      Alert.alert(
+        'Erro',
+        'A publicação selecionada é inválida.'
+      );
+
+      return;
+    }
+
+    if (
+      deletingPostId !==
+      null
+    ) {
+      return;
+    }
+
+    try {
+      setDeletingPostId(
+        post.id
+      );
+
+      const response =
+        await api.delete(
+          `/posts/${post.id}`
+        );
+
+      setPosts(
+        (
+          currentPosts
+        ) =>
+          currentPosts.filter(
+            (
+              currentPost
+            ) =>
+              Number(
+                currentPost.id
+              ) !==
+              Number(
+                post.id
+              )
+          )
+      );
+
+      Alert.alert(
+        'Sucesso',
+        response.data
+          ?.message ||
+          'Publicação excluída.'
+      );
+    } catch (error) {
+      console.log(
+        'ERRO AO EXCLUIR PUBLICAÇÃO:',
+        {
+          postId:
+            post.id,
+
+          message:
+            error.message,
+
+          status:
+            error.response
+              ?.status,
+
+          response:
+            error.response
+              ?.data,
+        }
+      );
+
+      Alert.alert(
+        'Erro',
+        error.response
+          ?.data
           ?.message ||
           'Não foi possível excluir a publicação.'
       );
@@ -350,7 +683,7 @@ export default function PublishedScreen({
   }
 
   /*
-   * COMPARTILHAMENTO.
+   * COMPARTILHAMENTO
    */
   function handleShare() {
     Alert.alert(
@@ -360,14 +693,30 @@ export default function PublishedScreen({
   }
 
   /*
-   * ITEM DA LISTA.
+   * RENDERIZAR PUBLICAÇÃO
    */
   function renderItem({
     item,
   }) {
     const isDeleting =
-      deletingPostId ===
-      item.id;
+      Number(
+        deletingPostId
+      ) ===
+      Number(
+        item?.id
+      );
+
+    const isPromoting =
+      Number(
+        promotingPostId
+      ) ===
+      Number(
+        item?.id
+      );
+
+    const itemBusy =
+      isDeleting ||
+      isPromoting;
 
     return (
       <View
@@ -376,29 +725,53 @@ export default function PublishedScreen({
         }
       >
         <PostCard
-          post={item}
-          onPress={() =>
-            handleOpenPost(item)
+          post={
+            item
           }
-          onShare={() =>
-            handleShare(item)
-          }
-          onPromote={() =>
-            handlePromote(item)
-          }
+          onPress={() => {
+            if (!itemBusy) {
+              handleOpenPost(
+                item
+              );
+            }
+          }}
+          onShare={() => {
+            if (!itemBusy) {
+              handleShare(
+                item
+              );
+            }
+          }}
+          onPromote={() => {
+            if (!itemBusy) {
+              handlePromote(
+                item
+              );
+            }
+          }}
         />
 
         <TouchableOpacity
           activeOpacity={0.8}
-          disabled={isDeleting}
-          onPress={() =>
-            handleDelete(item)
+          disabled={
+            itemBusy
           }
+          onPress={() => {
+            handleDelete(
+              item
+            );
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Excluir publicação"
+          accessibilityState={{
+            disabled:
+              itemBusy,
+          }}
           style={[
             localStyles.removeButton,
             {
               opacity:
-                isDeleting
+                itemBusy
                   ? 0.65
                   : 1,
             },
@@ -407,14 +780,14 @@ export default function PublishedScreen({
           {isDeleting ? (
             <ActivityIndicator
               size="small"
-              color="#ffffff"
+              color="#FFFFFF"
             />
           ) : (
             <>
               <Ionicons
                 name="trash-outline"
                 size={20}
-                color="#ffffff"
+                color="#FFFFFF"
               />
 
               <Text
@@ -432,7 +805,7 @@ export default function PublishedScreen({
   }
 
   /*
-   * CARREGAMENTO INICIAL.
+   * CARREGAMENTO INICIAL
    */
   if (loading) {
     return (
@@ -458,7 +831,9 @@ export default function PublishedScreen({
         >
           <ActivityIndicator
             size="large"
-            color={theme.primary}
+            color={
+              theme.primary
+            }
           />
 
           <Text
@@ -493,24 +868,29 @@ export default function PublishedScreen({
       />
 
       <FlatList
-        data={posts}
+        data={
+          posts
+        }
         keyExtractor={(
           item,
           index
         ) =>
           String(
             item?.id ??
-              index
+            index
           )
         }
-        renderItem={renderItem}
+        renderItem={
+          renderItem
+        }
         showsVerticalScrollIndicator={
           false
         }
         contentContainerStyle={[
           localStyles.list,
 
-          posts.length === 0
+          posts.length ===
+          0
             ? localStyles.emptyList
             : null,
         ]}
@@ -537,7 +917,11 @@ export default function PublishedScreen({
             }
           >
             <Ionicons
-              name="images-outline"
+              name={
+                loadError
+                  ? 'cloud-offline-outline'
+                  : 'images-outline'
+              }
               size={58}
               color={
                 theme.textSecondary
@@ -553,7 +937,9 @@ export default function PublishedScreen({
                 },
               ]}
             >
-              Nenhuma publicação
+              {loadError
+                ? 'Não foi possível carregar'
+                : 'Nenhuma publicação'}
             </Text>
 
             <Text
@@ -565,8 +951,60 @@ export default function PublishedScreen({
                 },
               ]}
             >
-              As publicações criadas por você aparecerão aqui.
+              {loadError
+                ? 'Não foi possível carregar suas publicações.'
+                : 'As publicações criadas por você aparecerão aqui.'}
             </Text>
+
+            {loadError ? (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={
+                  handleRetry
+                }
+                disabled={
+                  loading ||
+                  refreshing
+                }
+                style={[
+                  localStyles.retryButton,
+                  {
+                    backgroundColor:
+                      theme.primary,
+
+                    opacity:
+                      loading ||
+                      refreshing
+                        ? 0.6
+                        : 1,
+                  },
+                ]}
+              >
+                {loading ||
+                refreshing ? (
+                  <ActivityIndicator
+                    size="small"
+                    color="#FFFFFF"
+                  />
+                ) : (
+                  <>
+                    <Ionicons
+                      name="refresh-outline"
+                      size={20}
+                      color="#FFFFFF"
+                    />
+
+                    <Text
+                      style={
+                        localStyles.retryButtonText
+                      }
+                    >
+                      Tentar novamente
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            ) : null}
           </View>
         }
       />
@@ -577,92 +1015,181 @@ export default function PublishedScreen({
 const localStyles =
   StyleSheet.create({
     list: {
-      paddingHorizontal: 16,
-      paddingTop: 16,
-      paddingBottom: 35,
+      paddingHorizontal:
+        16,
+
+      paddingTop:
+        16,
+
+      paddingBottom:
+        35,
     },
 
     emptyList: {
-      flexGrow: 1,
+      flexGrow:
+        1,
     },
 
     postContainer: {
-      width: '100%',
-      marginBottom: 20,
+      width:
+        '100%',
+
+      marginBottom:
+        20,
     },
 
     removeButton: {
-      width: '100%',
-      minHeight: 50,
+      width:
+        '100%',
 
-      marginTop: -8,
+      minHeight:
+        50,
 
-      borderRadius: 14,
+      flexDirection:
+        'row',
 
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems:
+        'center',
+
+      justifyContent:
+        'center',
+
+      marginTop:
+        -8,
+
+      borderRadius:
+        14,
 
       backgroundColor:
-        '#ef4444',
+        '#EF4444',
     },
 
     removeButtonText: {
-      marginLeft: 8,
+      marginLeft:
+        8,
 
-      color: '#ffffff',
+      color:
+        '#FFFFFF',
 
-      fontSize: 15,
+      fontSize:
+        15,
 
-      fontWeight: '700',
+      fontWeight:
+        '700',
     },
 
     loadingContainer: {
-      flex: 1,
+      flex:
+        1,
     },
 
     loadingContent: {
-      flex: 1,
+      flex:
+        1,
 
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems:
+        'center',
+
+      justifyContent:
+        'center',
     },
 
     loadingText: {
-      marginTop: 12,
+      marginTop:
+        12,
 
-      fontSize: 15,
+      fontSize:
+        15,
     },
 
     emptyContainer: {
-      flex: 1,
+      flex:
+        1,
 
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems:
+        'center',
 
-      paddingHorizontal: 30,
-      paddingBottom: 60,
+      justifyContent:
+        'center',
+
+      paddingHorizontal:
+        30,
+
+      paddingBottom:
+        60,
     },
 
     emptyTitle: {
-      marginTop: 16,
+      maxWidth:
+        320,
 
-      fontSize: 20,
+      marginTop:
+        16,
 
-      fontWeight: '800',
+      fontSize:
+        20,
 
-      textAlign: 'center',
+      fontWeight:
+        '800',
+
+      textAlign:
+        'center',
     },
 
     emptyDescription: {
-      marginTop: 8,
+      maxWidth:
+        320,
 
-      fontSize: 14,
+      marginTop:
+        8,
 
-      lineHeight: 21,
+      fontSize:
+        14,
 
-      textAlign: 'center',
+      lineHeight:
+        21,
+
+      textAlign:
+        'center',
+    },
+
+    retryButton: {
+      minWidth:
+        190,
+
+      minHeight:
+        48,
+
+      flexDirection:
+        'row',
+
+      alignItems:
+        'center',
+
+      justifyContent:
+        'center',
+
+      marginTop:
+        22,
+
+      paddingHorizontal:
+        20,
+
+      borderRadius:
+        24,
+    },
+
+    retryButtonText: {
+      marginLeft:
+        8,
+
+      color:
+        '#FFFFFF',
+
+      fontSize:
+        14,
+
+      fontWeight:
+        '800',
     },
   });
-
-  // Hi

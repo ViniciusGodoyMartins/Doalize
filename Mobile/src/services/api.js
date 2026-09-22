@@ -1,36 +1,36 @@
 import axios from 'axios';
 
 /*
- * ENDEREÇO LOCAL DA API
+ * ENDEREÇO DA API PARA
+ * CELULAR CONECTADO POR USB
  *
- * No emulador Android, 10.0.2.2
- * representa o computador em que
- * o backend está sendo executado.
+ * É necessário executar:
  *
- * Quando o backend for hospedado,
- * esta URL será substituída pela
- * URL pública da API.
+ * adb reverse tcp:3333 tcp:3333
+ *
+ * antes de abrir o aplicativo.
  */
 const API_URL =
-  'http://10.0.2.2:3333';
+  'http://127.0.0.1:3333';
 
 /*
  * INSTÂNCIA PRINCIPAL DA API
  */
-const api = axios.create({
-  baseURL:
-    API_URL,
+const api =
+  axios.create({
+    baseURL:
+      API_URL,
 
-  timeout:
-    30000,
+    timeout:
+      30000,
 
-  headers: {
-    Accept:
-      'application/json',
+    headers: {
+      Accept:
+        'application/json',
 
-    'Content-Type':
-      'application/json',
-  },
-});
+      'Content-Type':
+        'application/json',
+    },
+  });
 
 export default api;

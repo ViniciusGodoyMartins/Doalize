@@ -133,9 +133,9 @@ function ContactsStack() {
 /*
  * PILHA DO PERFIL
  *
- * As telas de alteração de e-mail
- * e verificação em duas etapas
- * precisam ficar nesta pilha.
+ * DetailsScreen também está nesta
+ * pilha para permitir abrir uma
+ * publicação a partir de Publicados.
  */
 function ProfileStack() {
   return (
@@ -156,6 +156,13 @@ function ProfileStack() {
         name="PublishedScreen"
         component={
           PublishedScreen
+        }
+      />
+
+      <Stack.Screen
+        name="DetailsScreen"
+        component={
+          DetailsScreen
         }
       />
 
@@ -186,9 +193,6 @@ function ProfileStack() {
 /*
  * VERIFICAR SE A PILHA ESTÁ
  * NA TELA PRINCIPAL
- *
- * O gesto horizontal das abas será
- * bloqueado nas telas internas.
  */
 function isStackOnMainScreen(
   route,
@@ -231,7 +235,7 @@ export default function AppRoutes() {
           false,
 
         tabBarActiveTintColor:
-          '#2563eb',
+          '#2563EB',
 
         tabBarInactiveTintColor:
           '#777777',
@@ -247,7 +251,7 @@ export default function AppRoutes() {
             5,
 
           backgroundColor:
-            '#ffffff',
+            '#FFFFFF',
 
           borderTopWidth:
             0,
@@ -461,9 +465,9 @@ export default function AppRoutes() {
             'Conta',
 
           /*
-           * Impede a troca de aba por gesto
-           * nas Configurações, troca de
-           * e-mail e verificação em duas etapas.
+           * Bloqueia a troca por gesto
+           * nas telas internas da conta,
+           * incluindo Publicados e Detalhes.
            */
           swipeEnabled:
             isStackOnMainScreen(

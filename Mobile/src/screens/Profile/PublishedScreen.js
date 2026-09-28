@@ -23,6 +23,7 @@ import {
 } from '@react-navigation/native';
 
 import Header from '../../components/Header';
+
 import PostCard from '../../components/PostCard';
 
 import {
@@ -41,230 +42,207 @@ import {
 
 import styles from './style';
 
-/*
- * EXTRAIR PUBLICAÇÕES
- * DA RESPOSTA DA API
- */
-function extractPostsFromResponse(
-  responseData
-) {
-  if (
-    Array.isArray(
-      responseData
-    )
-  ) {
-    return responseData;
-  }
-
-  if (
-    Array.isArray(
-      responseData?.posts
-    )
-  ) {
-    return responseData.posts;
-  }
-
-  if (
-    Array.isArray(
-      responseData?.data
-    )
-  ) {
-    return responseData.data;
-  }
-
-  if (
-    Array.isArray(
-      responseData
-        ?.data
-        ?.posts
-    )
-  ) {
-    return responseData
-      .data
-      .posts;
-  }
-
-  if (
-    Array.isArray(
-      responseData?.results
-    )
-  ) {
-    return responseData.results;
-  }
-
-  return [];
-}
 
 /*
- * NORMALIZAR PUBLICAÇÃO
- * COM SEGURANÇA
+ * ============================================================
+ * CORES
+ * ============================================================
+ *
+ * O fundo desta tela permanece sempre no mesmo Dark Mode
+ * utilizado no restante do aplicativo.
  */
-function normalizeUserPost(
-  post
-) {
-  if (
-    !post ||
-    typeof post !==
-      'object'
-  ) {
-    return null;
-  }
 
-  try {
-    const normalizedPost =
-      normalizePost(
-        post
-      );
+const COLORS = {
+  background:
+    '#141414',
 
-    if (
-      normalizedPost &&
-      typeof normalizedPost ===
-        'object'
-    ) {
-      return {
-        ...post,
-        ...normalizedPost,
+  text:
+    '#F5F5F5',
 
-        user: {
-          ...post?.user,
-          ...normalizedPost?.user,
-        },
+  textSecondary:
+    'rgba(245, 245, 245, 0.68)',
 
-        promoted:
-          Boolean(
-            normalizedPost
-              ?.promoted ??
-            post?.promoted
-          ),
+  primary:
+    '#3AC2F8',
 
-        promoted_by_me:
-          Boolean(
-            normalizedPost
-              ?.promoted_by_me ??
-            post?.promoted_by_me
-          ),
+  danger:
+    '#D83A3A',
 
-        promotion_count:
-          Math.max(
-            0,
-            Number(
-              normalizedPost
-                ?.promotion_count ??
-              post
-                ?.promotion_count ??
-              0
-            )
-          ),
-      };
-    }
+  white:
+    '#FFFFFF',
 
-    return post;
-  } catch (error) {
-    console.log(
-      'ERRO AO NORMALIZAR PUBLICAÇÃO DO USUÁRIO:',
-      {
-        postId:
-          post?.id,
+  border:
+    'rgba(245, 245, 245, 0.18)',
+};
 
-        message:
-          error.message,
-      }
-    );
 
-    return post;
-  }
-}
+/*
+ * ============================================================
+ * PUBLISHED SCREEN
+ * ============================================================
+ */
 
 export default function PublishedScreen({
   navigation,
 }) {
+
+  /*
+   * ==========================================================
+   * TEMA
+   * ==========================================================
+   *
+   * Continuamos usando useTheme para manter compatibilidade
+   * com o restante do aplicativo e com o modo claro futuro.
+   *
+   * Porém, o fundo desta tela é controlado diretamente por
+   * COLORS.background para garantir o Dark Mode padrão.
+   */
+
   const {
     theme,
   } = useTheme();
 
+
+  /*
+   * ==========================================================
+   * USUÁRIO
+   * ==========================================================
+   */
+
   const {
     user,
   } = useAuth();
+
+
+  /*
+   * ==========================================================
+   * PUBLICAÇÕES
+   * ==========================================================
+   */
 
   const [
     posts,
     setPosts,
   ] = useState([]);
 
+
+  /*
+   * ==========================================================
+   * CARREGAMENTO
+   * ==========================================================
+   */
+
   const [
     loading,
     setLoading,
   ] = useState(true);
+
 
   const [
     refreshing,
     setRefreshing,
   ] = useState(false);
 
+
+  /*
+   * ==========================================================
+   * EXCLUSÃO
+   * ==========================================================
+   */
+
   const [
     deletingPostId,
     setDeletingPostId,
   ] = useState(null);
 
-  const [
-    promotingPostId,
-    setPromotingPostId,
-  ] = useState(null);
-
-  const [
-    loadError,
-    setLoadError,
-  ] = useState(false);
 
   /*
+   * ==========================================================
    * BUSCAR PUBLICAÇÕES
-   * DO USUÁRIO LOGADO
+   * ==========================================================
+   *
+   * A API continua exatamente igual.
    */
+
   const loadPosts =
     useCallback(
       async (
         showLoading = true
       ) => {
+
+        /*
+         * Caso não exista usuário logado,
+         * limpa a lista.
+         */
+
         if (!user?.id) {
+
           setPosts([]);
-          setLoading(false);
-          setRefreshing(false);
-          setLoadError(false);
+
+          setLoading(
+            false
+          );
+
+          setRefreshing(
+            false
+          );
 
           return;
         }
 
-        try {
-          setLoadError(
-            false
-          );
 
-          if (showLoading) {
+        try {
+
+          if (
+            showLoading
+          ) {
+
             setLoading(
               true
             );
+
           }
+
+
+          /*
+           * Buscar todas as publicações.
+           */
 
           const response =
             await api.get(
               '/posts'
             );
 
+
+          /*
+           * Aceitar tanto array direto
+           * quanto resposta contendo posts.
+           */
+
           const receivedPosts =
-            extractPostsFromResponse(
+            Array.isArray(
               response.data
-            );
+            )
+              ? response.data
+              : response.data?.posts ||
+                [];
+
+
+          /*
+           * Filtrar somente as publicações
+           * do usuário atual.
+           */
 
           const userPosts =
             receivedPosts
               .filter(
-                (
-                  post
-                ) => {
+                (post) => {
+
                   const postUserId =
                     post?.user_id ??
                     post?.userId ??
                     post?.user?.id;
+
 
                   return (
                     Number(
@@ -274,14 +252,16 @@ export default function PublishedScreen({
                       user.id
                     )
                   );
+
                 }
               )
               .map(
-                normalizeUserPost
-              )
-              .filter(
-                Boolean
+                (post) =>
+                  normalizePost(
+                    post
+                  )
               );
+
 
           console.log(
             'PUBLICAÇÕES DO USUÁRIO:',
@@ -294,10 +274,13 @@ export default function PublishedScreen({
             }
           );
 
+
           setPosts(
             userPosts
           );
+
         } catch (error) {
+
           console.log(
             'ERRO AO BUSCAR PUBLICAÇÕES DO USUÁRIO:',
             {
@@ -314,18 +297,17 @@ export default function PublishedScreen({
             }
           );
 
-          setLoadError(
-            true
-          );
 
           Alert.alert(
             'Erro',
-            error.response
-              ?.data
+
+            error.response?.data
               ?.message ||
               'Não foi possível carregar suas publicações.'
           );
+
         } finally {
+
           setLoading(
             false
           );
@@ -333,38 +315,45 @@ export default function PublishedScreen({
           setRefreshing(
             false
           );
+
         }
+
       },
       [
         user?.id,
       ]
     );
 
-  /*
-   * ATUALIZAR QUANDO
-   * A TELA RECEBER FOCO
-   */
-  useFocusEffect(
-    useCallback(() => {
-      loadPosts(
-        true
-      );
-    }, [
-      loadPosts,
-    ])
-  );
 
   /*
-   * ATUALIZAR ARRASTANDO
-   * PARA BAIXO
+   * ==========================================================
+   * ATUALIZAR AO RECEBER FOCO
+   * ==========================================================
    */
+
+  useFocusEffect(
+    useCallback(
+      () => {
+
+        loadPosts(
+          true
+        );
+
+      },
+      [
+        loadPosts,
+      ]
+    )
+  );
+
+
+  /*
+   * ==========================================================
+   * ATUALIZAR MANUALMENTE
+   * ==========================================================
+   */
+
   function handleRefresh() {
-    if (
-      refreshing ||
-      loading
-    ) {
-      return;
-    }
 
     setRefreshing(
       true
@@ -373,35 +362,19 @@ export default function PublishedScreen({
     loadPosts(
       false
     );
+
   }
 
-  /*
-   * TENTAR CARREGAR
-   * NOVAMENTE
-   */
-  function handleRetry() {
-    if (
-      loading ||
-      refreshing
-    ) {
-      return;
-    }
-
-    loadPosts(
-      true
-    );
-  }
 
   /*
+   * ==========================================================
    * ABRIR DETALHES
-   * DA PUBLICAÇÃO
+   * ==========================================================
    */
+
   function handleOpenPost(
     post
   ) {
-    if (!post) {
-      return;
-    }
 
     navigation.navigate(
       'DetailsScreen',
@@ -409,62 +382,34 @@ export default function PublishedScreen({
         post,
       }
     );
+
   }
 
+
   /*
-   * PROMOVER OU REMOVER
-   * A PROMOÇÃO
+   * ==========================================================
+   * PROMOVER PUBLICAÇÃO
+   * ==========================================================
    */
+
   async function handlePromote(
     post
   ) {
-    if (
-      !post?.id ||
-      promotingPostId !==
-        null ||
-      deletingPostId !==
-        null
-    ) {
-      return;
-    }
 
     try {
-      setPromotingPostId(
-        post.id
-      );
 
       const response =
         await api.post(
           `/posts/promote/${post.id}`
         );
 
-      const responseData =
-        response.data ||
-        {};
 
       const promoted =
         Boolean(
-          responseData.promoted
+          response.data
+            ?.promoted
         );
 
-      const promotedByMe =
-        Boolean(
-          responseData
-            .promoted_by_me ??
-          promoted
-        );
-
-      const promotionCount =
-        Math.max(
-          0,
-          Number(
-            responseData
-              .promotion_count ??
-            post
-              ?.promotion_count ??
-            0
-          )
-        );
 
       setPosts(
         (
@@ -473,44 +418,37 @@ export default function PublishedScreen({
           currentPosts.map(
             (
               currentPost
-            ) => {
-              if (
-                Number(
-                  currentPost.id
-                ) !==
-                Number(
-                  post.id
-                )
-              ) {
-                return currentPost;
-              }
+            ) =>
 
-              return {
-                ...currentPost,
+              currentPost.id ===
+              post.id
 
-                promoted,
+                ? {
+                    ...currentPost,
 
-                promoted_by_me:
-                  promotedByMe,
+                    promoted,
+                  }
 
-                promotion_count:
-                  promotionCount,
-              };
-            }
+                : currentPost
+
           )
       );
 
+
       Alert.alert(
         'Sucesso',
-        responseData
+
+        response.data
           ?.message ||
           (
-            promotedByMe
+            promoted
               ? 'Publicação promovida.'
               : 'Promoção removida.'
           )
       );
+
     } catch (error) {
+
       console.log(
         'ERRO AO PROMOVER PUBLICAÇÃO:',
         {
@@ -520,49 +458,41 @@ export default function PublishedScreen({
           message:
             error.message,
 
-          status:
-            error.response
-              ?.status,
-
           response:
             error.response
               ?.data,
         }
       );
 
+
       Alert.alert(
         'Erro',
-        error.response
-          ?.data
+
+        error.response?.data
           ?.message ||
-          'Não foi possível alterar a promoção.'
+          'Não foi possível promover a publicação.'
       );
-    } finally {
-      setPromotingPostId(
-        null
-      );
+
     }
+
   }
 
+
   /*
+   * ==========================================================
    * CONFIRMAR EXCLUSÃO
+   * ==========================================================
    */
+
   function handleDelete(
     post
   ) {
-    if (
-      !post?.id ||
-      deletingPostId !==
-        null ||
-      promotingPostId !==
-        null
-    ) {
-      return;
-    }
 
     Alert.alert(
       'Excluir publicação',
+
       'Deseja realmente excluir esta publicação? Essa ação não poderá ser desfeita.',
+
       [
         {
           text:
@@ -580,50 +510,57 @@ export default function PublishedScreen({
             'destructive',
 
           onPress: () => {
+
             confirmDelete(
               post
             );
+
           },
         },
-      ],
-      {
-        cancelable:
-          true,
-      }
+      ]
     );
+
   }
 
+
   /*
-   * EXCLUIR PUBLICAÇÃO
+   * ==========================================================
+   * EXCLUSÃO REAL
+   * ==========================================================
    */
+
   async function confirmDelete(
     post
   ) {
+
     if (!post?.id) {
+
       Alert.alert(
         'Erro',
+
         'A publicação selecionada é inválida.'
       );
 
       return;
     }
 
-    if (
-      deletingPostId !==
-      null
-    ) {
-      return;
-    }
 
     try {
+
       setDeletingPostId(
         post.id
       );
+
 
       const response =
         await api.delete(
           `/posts/${post.id}`
         );
+
+
+      /*
+       * Remove imediatamente da tela.
+       */
 
       setPosts(
         (
@@ -633,22 +570,22 @@ export default function PublishedScreen({
             (
               currentPost
             ) =>
-              Number(
-                currentPost.id
-              ) !==
-              Number(
-                post.id
-              )
+              currentPost.id !==
+              post.id
           )
       );
 
+
       Alert.alert(
         'Sucesso',
+
         response.data
           ?.message ||
           'Publicação excluída.'
       );
+
     } catch (error) {
+
       console.log(
         'ERRO AO EXCLUIR PUBLICAÇÃO:',
         {
@@ -668,224 +605,275 @@ export default function PublishedScreen({
         }
       );
 
+
       Alert.alert(
         'Erro',
-        error.response
-          ?.data
+
+        error.response?.data
           ?.message ||
           'Não foi possível excluir a publicação.'
       );
+
     } finally {
+
       setDeletingPostId(
         null
       );
+
     }
+
   }
 
+
   /*
+   * ==========================================================
    * COMPARTILHAMENTO
+   * ==========================================================
    */
+
   function handleShare() {
+
     Alert.alert(
       'Compartilhar',
+
       'A função de compartilhamento será adicionada em breve.'
     );
+
   }
 
+
   /*
-   * RENDERIZAR PUBLICAÇÃO
+   * ==========================================================
+   * ITEM DA LISTA
+   * ==========================================================
    */
+
   function renderItem({
     item,
   }) {
+
     const isDeleting =
-      Number(
-        deletingPostId
-      ) ===
-      Number(
-        item?.id
-      );
+      deletingPostId ===
+      item.id;
 
-    const isPromoting =
-      Number(
-        promotingPostId
-      ) ===
-      Number(
-        item?.id
-      );
-
-    const itemBusy =
-      isDeleting ||
-      isPromoting;
 
     return (
+
       <View
         style={
           localStyles.postContainer
         }
       >
+
         <PostCard
+
           post={
             item
           }
-          onPress={() => {
-            if (!itemBusy) {
-              handleOpenPost(
-                item
-              );
-            }
-          }}
-          onShare={() => {
-            if (!itemBusy) {
-              handleShare(
-                item
-              );
-            }
-          }}
-          onPromote={() => {
-            if (!itemBusy) {
-              handlePromote(
-                item
-              );
-            }
-          }}
+
+          onPress={() =>
+            handleOpenPost(
+              item
+            )
+          }
+
+          onShare={() =>
+            handleShare(
+              item
+            )
+          }
+
+          onPromote={() =>
+            handlePromote(
+              item
+            )
+          }
+
         />
 
+
+        {/* ==================================================
+            BOTÃO EXCLUIR
+            ================================================== */}
+
         <TouchableOpacity
-          activeOpacity={0.8}
-          disabled={
-            itemBusy
+
+          activeOpacity={
+            0.8
           }
-          onPress={() => {
+
+          disabled={
+            isDeleting
+          }
+
+          onPress={() =>
             handleDelete(
               item
-            );
-          }}
-          accessibilityRole="button"
-          accessibilityLabel="Excluir publicação"
-          accessibilityState={{
-            disabled:
-              itemBusy,
-          }}
+            )
+          }
+
           style={[
             localStyles.removeButton,
+
             {
               opacity:
-                itemBusy
+                isDeleting
                   ? 0.65
                   : 1,
             },
           ]}
+
         >
-          {isDeleting ? (
-            <ActivityIndicator
-              size="small"
-              color="#FFFFFF"
-            />
-          ) : (
-            <>
-              <Ionicons
-                name="trash-outline"
-                size={20}
-                color="#FFFFFF"
+
+          {
+            isDeleting ? (
+
+              <ActivityIndicator
+                size="small"
+                color={
+                  COLORS.white
+                }
               />
 
-              <Text
+            ) : (
+
+              <View
                 style={
-                  localStyles.removeButtonText
+                  localStyles.removeButtonContent
                 }
               >
-                Excluir publicação
-              </Text>
-            </>
-          )}
+
+                <Ionicons
+                  name="trash-outline"
+                  size={20}
+                  color={
+                    COLORS.white
+                  }
+                />
+
+                <Text
+                  style={
+                    localStyles.removeButtonText
+                  }
+                >
+                  Excluir publicação
+                </Text>
+
+              </View>
+
+            )
+          }
+
         </TouchableOpacity>
+
       </View>
+
     );
+
   }
 
+
   /*
-   * CARREGAMENTO INICIAL
+   * ==========================================================
+   * LOADING
+   * ==========================================================
+   *
+   * O fundo é explicitamente #141414.
    */
+
   if (loading) {
+
     return (
+
       <View
         style={[
           styles.container,
+
           localStyles.loadingContainer,
-          {
-            backgroundColor:
-              theme.background,
-          },
         ]}
       >
+
         <Header
           title="Publicados"
           showBackButton
         />
+
 
         <View
           style={
             localStyles.loadingContent
           }
         >
+
           <ActivityIndicator
             size="large"
             color={
-              theme.primary
+              COLORS.primary
             }
           />
 
+
           <Text
-            style={[
-              localStyles.loadingText,
-              {
-                color:
-                  theme.textSecondary,
-              },
-            ]}
+            style={
+              localStyles.loadingText
+            }
           >
             Carregando publicações...
           </Text>
+
         </View>
+
       </View>
+
     );
+
   }
 
+
+  /*
+   * ==========================================================
+   * TELA PRINCIPAL
+   * ==========================================================
+   */
+
   return (
+
     <View
-      style={[
-        styles.container,
-        {
-          backgroundColor:
-            theme.background,
-        },
-      ]}
+      style={
+        styles.container
+      }
     >
+
       <Header
         title="Publicados"
         showBackButton
       />
 
+
       <FlatList
+
         data={
           posts
         }
+
         keyExtractor={(
           item,
           index
         ) =>
           String(
             item?.id ??
-            index
+              index
           )
         }
+
         renderItem={
           renderItem
         }
+
         showsVerticalScrollIndicator={
           false
         }
+
         contentContainerStyle={[
           localStyles.list,
 
@@ -894,126 +882,93 @@ export default function PublishedScreen({
             ? localStyles.emptyList
             : null,
         ]}
+
         refreshControl={
+
           <RefreshControl
+
             refreshing={
               refreshing
             }
+
             onRefresh={
               handleRefresh
             }
+
             colors={[
-              theme.primary,
+              COLORS.primary,
             ]}
+
             tintColor={
-              theme.primary
+              COLORS.primary
             }
+
           />
+
         }
+
         ListEmptyComponent={
+
           <View
             style={
               localStyles.emptyContainer
             }
           >
+
             <Ionicons
-              name={
-                loadError
-                  ? 'cloud-offline-outline'
-                  : 'images-outline'
-              }
+              name="images-outline"
               size={58}
               color={
-                theme.textSecondary
+                COLORS.textSecondary
               }
             />
 
-            <Text
-              style={[
-                localStyles.emptyTitle,
-                {
-                  color:
-                    theme.text,
-                },
-              ]}
-            >
-              {loadError
-                ? 'Não foi possível carregar'
-                : 'Nenhuma publicação'}
-            </Text>
 
             <Text
-              style={[
-                localStyles.emptyDescription,
-                {
-                  color:
-                    theme.textSecondary,
-                },
-              ]}
+              style={
+                localStyles.emptyTitle
+              }
             >
-              {loadError
-                ? 'Não foi possível carregar suas publicações.'
-                : 'As publicações criadas por você aparecerão aqui.'}
+              Nenhuma publicação
             </Text>
 
-            {loadError ? (
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={
-                  handleRetry
-                }
-                disabled={
-                  loading ||
-                  refreshing
-                }
-                style={[
-                  localStyles.retryButton,
-                  {
-                    backgroundColor:
-                      theme.primary,
 
-                    opacity:
-                      loading ||
-                      refreshing
-                        ? 0.6
-                        : 1,
-                  },
-                ]}
-              >
-                {loading ||
-                refreshing ? (
-                  <ActivityIndicator
-                    size="small"
-                    color="#FFFFFF"
-                  />
-                ) : (
-                  <>
-                    <Ionicons
-                      name="refresh-outline"
-                      size={20}
-                      color="#FFFFFF"
-                    />
+            <Text
+              style={
+                localStyles.emptyDescription
+              }
+            >
+              As publicações criadas por você aparecerão aqui.
+            </Text>
 
-                    <Text
-                      style={
-                        localStyles.retryButtonText
-                      }
-                    >
-                      Tentar novamente
-                    </Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            ) : null}
           </View>
+
         }
+
       />
+
     </View>
+
   );
+
 }
+
+
+/*
+ * ============================================================
+ * ESTILOS LOCAIS
+ * ============================================================
+ */
 
 const localStyles =
   StyleSheet.create({
+
+    /*
+     * ========================================================
+     * LISTA
+     * ========================================================
+     */
+
     list: {
       paddingHorizontal:
         16,
@@ -1023,12 +978,26 @@ const localStyles =
 
       paddingBottom:
         35,
+
+      backgroundColor:
+        '#141414',
     },
+
 
     emptyList: {
       flexGrow:
         1,
+
+      backgroundColor:
+        '#141414',
     },
+
+
+    /*
+     * ========================================================
+     * PUBLICAÇÃO
+     * ========================================================
+     */
 
     postContainer: {
       width:
@@ -1036,7 +1005,17 @@ const localStyles =
 
       marginBottom:
         20,
+
+      backgroundColor:
+        '#141414',
     },
+
+
+    /*
+     * ========================================================
+     * BOTÃO REMOVER
+     * ========================================================
+     */
 
     removeButton: {
       width:
@@ -1045,6 +1024,27 @@ const localStyles =
       minHeight:
         50,
 
+      marginTop:
+        -8,
+
+      borderRadius:
+        10,
+
+      alignItems:
+        'center',
+
+      justifyContent:
+        'center',
+
+      backgroundColor:
+        '#D83A3A',
+
+      overflow:
+        'hidden',
+    },
+
+
+    removeButtonContent: {
       flexDirection:
         'row',
 
@@ -1053,16 +1053,8 @@ const localStyles =
 
       justifyContent:
         'center',
-
-      marginTop:
-        -8,
-
-      borderRadius:
-        14,
-
-      backgroundColor:
-        '#EF4444',
     },
+
 
     removeButtonText: {
       marginLeft:
@@ -1074,14 +1066,31 @@ const localStyles =
       fontSize:
         15,
 
+      lineHeight:
+        19,
+
       fontWeight:
-        '700',
+        '600',
+
+      includeFontPadding:
+        false,
     },
+
+
+    /*
+     * ========================================================
+     * LOADING
+     * ========================================================
+     */
 
     loadingContainer: {
       flex:
         1,
+
+      backgroundColor:
+        '#141414',
     },
+
 
     loadingContent: {
       flex:
@@ -1092,7 +1101,11 @@ const localStyles =
 
       justifyContent:
         'center',
+
+      backgroundColor:
+        '#141414',
     },
+
 
     loadingText: {
       marginTop:
@@ -1100,7 +1113,26 @@ const localStyles =
 
       fontSize:
         15,
+
+      lineHeight:
+        20,
+
+      color:
+        '#AEB8BD',
+
+      textAlign:
+        'center',
+
+      includeFontPadding:
+        false,
     },
+
+
+    /*
+     * ========================================================
+     * ESTADO VAZIO
+     * ========================================================
+     */
 
     emptyContainer: {
       flex:
@@ -1117,29 +1149,37 @@ const localStyles =
 
       paddingBottom:
         60,
+
+      backgroundColor:
+        '#141414',
     },
 
-    emptyTitle: {
-      maxWidth:
-        320,
 
+    emptyTitle: {
       marginTop:
         16,
 
       fontSize:
         20,
 
+      lineHeight:
+        25,
+
       fontWeight:
-        '800',
+        '700',
+
+      color:
+        '#F5F5F5',
 
       textAlign:
         'center',
+
+      includeFontPadding:
+        false,
     },
 
-    emptyDescription: {
-      maxWidth:
-        320,
 
+    emptyDescription: {
       marginTop:
         8,
 
@@ -1149,47 +1189,14 @@ const localStyles =
       lineHeight:
         21,
 
+      color:
+        '#AEB8BD',
+
       textAlign:
         'center',
+
+      includeFontPadding:
+        false,
     },
 
-    retryButton: {
-      minWidth:
-        190,
-
-      minHeight:
-        48,
-
-      flexDirection:
-        'row',
-
-      alignItems:
-        'center',
-
-      justifyContent:
-        'center',
-
-      marginTop:
-        22,
-
-      paddingHorizontal:
-        20,
-
-      borderRadius:
-        24,
-    },
-
-    retryButtonText: {
-      marginLeft:
-        8,
-
-      color:
-        '#FFFFFF',
-
-      fontSize:
-        14,
-
-      fontWeight:
-        '800',
-    },
   });

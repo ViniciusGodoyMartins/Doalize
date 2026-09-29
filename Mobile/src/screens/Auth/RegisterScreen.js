@@ -33,205 +33,219 @@ import {
   useAuth,
 } from '../../hooks/useAuth';
 
-import logo from '../../../assets/logo.png';
-
+import {
+  useTheme,
+} from '../../hooks/useTheme';
 
 /*
- * ============================================================
- * CORES OFICIAIS DO DOALIZE
- * ============================================================
+ * LOGOS
  */
+const logoDark =
+  require(
+    '../../../assets/logo.png'
+  );
 
+const logoLight =
+  require(
+    '../../../assets/logomodoclaro.png'
+  );
+
+/*
+ * CORES OFICIAIS
+ * DO DOALIZE
+ */
 const COLORS = {
-
   /*
-   * FUNDO PRINCIPAL DARK
+   * FUNDOS
    */
   background:
     '#141414',
 
-  /*
-   * FUNDO DO LIGHT MODE
-   *
-   * Mantido para utilização futura.
-   */
   lightBackground:
     '#F5F5F5',
 
   /*
-   * AZUL PRINCIPAL
+   * AZUIS
    */
   primary:
     '#3AC2F8',
 
-  /*
-   * AZUL SECUNDÁRIO
-   */
   secondary:
     '#2594BD',
 
-  /*
-   * AZUL DOS CAMPOS
-   */
   input:
     '#05618D',
 
-  /*
-   * AZUL DE APOIO
-   */
   support:
     '#128090',
 
-  /*
-   * AZUL PROFUNDO
-   */
   deepBlue:
     '#155269',
 
   /*
-   * TEXTO CLARO
+   * TEXTOS
    */
   lightText:
     '#F5F5F5',
 
-  /*
-   * TEXTO ESCURO
-   *
-   * Mantido para o futuro Light Mode.
-   */
   darkText:
     '#141414',
 
-  /*
-   * BRANCO
-   */
   white:
     '#FFFFFF',
 
   /*
-   * BORDA DISCRETA
+   * BORDAS
    */
   border:
     'rgba(245, 245, 245, 0.30)',
 
+  lightBorder:
+    'rgba(20, 20, 20, 0.24)',
+
+  /*
+   * TEXTOS SECUNDÁRIOS
+   */
+  darkSecondaryText:
+    'rgba(245, 245, 245, 0.68)',
+
+  lightSecondaryText:
+    'rgba(20, 20, 20, 0.68)',
 };
 
-
 /*
- * ============================================================
  * VERSÕES DOS DOCUMENTOS
- * ============================================================
  */
-
 const TERMS_VERSION =
   '1.0';
 
 const PRIVACY_VERSION =
   '1.0';
 
-
-/*
- * ============================================================
- * REGISTER SCREEN
- * ============================================================
- */
-
 export default function RegisterScreen() {
-
   const navigation =
     useNavigation();
 
-
   const route =
     useRoute();
-
-
-  /*
-   * ==========================================================
-   * AUTENTICAÇÃO
-   * ==========================================================
-   *
-   * Mantém o AuthContext original.
-   */
 
   const {
     signUp,
   } = useAuth();
 
-
-  /*
-   * ==========================================================
-   * ESTADOS
-   * ==========================================================
-   */
+  const {
+    darkMode,
+  } = useTheme();
 
   const [
     name,
     setName,
   ] = useState('');
 
-
   const [
     email,
     setEmail,
   ] = useState('');
-
 
   const [
     password,
     setPassword,
   ] = useState('');
 
-
   const [
     confirmPassword,
     setConfirmPassword,
   ] = useState('');
-
 
   const [
     loading,
     setLoading,
   ] = useState(false);
 
-
   const [
     termsAccepted,
     setTermsAccepted,
   ] = useState(false);
-
 
   const [
     termsAcceptedAt,
     setTermsAcceptedAt,
   ] = useState(null);
 
+  /*
+   * CORES DO TEMA
+   *
+   * Somente cores são alteradas.
+   * As dimensões continuam nos estilos
+   * originais no final deste arquivo.
+   */
+  const screenBackground =
+    darkMode
+      ? COLORS.background
+      : COLORS.lightBackground;
+
+  const mainTextColor =
+    darkMode
+      ? COLORS.lightText
+      : COLORS.darkText;
+
+  const secondaryTextColor =
+    darkMode
+      ? COLORS.darkSecondaryText
+      : COLORS.lightSecondaryText;
+
+  const standardBorderColor =
+    darkMode
+      ? COLORS.border
+      : COLORS.lightBorder;
+
+  const backIconColor =
+    darkMode
+      ? COLORS.lightText
+      : COLORS.darkText;
+
+  const selectedLogo =
+    darkMode
+      ? logoDark
+      : logoLight;
+
+  const mainButtonTextColor =
+    darkMode
+      ? COLORS.white
+      : COLORS.darkText;
+
+  const requiredNoticeBackground =
+    darkMode
+      ? COLORS.deepBlue
+      : 'rgba(5, 97, 141, 0.10)';
+
+  const requiredNoticeBorder =
+    darkMode
+      ? 'rgba(21, 82, 105, 0.75)'
+      : COLORS.secondary;
+
+  const requiredNoticeTextColor =
+    darkMode
+      ? 'rgba(245, 245, 245, 0.78)'
+      : COLORS.darkText;
 
   /*
-   * ============================================================
-   * RECEBER O ACEITE DA TELA DE TERMOS
-   * ============================================================
-   *
-   * Toda a lógica original foi mantida.
+   * RECEBER O ACEITE
+   * DA TELA DE TERMOS
    */
-
   useEffect(() => {
-
     const accepted =
       route.params
         ?.termsAccepted ===
       true;
 
-
     const acceptedTermsVersion =
       route.params
         ?.termsVersion;
 
-
     const acceptedPrivacyVersion =
       route.params
         ?.privacyVersion;
-
 
     const versionsMatch =
       acceptedTermsVersion ===
@@ -239,16 +253,13 @@ export default function RegisterScreen() {
       acceptedPrivacyVersion ===
         PRIVACY_VERSION;
 
-
     if (
       accepted &&
       versionsMatch
     ) {
-
       setTermsAccepted(
         true
       );
-
 
       setTermsAcceptedAt(
         route.params
@@ -257,30 +268,23 @@ export default function RegisterScreen() {
           .toISOString()
       );
 
-
       return;
     }
-
 
     if (
       route.params
         ?.termsAccepted ===
       false
     ) {
-
       setTermsAccepted(
         false
       );
 
-
       setTermsAcceptedAt(
         null
       );
-
     }
-
   }, [
-
     route.params
       ?.termsAccepted,
 
@@ -292,48 +296,33 @@ export default function RegisterScreen() {
 
     route.params
       ?.privacyVersion,
-
   ]);
 
-
   /*
-   * ============================================================
    * VALIDAR E-MAIL
-   * ============================================================
    */
-
   function isValidEmail(
     emailValue
   ) {
-
     const emailPattern =
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 
     return emailPattern.test(
       emailValue
     );
-
   }
 
-
   /*
-   * ============================================================
    * ABRIR TERMOS
-   * ============================================================
    */
-
   function handleOpenTerms() {
-
     if (loading) {
       return;
     }
 
-
     navigation.navigate(
       'TermsPrivacyScreen',
       {
-
         termsVersion:
           TERMS_VERSION,
 
@@ -342,49 +331,35 @@ export default function RegisterScreen() {
 
         alreadyAccepted:
           termsAccepted,
-
       }
     );
-
   }
 
-
   /*
-   * ============================================================
    * CADASTRAR CONTA
-   * ============================================================
-   *
-   * Toda a lógica original de validação e signUp() foi mantida.
    */
-
   async function handleRegister() {
-
     if (loading) {
       return;
     }
 
-
     const normalizedName =
       name.trim();
-
 
     const normalizedEmail =
       email
         .trim()
         .toLowerCase();
 
-
     /*
      * CAMPOS OBRIGATÓRIOS
      */
-
     if (
       !normalizedName ||
       !normalizedEmail ||
       !password ||
       !confirmPassword
     ) {
-
       Alert.alert(
         'Atenção',
         'Preencha todos os campos.'
@@ -393,16 +368,13 @@ export default function RegisterScreen() {
       return;
     }
 
-
     /*
      * TAMANHO DO NOME
      */
-
     if (
       normalizedName.length <
       2
     ) {
-
       Alert.alert(
         'Atenção',
         'O nome deve possuir pelo menos 2 caracteres.'
@@ -411,12 +383,10 @@ export default function RegisterScreen() {
       return;
     }
 
-
     if (
       normalizedName.length >
       120
     ) {
-
       Alert.alert(
         'Atenção',
         'O nome deve possuir no máximo 120 caracteres.'
@@ -425,17 +395,14 @@ export default function RegisterScreen() {
       return;
     }
 
-
     /*
      * E-MAIL
      */
-
     if (
       !isValidEmail(
         normalizedEmail
       )
     ) {
-
       Alert.alert(
         'Atenção',
         'Informe um endereço de e-mail válido.'
@@ -444,16 +411,13 @@ export default function RegisterScreen() {
       return;
     }
 
-
     /*
      * SENHA
      */
-
     if (
       password.length <
       6
     ) {
-
       Alert.alert(
         'Atenção',
         'A senha deve possuir pelo menos 6 caracteres.'
@@ -462,16 +426,13 @@ export default function RegisterScreen() {
       return;
     }
 
-
     /*
      * CONFIRMAÇÃO DA SENHA
      */
-
     if (
       password !==
       confirmPassword
     ) {
-
       Alert.alert(
         'Atenção',
         'As senhas não coincidem.'
@@ -480,21 +441,17 @@ export default function RegisterScreen() {
       return;
     }
 
-
     /*
      * TERMOS
      */
-
     if (
       !termsAccepted ||
       !termsAcceptedAt
     ) {
-
       Alert.alert(
         'Termos não aceitos',
         'Para criar sua conta, abra os Termos de Uso e a Política de Privacidade, role até o final e confirme que leu e concorda com os documentos.',
         [
-
           {
             text:
               'Cancelar',
@@ -510,32 +467,19 @@ export default function RegisterScreen() {
             onPress:
               handleOpenTerms,
           },
-
         ]
       );
 
       return;
     }
 
-
     try {
-
       setLoading(
         true
       );
 
-
-      /*
-       * ========================================================
-       * BACKEND ORIGINAL
-       * ========================================================
-       *
-       * Não alterado.
-       */
-
       const response =
         await signUp({
-
           name:
             normalizedName,
 
@@ -554,18 +498,11 @@ export default function RegisterScreen() {
 
           privacyVersion:
             PRIVACY_VERSION,
-
         });
-
-
-      /*
-       * ERRO NO CADASTRO
-       */
 
       if (
         !response?.success
       ) {
-
         Alert.alert(
           'Erro',
           response?.message ||
@@ -575,40 +512,27 @@ export default function RegisterScreen() {
         return;
       }
 
-
-      /*
-       * CADASTRO CONCLUÍDO
-       */
-
       Alert.alert(
         'Conta criada',
         'Sua conta foi criada com sucesso.',
         [
-
           {
             text:
               'Fazer login',
 
             onPress: () => {
-
               navigation.navigate(
                 'LoginScreen'
               );
-
             },
-
           },
-
         ],
         {
           cancelable:
             false,
         }
       );
-
-
     } catch (error) {
-
       console.log(
         'ERRO AO CRIAR CONTA:',
         {
@@ -625,7 +549,6 @@ export default function RegisterScreen() {
         }
       );
 
-
       Alert.alert(
         'Erro',
         error.response
@@ -633,110 +556,86 @@ export default function RegisterScreen() {
           ?.message ||
           'Não foi possível criar a conta.'
       );
-
-
     } finally {
-
       setLoading(
         false
       );
-
     }
-
   }
 
-
   /*
-   * ============================================================
    * VOLTAR
-   * ============================================================
    */
-
   function handleBack() {
-
     if (loading) {
       return;
     }
 
-
     if (
       navigation.canGoBack()
     ) {
-
       navigation.goBack();
 
       return;
     }
 
-
     navigation.navigate(
       'WelcomeScreen'
     );
-
   }
 
-
   /*
-   * ============================================================
    * ABRIR LOGIN
-   * ============================================================
    */
-
   function handleOpenLogin() {
-
     if (loading) {
       return;
     }
 
-
     navigation.navigate(
       'LoginScreen'
     );
-
   }
-
-
-  /*
-   * ============================================================
-   * RENDERIZAÇÃO
-   * ============================================================
-   */
 
   return (
     <SafeAreaView
-      style={
-        styles.safeArea
-      }
+      style={[
+        styles.safeArea,
+        {
+          backgroundColor:
+            screenBackground,
+        },
+      ]}
     >
-
-      {/* ======================================================
-          STATUS BAR
-          ====================================================== */}
-
       <StatusBar
-        barStyle="light-content"
+        barStyle={
+          darkMode
+            ? 'light-content'
+            : 'dark-content'
+        }
         backgroundColor={
-          COLORS.background
+          screenBackground
         }
       />
 
-
       <KeyboardAvoidingView
-        style={
-          styles.container
-        }
+        style={[
+          styles.container,
+          {
+            backgroundColor:
+              screenBackground,
+          },
+        ]}
         behavior={
-          Platform.OS === 'ios'
+          Platform.OS ===
+          'ios'
             ? 'padding'
             : undefined
         }
       >
-
-
-        {/* ====================================================
-            BOTÃO VOLTAR
-            ==================================================== */}
-
+        {/*
+         * BOTÃO VOLTAR
+         */}
         <TouchableOpacity
           activeOpacity={0.72}
           onPress={
@@ -757,22 +656,18 @@ export default function RegisterScreen() {
             },
           ]}
         >
-
           <Ionicons
             name="arrow-back"
             size={22}
             color={
-              COLORS.lightText
+              backIconColor
             }
           />
-
         </TouchableOpacity>
 
-
-        {/* ====================================================
-            ÁREA ROLÁVEL
-            ==================================================== */}
-
+        {/*
+         * ÁREA ROLÁVEL
+         */}
         <ScrollView
           contentContainerStyle={
             styles.scrollContent
@@ -783,77 +678,68 @@ export default function RegisterScreen() {
           keyboardShouldPersistTaps="handled"
           bounces={false}
         >
-
-          {/* ==================================================
-              CONTEÚDO PRINCIPAL
-              ================================================== */}
-
           <View
             style={
               styles.mainContent
             }
           >
-
-
-            {/* =================================================
-                LOGO
-                ================================================= */}
-
+            {/*
+             * LOGO
+             */}
             <Image
               source={
-                logo
+                selectedLogo
               }
               style={
                 styles.logoImage
               }
               resizeMode="contain"
-              accessible={true}
+              accessible
               accessibilityLabel="Doalize"
             />
 
-
-            {/* =================================================
-                TÍTULO
-                ================================================= */}
-
+            {/*
+             * TÍTULO
+             */}
             <Text
-              style={
-                styles.title
-              }
+              style={[
+                styles.title,
+                {
+                  color:
+                    mainTextColor,
+                },
+              ]}
             >
               Cadastrar
             </Text>
 
-
-            {/* =================================================
-                FORMULÁRIO
-                ================================================= */}
-
+            {/*
+             * FORMULÁRIO
+             */}
             <View
               style={
                 styles.form
               }
             >
-
-
-              {/* =============================================
-                  NOME
-                  ============================================= */}
-
+              {/*
+               * NOME
+               */}
               <View
                 style={
                   styles.fieldContainer
                 }
               >
-
                 <Text
-                  style={
-                    styles.label
-                  }
+                  style={[
+                    styles.label,
+                    {
+                      color:
+                        mainTextColor,
+                    },
+                  ]}
                 >
                   Nome
                 </Text>
-
 
                 <Input
                   placeholder="Digite seu nome"
@@ -871,28 +757,27 @@ export default function RegisterScreen() {
                   maxLength={120}
                   returnKeyType="next"
                 />
-
               </View>
 
-
-              {/* =============================================
-                  E-MAIL
-                  ============================================= */}
-
+              {/*
+               * E-MAIL
+               */}
               <View
                 style={
                   styles.fieldContainer
                 }
               >
-
                 <Text
-                  style={
-                    styles.label
-                  }
+                  style={[
+                    styles.label,
+                    {
+                      color:
+                        mainTextColor,
+                    },
+                  ]}
                 >
                   E-mail
                 </Text>
-
 
                 <Input
                   placeholder="Digite seu e-mail"
@@ -911,28 +796,27 @@ export default function RegisterScreen() {
                   maxLength={160}
                   returnKeyType="next"
                 />
-
               </View>
 
-
-              {/* =============================================
-                  SENHA
-                  ============================================= */}
-
+              {/*
+               * SENHA
+               */}
               <View
                 style={
                   styles.fieldContainer
                 }
               >
-
                 <Text
-                  style={
-                    styles.label
-                  }
+                  style={[
+                    styles.label,
+                    {
+                      color:
+                        mainTextColor,
+                    },
+                  ]}
                 >
                   Senha
                 </Text>
-
 
                 <Input
                   placeholder="Mínimo de 6 caracteres"
@@ -950,28 +834,27 @@ export default function RegisterScreen() {
                   }
                   returnKeyType="next"
                 />
-
               </View>
 
-
-              {/* =============================================
-                  CONFIRMAR SENHA
-                  ============================================= */}
-
+              {/*
+               * CONFIRMAR SENHA
+               */}
               <View
                 style={
                   styles.fieldContainer
                 }
               >
-
                 <Text
-                  style={
-                    styles.label
-                  }
+                  style={[
+                    styles.label,
+                    {
+                      color:
+                        mainTextColor,
+                    },
+                  ]}
                 >
                   Confirmar senha
                 </Text>
-
 
                 <Input
                   placeholder="Digite a senha novamente"
@@ -994,16 +877,12 @@ export default function RegisterScreen() {
                       : undefined
                   }
                 />
-
               </View>
-
             </View>
 
-
-            {/* =================================================
-                TERMOS E PRIVACIDADE
-                ================================================= */}
-
+            {/*
+             * TERMOS E PRIVACIDADE
+             */}
             <View
               style={[
                 styles.termsContainer,
@@ -1011,21 +890,18 @@ export default function RegisterScreen() {
                   borderColor:
                     termsAccepted
                       ? COLORS.support
-                      : COLORS.border,
+                      : standardBorderColor,
                 },
               ]}
             >
-
               <View
                 style={
                   styles.termsHeader
                 }
               >
-
-                {/* ===========================================
-                    CHECKBOX
-                    =========================================== */}
-
+                {/*
+                 * CHECKBOX
+                 */}
                 <View
                   style={[
                     styles.checkbox,
@@ -1038,68 +914,62 @@ export default function RegisterScreen() {
                       borderColor:
                         termsAccepted
                           ? COLORS.support
-                          : 'rgba(245, 245, 245, 0.55)',
+                          : darkMode
+                            ? 'rgba(245, 245, 245, 0.55)'
+                            : 'rgba(20, 20, 20, 0.55)',
                     },
                   ]}
                 >
-
-                  {
-                    termsAccepted
-                      ? (
-                        <Ionicons
-                          name="checkmark"
-                          size={16}
-                          color={
-                            COLORS.white
-                          }
-                        />
-                      )
-                      : null
-                  }
-
+                  {termsAccepted ? (
+                    <Ionicons
+                      name="checkmark"
+                      size={16}
+                      color={
+                        COLORS.white
+                      }
+                    />
+                  ) : null}
                 </View>
 
-
-                {/* ===========================================
-                    TEXTOS
-                    =========================================== */}
-
+                {/*
+                 * TEXTOS
+                 */}
                 <View
                   style={
                     styles.termsTextContainer
                   }
                 >
-
                   <Text
-                    style={
-                      styles.termsTitle
-                    }
+                    style={[
+                      styles.termsTitle,
+                      {
+                        color:
+                          mainTextColor,
+                      },
+                    ]}
                   >
                     Termos e Privacidade
                   </Text>
 
-
                   <Text
-                    style={
-                      styles.termsStatus
-                    }
+                    style={[
+                      styles.termsStatus,
+                      {
+                        color:
+                          secondaryTextColor,
+                      },
+                    ]}
                   >
-                    {
-                      termsAccepted
-                        ? 'Leitura concluída e aceite registrado.'
-                        : 'A leitura e o aceite são obrigatórios.'
-                    }
+                    {termsAccepted
+                      ? 'Leitura concluída e aceite registrado.'
+                      : 'A leitura e o aceite são obrigatórios.'}
                   </Text>
-
                 </View>
-
               </View>
 
-
-              {/* =============================================
-                  LER DOCUMENTOS
-                  ============================================= */}
-
+              {/*
+               * LER DOCUMENTOS
+               */}
               <TouchableOpacity
                 activeOpacity={0.78}
                 onPress={
@@ -1123,75 +993,77 @@ export default function RegisterScreen() {
                   },
                 ]}
               >
-
                 <Ionicons
                   name="document-text-outline"
                   size={19}
                   color={
-                    COLORS.primary
+                    darkMode
+                      ? COLORS.primary
+                      : COLORS.secondary
                   }
                 />
 
-
                 <Text
-                  style={
-                    styles.readTermsText
-                  }
+                  style={[
+                    styles.readTermsText,
+                    {
+                      color:
+                        darkMode
+                          ? COLORS.primary
+                          : COLORS.secondary,
+                    },
+                  ]}
                 >
-                  {
-                    termsAccepted
-                      ? 'Ler documentos novamente'
-                      : 'Ler Termos e Política'
-                  }
+                  {termsAccepted
+                    ? 'Ler documentos novamente'
+                    : 'Ler Termos e Política'}
                 </Text>
-
               </TouchableOpacity>
-
             </View>
 
+            {/*
+             * AVISO OBRIGATÓRIO
+             */}
+            {!termsAccepted ? (
+              <View
+                style={[
+                  styles.requiredNotice,
+                  {
+                    borderColor:
+                      requiredNoticeBorder,
 
-            {/* =================================================
-                AVISO OBRIGATÓRIO
-                ================================================= */}
+                    backgroundColor:
+                      requiredNoticeBackground,
+                  },
+                ]}
+              >
+                <Ionicons
+                  name="information-circle-outline"
+                  size={19}
+                  color={
+                    darkMode
+                      ? COLORS.primary
+                      : COLORS.secondary
+                  }
+                />
 
-            {
-              !termsAccepted
-                ? (
+                <Text
+                  style={[
+                    styles.requiredNoticeText,
+                    {
+                      color:
+                        requiredNoticeTextColor,
+                    },
+                  ]}
+                >
+                  O cadastro será liberado depois que você rolar os documentos até o final e confirmar o aceite.
+                </Text>
+              </View>
+            ) : null}
 
-                  <View
-                    style={
-                      styles.requiredNotice
-                    }
-                  >
-
-                    <Ionicons
-                      name="information-circle-outline"
-                      size={19}
-                      color={
-                        COLORS.primary
-                      }
-                    />
-
-
-                    <Text
-                      style={
-                        styles.requiredNoticeText
-                      }
-                    >
-                      O cadastro será liberado depois que você rolar os documentos até o final e confirmar o aceite.
-                    </Text>
-
-                  </View>
-
-                )
-                : null
-            }
-
-
-            {/* =================================================
-                CRIAR CONTA
-                ================================================= */}
-
+            {/*
+             * CRIAR CONTA
+             */}
             <TouchableOpacity
               activeOpacity={0.82}
               onPress={
@@ -1219,57 +1091,49 @@ export default function RegisterScreen() {
                 },
               ]}
             >
-
-              {
-                loading
-                  ? (
-
-                    <ActivityIndicator
-                      size="small"
-                      color={
-                        COLORS.white
-                      }
-                    />
-
-                  )
-                  : (
-
-                    <Text
-                      style={
-                        styles.registerMainButtonText
-                      }
-                    >
-                      {
-                        termsAccepted
-                          ? 'Criar conta'
-                          : 'Leia e aceite os termos'
-                      }
-                    </Text>
-
-                  )
-              }
-
+              {loading ? (
+                <ActivityIndicator
+                  size="small"
+                  color={
+                    mainButtonTextColor
+                  }
+                />
+              ) : (
+                <Text
+                  style={[
+                    styles.registerMainButtonText,
+                    {
+                      color:
+                        mainButtonTextColor,
+                    },
+                  ]}
+                >
+                  {termsAccepted
+                    ? 'Criar conta'
+                    : 'Leia e aceite os termos'}
+                </Text>
+              )}
             </TouchableOpacity>
 
-
-            {/* =================================================
-                LOGIN
-                ================================================= */}
-
+            {/*
+             * LOGIN
+             */}
             <View
               style={
                 styles.footer
               }
             >
-
               <Text
-                style={
-                  styles.footerText
-                }
+                style={[
+                  styles.footerText,
+                  {
+                    color:
+                      secondaryTextColor,
+                  },
+                ]}
               >
                 Já possui uma conta?
               </Text>
-
 
               <TouchableOpacity
                 activeOpacity={0.7}
@@ -1285,692 +1149,681 @@ export default function RegisterScreen() {
                   styles.loginLinkButton
                 }
               >
-
                 <Text
-                  style={
-                    styles.loginLinkText
-                  }
+                  style={[
+                    styles.loginLinkText,
+                    {
+                      color:
+                        darkMode
+                          ? COLORS.primary
+                          : COLORS.secondary,
+                    },
+                  ]}
                 >
                   Fazer login
                 </Text>
-
               </TouchableOpacity>
-
             </View>
-
           </View>
-
         </ScrollView>
-
       </KeyboardAvoidingView>
-
     </SafeAreaView>
   );
 }
 
-
 /*
- * ============================================================
  * ESTILOS
- * ============================================================
+ *
+ * Todas as medidas abaixo foram
+ * preservadas do arquivo original.
  */
-
 const styles =
   StyleSheet.create({
-
-    /*
-     * ========================================================
-     * SAFE AREA
-     * ========================================================
-     */
-
     safeArea: {
-      flex: 1,
+      flex:
+        1,
 
-      width: '100%',
-
-      backgroundColor:
-        COLORS.background,
+      width:
+        '100%',
     },
-
-
-    /*
-     * ========================================================
-     * CONTAINER
-     * ========================================================
-     */
 
     container: {
-      flex: 1,
+      flex:
+        1,
 
-      width: '100%',
-
-      backgroundColor:
-        COLORS.background,
+      width:
+        '100%',
     },
 
-
-    /*
-     * ========================================================
-     * BOTÃO VOLTAR
-     * ========================================================
-     */
-
     backButton: {
-      position: 'absolute',
+      position:
+        'absolute',
 
       top:
-        Platform.OS === 'android'
+        Platform.OS ===
+        'android'
           ? 8
           : 6,
 
-      left: 12,
+      left:
+        12,
 
-      zIndex: 20,
+      zIndex:
+        20,
 
-      width: 40,
+      width:
+        40,
 
-      height: 40,
+      height:
+        40,
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
-      borderRadius: 20,
+      borderRadius:
+        20,
 
       backgroundColor:
         'transparent',
 
-      padding: 0,
+      padding:
+        0,
 
-      margin: 0,
+      margin:
+        0,
     },
-
-
-    /*
-     * ========================================================
-     * SCROLL
-     * ========================================================
-     */
 
     scrollContent: {
-      flexGrow: 1,
+      flexGrow:
+        1,
 
-      width: '100%',
+      width:
+        '100%',
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
-      paddingHorizontal: 24,
+      paddingHorizontal:
+        24,
 
-      paddingTop: 48,
+      paddingTop:
+        48,
 
-      paddingBottom: 28,
+      paddingBottom:
+        28,
     },
-
-
-    /*
-     * ========================================================
-     * CONTEÚDO PRINCIPAL
-     * ========================================================
-     */
 
     mainContent: {
-      width: '100%',
+      width:
+        '100%',
 
-      maxWidth: 338,
+      maxWidth:
+        338,
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
-      alignSelf: 'center',
+      alignSelf:
+        'center',
 
-      padding: 0,
+      padding:
+        0,
 
-      margin: 0,
+      margin:
+        0,
     },
-
-
-    /*
-     * ========================================================
-     * LOGO
-     * ========================================================
-     *
-     * Usa:
-     *
-     * assets/logo.png
-     */
 
     logoImage: {
-      width: 166,
+      width:
+        166,
 
-      height: 50,
+      height:
+        50,
 
-      maxWidth: '60%',
+      maxWidth:
+        '60%',
 
-      alignSelf: 'center',
+      alignSelf:
+        'center',
 
-      resizeMode: 'contain',
+      resizeMode:
+        'contain',
 
-      margin: 0,
+      margin:
+        0,
 
-      padding: 0,
+      padding:
+        0,
 
       backgroundColor:
         'transparent',
     },
-
-
-    /*
-     * ========================================================
-     * TÍTULO
-     * ========================================================
-     */
 
     title: {
-      marginTop: 25,
+      marginTop:
+        25,
 
-      fontSize: 23,
+      fontSize:
+        23,
 
-      lineHeight: 29,
+      lineHeight:
+        29,
 
-      fontWeight: '500',
+      fontWeight:
+        '500',
 
-      color:
-        COLORS.lightText,
+      textAlign:
+        'center',
 
-      textAlign: 'center',
+      includeFontPadding:
+        false,
 
-      includeFontPadding: false,
+      letterSpacing:
+        0,
 
-      letterSpacing: 0,
+      marginBottom:
+        0,
 
-      marginBottom: 0,
-
-      padding: 0,
+      padding:
+        0,
     },
 
-
-    /*
-     * ========================================================
-     * FORMULÁRIO
-     * ========================================================
-     *
-     * Igual ao Login:
-     *
-     * sem card;
-     * sem sombra;
-     * sem fundo separado.
-     */
-
     form: {
-      width: '100%',
+      width:
+        '100%',
 
-      marginTop: 28,
+      marginTop:
+        28,
 
-      padding: 0,
+      padding:
+        0,
 
       backgroundColor:
         'transparent',
 
-      borderWidth: 0,
+      borderWidth:
+        0,
 
-      borderRadius: 0,
+      borderRadius:
+        0,
 
       shadowColor:
         'transparent',
 
       shadowOffset: {
-        width: 0,
+        width:
+          0,
 
-        height: 0,
+        height:
+          0,
       },
 
-      shadowOpacity: 0,
+      shadowOpacity:
+        0,
 
-      shadowRadius: 0,
+      shadowRadius:
+        0,
 
-      elevation: 0,
+      elevation:
+        0,
     },
-
-
-    /*
-     * ========================================================
-     * CONTAINER DOS CAMPOS
-     * ========================================================
-     */
 
     fieldContainer: {
-      width: '100%',
+      width:
+        '100%',
 
-      marginBottom: 15,
+      marginBottom:
+        15,
 
-      padding: 0,
+      padding:
+        0,
 
       backgroundColor:
         'transparent',
     },
-
-
-    /*
-     * ========================================================
-     * LABEL
-     * ========================================================
-     */
 
     label: {
-      width: '100%',
+      width:
+        '100%',
 
-      marginBottom: 8,
+      marginBottom:
+        8,
 
-      marginLeft: 0,
+      marginLeft:
+        0,
 
-      fontSize: 15,
+      fontSize:
+        15,
 
-      lineHeight: 20,
+      lineHeight:
+        20,
 
-      fontWeight: '600',
+      fontWeight:
+        '600',
 
-      color:
-        COLORS.lightText,
+      includeFontPadding:
+        false,
 
-      includeFontPadding: false,
+      textAlign:
+        'left',
 
-      textAlign: 'left',
-
-      padding: 0,
+      padding:
+        0,
     },
-
-
-    /*
-     * ========================================================
-     * TERMOS
-     * ========================================================
-     *
-     * Mantemos a funcionalidade dos termos, mas o visual passa
-     * a ser muito mais discreto que o card antigo.
-     */
 
     termsContainer: {
-      width: '100%',
+      width:
+        '100%',
 
-      marginTop: 5,
+      marginTop:
+        5,
 
-      padding: 12,
+      padding:
+        12,
 
-      borderWidth: 1,
+      borderWidth:
+        1,
 
-      borderRadius: 10,
+      borderRadius:
+        10,
 
       backgroundColor:
         'transparent',
 
-      overflow: 'hidden',
+      overflow:
+        'hidden',
     },
-
-
-    /*
-     * ========================================================
-     * CABEÇALHO DOS TERMOS
-     * ========================================================
-     */
 
     termsHeader: {
-      width: '100%',
+      width:
+        '100%',
 
-      flexDirection: 'row',
+      flexDirection:
+        'row',
 
-      alignItems: 'flex-start',
+      alignItems:
+        'flex-start',
 
-      padding: 0,
+      padding:
+        0,
 
-      margin: 0,
+      margin:
+        0,
     },
-
-
-    /*
-     * ========================================================
-     * CHECKBOX
-     * ========================================================
-     */
 
     checkbox: {
-      width: 24,
+      width:
+        24,
 
-      height: 24,
+      height:
+        24,
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
-      borderWidth: 1.5,
+      borderWidth:
+        1.5,
 
-      borderRadius: 6,
+      borderRadius:
+        6,
 
-      flexShrink: 0,
+      flexShrink:
+        0,
 
-      margin: 0,
+      margin:
+        0,
 
-      padding: 0,
+      padding:
+        0,
     },
-
-
-    /*
-     * ========================================================
-     * TEXTOS DOS TERMOS
-     * ========================================================
-     */
 
     termsTextContainer: {
-      flex: 1,
+      flex:
+        1,
 
-      minWidth: 0,
+      minWidth:
+        0,
 
-      marginLeft: 10,
+      marginLeft:
+        10,
 
-      padding: 0,
+      padding:
+        0,
 
-      marginTop: 0,
+      marginTop:
+        0,
     },
-
 
     termsTitle: {
-      fontSize: 14,
+      fontSize:
+        14,
 
-      lineHeight: 19,
+      lineHeight:
+        19,
 
-      fontWeight: '600',
+      fontWeight:
+        '600',
 
-      color:
-        COLORS.lightText,
+      includeFontPadding:
+        false,
 
-      includeFontPadding: false,
+      margin:
+        0,
 
-      margin: 0,
-
-      padding: 0,
+      padding:
+        0,
     },
-
 
     termsStatus: {
-      marginTop: 3,
+      marginTop:
+        3,
 
-      fontSize: 11,
+      fontSize:
+        11,
 
-      lineHeight: 16,
+      lineHeight:
+        16,
 
-      fontWeight: '400',
+      fontWeight:
+        '400',
 
-      color:
-        'rgba(245, 245, 245, 0.68)',
+      includeFontPadding:
+        false,
 
-      includeFontPadding: false,
+      marginBottom:
+        0,
 
-      marginBottom: 0,
-
-      padding: 0,
+      padding:
+        0,
     },
-
-
-    /*
-     * ========================================================
-     * BOTÃO LER DOCUMENTOS
-     * ========================================================
-     */
 
     readTermsButton: {
-      width: '100%',
+      width:
+        '100%',
 
-      minHeight: 40,
+      minHeight:
+        40,
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
-      flexDirection: 'row',
+      flexDirection:
+        'row',
 
-      marginTop: 10,
+      marginTop:
+        10,
 
-      paddingHorizontal: 10,
+      paddingHorizontal:
+        10,
 
-      paddingVertical: 8,
+      paddingVertical:
+        8,
 
-      borderWidth: 1,
+      borderWidth:
+        1,
 
-      borderRadius: 10,
+      borderRadius:
+        10,
 
       backgroundColor:
         'transparent',
 
-      overflow: 'hidden',
+      overflow:
+        'hidden',
     },
-
 
     readTermsText: {
-      flexShrink: 1,
+      flexShrink:
+        1,
 
-      marginLeft: 7,
+      marginLeft:
+        7,
 
-      fontSize: 11,
+      fontSize:
+        11,
 
-      lineHeight: 16,
+      lineHeight:
+        16,
 
-      fontWeight: '600',
+      fontWeight:
+        '600',
 
-      color:
-        COLORS.primary,
+      textAlign:
+        'center',
 
-      textAlign: 'center',
+      includeFontPadding:
+        false,
 
-      includeFontPadding: false,
+      padding:
+        0,
 
-      padding: 0,
-
-      marginBottom: 0,
+      marginBottom:
+        0,
     },
-
-
-    /*
-     * ========================================================
-     * AVISO OBRIGATÓRIO
-     * ========================================================
-     */
 
     requiredNotice: {
-      width: '100%',
+      width:
+        '100%',
 
-      flexDirection: 'row',
+      flexDirection:
+        'row',
 
-      alignItems: 'flex-start',
+      alignItems:
+        'flex-start',
 
-      marginTop: 9,
+      marginTop:
+        9,
 
-      paddingHorizontal: 11,
+      paddingHorizontal:
+        11,
 
-      paddingVertical: 10,
+      paddingVertical:
+        10,
 
-      borderWidth: 1,
+      borderWidth:
+        1,
 
-      borderColor:
-        'rgba(21, 82, 105, 0.75)',
+      borderRadius:
+        10,
 
-      borderRadius: 10,
-
-      backgroundColor:
-        '#155269',
-
-      overflow: 'hidden',
+      overflow:
+        'hidden',
     },
-
 
     requiredNoticeText: {
-      flex: 1,
+      flex:
+        1,
 
-      minWidth: 0,
+      minWidth:
+        0,
 
-      marginLeft: 8,
+      marginLeft:
+        8,
 
-      fontSize: 10,
+      fontSize:
+        10,
 
-      lineHeight: 15,
+      lineHeight:
+        15,
 
-      fontWeight: '400',
+      fontWeight:
+        '400',
 
-      color:
-        'rgba(245, 245, 245, 0.78)',
+      includeFontPadding:
+        false,
 
-      includeFontPadding: false,
+      padding:
+        0,
 
-      padding: 0,
-
-      marginBottom: 0,
+      marginBottom:
+        0,
     },
-
-
-    /*
-     * ========================================================
-     * BOTÃO PRINCIPAL
-     * ========================================================
-     *
-     * Mesmo padrão do botão do Login.
-     */
 
     registerMainButton: {
-      width: '100%',
+      width:
+        '100%',
 
-      height: 44,
+      height:
+        44,
 
-      minHeight: 44,
+      minHeight:
+        44,
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
-      marginTop: 12,
+      marginTop:
+        12,
 
-      paddingHorizontal: 16,
+      paddingHorizontal:
+        16,
 
-      paddingVertical: 0,
+      paddingVertical:
+        0,
 
-      borderRadius: 10,
+      borderRadius:
+        10,
 
-      backgroundColor:
-        COLORS.primary,
-
-      overflow: 'hidden',
+      overflow:
+        'hidden',
     },
-
 
     registerMainButtonText: {
-      color:
-        COLORS.white,
+      fontSize:
+        16,
 
-      fontSize: 16,
+      lineHeight:
+        20,
 
-      lineHeight: 20,
+      fontWeight:
+        '600',
 
-      fontWeight: '600',
+      textAlign:
+        'center',
 
-      textAlign: 'center',
+      includeFontPadding:
+        false,
 
-      includeFontPadding: false,
+      margin:
+        0,
 
-      margin: 0,
-
-      padding: 0,
+      padding:
+        0,
     },
-
-
-    /*
-     * ========================================================
-     * RODAPÉ
-     * ========================================================
-     */
 
     footer: {
-      width: '100%',
+      width:
+        '100%',
 
-      flexDirection: 'row',
+      flexDirection:
+        'row',
 
-      flexWrap: 'wrap',
+      flexWrap:
+        'wrap',
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
-      marginTop: 9,
+      marginTop:
+        9,
 
-      paddingHorizontal: 4,
+      paddingHorizontal:
+        4,
 
-      paddingVertical: 0,
+      paddingVertical:
+        0,
 
-      alignSelf: 'center',
+      alignSelf:
+        'center',
     },
-
 
     footerText: {
-      fontSize: 11,
+      fontSize:
+        11,
 
-      lineHeight: 16,
+      lineHeight:
+        16,
 
-      fontWeight: '400',
+      fontWeight:
+        '400',
 
-      color:
-        'rgba(245, 245, 245, 0.72)',
+      textAlign:
+        'center',
 
-      textAlign: 'center',
+      includeFontPadding:
+        false,
 
-      includeFontPadding: false,
+      margin:
+        0,
 
-      margin: 0,
-
-      padding: 0,
+      padding:
+        0,
     },
 
-
-    /*
-     * ========================================================
-     * LINK DE LOGIN
-     * ========================================================
-     */
-
     loginLinkButton: {
-      minHeight: 24,
+      minHeight:
+        24,
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
-      marginLeft: 3,
+      marginLeft:
+        3,
 
-      paddingHorizontal: 2,
+      paddingHorizontal:
+        2,
 
-      paddingVertical: 2,
+      paddingVertical:
+        2,
 
       backgroundColor:
         'transparent',
     },
 
-
     loginLinkText: {
-      fontSize: 11,
+      fontSize:
+        11,
 
-      lineHeight: 16,
+      lineHeight:
+        16,
 
-      fontWeight: '600',
+      fontWeight:
+        '600',
 
-      color:
-        COLORS.primary,
+      textAlign:
+        'center',
 
-      textAlign: 'center',
+      includeFontPadding:
+        false,
 
-      includeFontPadding: false,
+      margin:
+        0,
 
-      margin: 0,
-
-      padding: 0,
+      padding:
+        0,
     },
-
   });

@@ -20,7 +20,6 @@ import {
   FontAwesome6,
 } from '@expo/vector-icons';
 
-
 /*
  * ============================================================
  * TELAS DO FEED
@@ -31,7 +30,6 @@ import HomeScreen from '../screens/Home/HomeScreen';
 
 import DetailsScreen from '../screens/Home/DetailsScreen';
 
-
 /*
  * ============================================================
  * TELA DE PUBLICAÇÃO
@@ -39,7 +37,6 @@ import DetailsScreen from '../screens/Home/DetailsScreen';
  */
 
 import PublishScreen from '../screens/Publish/PublishScreen';
-
 
 /*
  * ============================================================
@@ -51,7 +48,6 @@ import ContactsScreen from '../screens/Contacts/ContactsScreen';
 
 import ChatScreen from '../screens/Chat/ChatScreen';
 
-
 /*
  * ============================================================
  * TELAS DO PERFIL
@@ -61,7 +57,6 @@ import ChatScreen from '../screens/Chat/ChatScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
 
 import PublishedScreen from '../screens/Profile/PublishedScreen';
-
 
 /*
  * ============================================================
@@ -75,7 +70,6 @@ import EmailChangeScreen from '../screens/Settings/EmailChangeScreen';
 
 import TwoFactorSettingsScreen from '../screens/Settings/TwoFactorSettingsScreen';
 
-
 /*
  * ============================================================
  * NAVEGADORES
@@ -88,7 +82,6 @@ const Tab =
 const Stack =
   createNativeStackNavigator();
 
-
 /*
  * ============================================================
  * CONFIGURAÇÃO DAS PILHAS
@@ -96,7 +89,6 @@ const Stack =
  */
 
 const stackScreenOptions = {
-
   headerShown:
     false,
 
@@ -105,9 +97,7 @@ const stackScreenOptions = {
 
   gestureEnabled:
     true,
-
 };
-
 
 /*
  * ============================================================
@@ -116,7 +106,6 @@ const stackScreenOptions = {
  */
 
 function HomeStack() {
-
   return (
     <Stack.Navigator
       initialRouteName="HomeScreen"
@@ -124,7 +113,6 @@ function HomeStack() {
         stackScreenOptions
       }
     >
-
       <Stack.Screen
         name="HomeScreen"
         component={
@@ -138,11 +126,9 @@ function HomeStack() {
           DetailsScreen
         }
       />
-
     </Stack.Navigator>
   );
 }
-
 
 /*
  * ============================================================
@@ -151,7 +137,6 @@ function HomeStack() {
  */
 
 function ContactsStack() {
-
   return (
     <Stack.Navigator
       initialRouteName="ContactsScreen"
@@ -159,7 +144,6 @@ function ContactsStack() {
         stackScreenOptions
       }
     >
-
       <Stack.Screen
         name="ContactsScreen"
         component={
@@ -173,20 +157,28 @@ function ContactsStack() {
           ChatScreen
         }
       />
-
     </Stack.Navigator>
   );
 }
-
 
 /*
  * ============================================================
  * PILHA DO PERFIL
  * ============================================================
+ *
+ * DetailsScreen também precisa estar
+ * registrada nesta pilha.
+ *
+ * Assim, a publicação pode ser aberta
+ * por este caminho:
+ *
+ * Conta
+ * → Publicados
+ * → DetailsScreen
+ * → voltar para Publicados
  */
 
 function ProfileStack() {
-
   return (
     <Stack.Navigator
       initialRouteName="ProfileScreen"
@@ -194,7 +186,6 @@ function ProfileStack() {
         stackScreenOptions
       }
     >
-
       <Stack.Screen
         name="ProfileScreen"
         component={
@@ -206,6 +197,13 @@ function ProfileStack() {
         name="PublishedScreen"
         component={
           PublishedScreen
+        }
+      />
+
+      <Stack.Screen
+        name="DetailsScreen"
+        component={
+          DetailsScreen
         }
       />
 
@@ -229,11 +227,9 @@ function ProfileStack() {
           TwoFactorSettingsScreen
         }
       />
-
     </Stack.Navigator>
   );
 }
-
 
 /*
  * ============================================================
@@ -245,17 +241,14 @@ function isStackOnMainScreen(
   route,
   mainScreenName
 ) {
-
   const focusedRouteName =
     getFocusedRouteNameFromRoute(
       route
     );
 
-
   if (!focusedRouteName) {
     return true;
   }
-
 
   return (
     focusedRouteName ===
@@ -263,6 +256,54 @@ function isStackOnMainScreen(
   );
 }
 
+/*
+ * ============================================================
+ * COMPONENTE DO ÍCONE DA BARRA
+ * ============================================================
+ */
+
+function TabIcon({
+  name,
+  color,
+  size,
+  solid,
+}) {
+  return (
+    <View
+      style={{
+        width:
+          32,
+
+        height:
+          32,
+
+        alignItems:
+          'center',
+
+        justifyContent:
+          'center',
+
+        overflow:
+          'visible',
+      }}
+    >
+      <FontAwesome6
+        name={
+          name
+        }
+        size={
+          size
+        }
+        color={
+          color
+        }
+        solid={
+          solid
+        }
+      />
+    </View>
+  );
+}
 
 /*
  * ============================================================
@@ -271,29 +312,16 @@ function isStackOnMainScreen(
  */
 
 export default function AppRoutes() {
-
   return (
     <Tab.Navigator
-
       initialRouteName="Home"
-
       tabBarPosition="bottom"
-
-
-      /*
-       * ========================================================
-       * CONFIGURAÇÕES DA BARRA
-       * ========================================================
-       */
-
       screenOptions={{
-
         /*
          * Navegação por gesto.
          */
         swipeEnabled:
           true,
-
 
         /*
          * Carregamento preguiçoso.
@@ -301,20 +329,17 @@ export default function AppRoutes() {
         lazy:
           true,
 
-
         /*
          * Mostrar ícones.
          */
         tabBarShowIcon:
           true,
 
-
         /*
-         * Não usar scroll horizontal.
+         * Não usar rolagem horizontal.
          */
         tabBarScrollEnabled:
           false,
-
 
         /*
          * Não mostrar os textos.
@@ -322,37 +347,22 @@ export default function AppRoutes() {
         tabBarShowLabel:
           false,
 
-
         /*
-         * ====================================================
-         * CORES
-         * ====================================================
-         *
-         * Selecionado:
-         * #3AC2F8
-         *
-         * Não selecionado:
-         * #F5F5F5
+         * ÍCONE SELECIONADO
          */
-
         tabBarActiveTintColor:
           '#3AC2F8',
 
+        /*
+         * ÍCONE NÃO SELECIONADO
+         */
         tabBarInactiveTintColor:
           '#F5F5F5',
 
-
         /*
-         * ====================================================
          * BARRA INFERIOR
-         * ====================================================
          */
-
         tabBarStyle: {
-
-          /*
-           * Mantém a altura visual da barra.
-           */
           height:
             64,
 
@@ -362,61 +372,33 @@ export default function AppRoutes() {
           maxHeight:
             64,
 
-
-          /*
-           * Espaçamento vertical.
-           */
           paddingTop:
             3,
 
           paddingBottom:
             3,
 
-
-          /*
-           * Sem espaço lateral.
-           */
           paddingHorizontal:
             0,
 
           margin:
             0,
 
-
-          /*
-           * Fundo escuro.
-           */
           backgroundColor:
             '#141414',
 
-
-          /*
-           * Linha superior de separação.
-           */
           borderTopWidth:
             1,
 
           borderTopColor:
             '#F5F5F5',
 
-
-          /*
-           * Sem linha inferior.
-           */
           borderBottomWidth:
             0,
 
-
-          /*
-           * Sem elevação.
-           */
           elevation:
             0,
 
-
-          /*
-           * Sem sombra.
-           */
           shadowColor:
             'transparent',
 
@@ -434,25 +416,14 @@ export default function AppRoutes() {
           shadowRadius:
             0,
 
-
-          /*
-           * Evita recorte dos ícones.
-           */
           overflow:
             'visible',
-
         },
 
-
         /*
-         * ====================================================
-         * INDICADOR DO MATERIAL TOP TAB
-         * ====================================================
-         *
-         * Desativado.
+         * INDICADOR DESATIVADO
          */
         tabBarIndicatorStyle: {
-
           height:
             0,
 
@@ -461,21 +432,12 @@ export default function AppRoutes() {
 
           opacity:
             0,
-
         },
 
-
         /*
-         * ====================================================
          * ITENS DA BARRA
-         * ====================================================
          */
-
         tabBarItemStyle: {
-
-          /*
-           * Cada item ocupa exatamente a mesma proporção.
-           */
           flex:
             1,
 
@@ -488,27 +450,15 @@ export default function AppRoutes() {
           flexBasis:
             0,
 
-
-          /*
-           * Impede cálculos mínimos de largura.
-           */
           minWidth:
             0,
 
-
-          /*
-           * Mais espaço vertical interno para os ícones.
-           */
           height:
             58,
 
           minHeight:
             58,
 
-
-          /*
-           * Sem espaço horizontal.
-           */
           paddingHorizontal:
             0,
 
@@ -518,43 +468,23 @@ export default function AppRoutes() {
           paddingBottom:
             1,
 
-
-          /*
-           * Sem margem.
-           */
           margin:
             0,
 
-
-          /*
-           * Centralização.
-           */
           justifyContent:
             'center',
 
           alignItems:
             'center',
 
-
-          /*
-           * Permite que o ícone ultrapasse minimamente
-           * sua área interna sem ser recortado.
-           */
           overflow:
             'visible',
-
         },
 
-
         /*
-         * ====================================================
-         * LABEL
-         * ====================================================
-         *
-         * Mantido por compatibilidade, mas oculto.
+         * TEXTO OCULTO
          */
         tabBarLabelStyle: {
-
           margin:
             0,
 
@@ -569,44 +499,34 @@ export default function AppRoutes() {
 
           textTransform:
             'none',
-
         },
 
-
         /*
-         * ====================================================
          * EFEITO DE TOQUE
-         * ====================================================
          */
-
         tabBarPressColor:
           'rgba(245, 245, 245, 0.06)',
 
         tabBarPressOpacity:
           0.75,
-
       }}
-
     >
-
-
-      {/* ======================================================
-          INÍCIO
-          ====================================================== */}
+      {/*
+       * ======================================================
+       * INÍCIO
+       * ======================================================
+       */}
 
       <Tab.Screen
-
         name="Home"
-
         component={
           HomeStack
         }
-
-        options={({ route }) => ({
-
+        options={({
+          route,
+        }) => ({
           title:
             'Início',
-
 
           swipeEnabled:
             isStackOnMainScreen(
@@ -614,74 +534,30 @@ export default function AppRoutes() {
               'HomeScreen'
             ),
 
-
-          /*
-           * ==================================================
-           * HOME
-           * ==================================================
-           *
-           * Ativo:
-           * fa-solid fa-house
-           *
-           * Inativo:
-           * fa-regular fa-house
-           */
-
           tabBarIcon: ({
             color,
             focused,
           }) => (
-
-            <View
-              style={{
-                width:
-                  32,
-
-                height:
-                  32,
-
-                alignItems:
-                  'center',
-
-                justifyContent:
-                  'center',
-
-                overflow:
-                  'visible',
-              }}
-            >
-
-              <FontAwesome6
-
-                name="house"
-
-                size={
-                  focused
-                    ? 25
-                    : 24
-                }
-
-                color={
-                  color
-                }
-
-                solid={
-                  focused
-                }
-
-              />
-
-            </View>
-
+            <TabIcon
+              name="house"
+              color={
+                color
+              }
+              size={
+                focused
+                  ? 25
+                  : 24
+              }
+              solid={
+                focused
+              }
+            />
           ),
-
         })}
-
-
-        listeners={({ navigation }) => ({
-
+        listeners={({
+          navigation,
+        }) => ({
           tabPress: () => {
-
             navigation.navigate(
               'Home',
               {
@@ -689,106 +565,59 @@ export default function AppRoutes() {
                   'HomeScreen',
               }
             );
-
           },
-
         })}
-
       />
 
-
-      {/* ======================================================
-          PUBLICAR
-          ====================================================== */}
+      {/*
+       * ======================================================
+       * PUBLICAR
+       * ======================================================
+       */}
 
       <Tab.Screen
-
         name="Publicar"
-
         component={
           PublishScreen
         }
-
         options={{
-
           title:
             'Publicar',
 
           swipeEnabled:
             true,
 
-
-          /*
-           * Pena sólida.
-           */
-
           tabBarIcon: ({
             color,
           }) => (
-
-            <View
-              style={{
-                width:
-                  32,
-
-                height:
-                  32,
-
-                alignItems:
-                  'center',
-
-                justifyContent:
-                  'center',
-
-                overflow:
-                  'visible',
-              }}
-            >
-
-              <FontAwesome6
-
-                name="feather"
-
-                size={
-                  24
-                }
-
-                color={
-                  color
-                }
-
-                solid={
-                  true
-                }
-
-              />
-
-            </View>
-
+            <TabIcon
+              name="feather"
+              color={
+                color
+              }
+              size={24}
+              solid
+            />
           ),
-
         }}
-
       />
 
-
-      {/* ======================================================
-          CONTATOS
-          ====================================================== */}
+      {/*
+       * ======================================================
+       * CONTATOS
+       * ======================================================
+       */}
 
       <Tab.Screen
-
         name="Contatos"
-
         component={
           ContactsStack
         }
-
-        options={({ route }) => ({
-
+        options={({
+          route,
+        }) => ({
           title:
             'Contatos',
-
 
           swipeEnabled:
             isStackOnMainScreen(
@@ -796,74 +625,30 @@ export default function AppRoutes() {
               'ContactsScreen'
             ),
 
-
-          /*
-           * ==================================================
-           * MENSAGEM
-           * ==================================================
-           *
-           * Ativo:
-           * fa-solid fa-comment
-           *
-           * Inativo:
-           * fa-regular fa-comment
-           */
-
           tabBarIcon: ({
             color,
             focused,
           }) => (
-
-            <View
-              style={{
-                width:
-                  32,
-
-                height:
-                  32,
-
-                alignItems:
-                  'center',
-
-                justifyContent:
-                  'center',
-
-                overflow:
-                  'visible',
-              }}
-            >
-
-              <FontAwesome6
-
-                name="comment"
-
-                size={
-                  focused
-                    ? 25
-                    : 24
-                }
-
-                color={
-                  color
-                }
-
-                solid={
-                  focused
-                }
-
-              />
-
-            </View>
-
+            <TabIcon
+              name="comment"
+              color={
+                color
+              }
+              size={
+                focused
+                  ? 25
+                  : 24
+              }
+              solid={
+                focused
+              }
+            />
           ),
-
         })}
-
-
-        listeners={({ navigation }) => ({
-
+        listeners={({
+          navigation,
+        }) => ({
           tabPress: () => {
-
             navigation.navigate(
               'Contatos',
               {
@@ -871,106 +656,70 @@ export default function AppRoutes() {
                   'ContactsScreen',
               }
             );
-
           },
-
         })}
-
       />
 
-
-      {/* ======================================================
-          CONTA
-          ====================================================== */}
+      {/*
+       * ======================================================
+       * CONTA
+       * ======================================================
+       */}
 
       <Tab.Screen
-
         name="Conta"
-
         component={
           ProfileStack
         }
-
-        options={({ route }) => ({
-
+        options={({
+          route,
+        }) => ({
           title:
             'Conta',
 
-
+          /*
+           * O gesto entre abas fica
+           * disponível somente na
+           * tela principal do perfil.
+           *
+           * O gesto fica bloqueado em:
+           *
+           * - Publicados;
+           * - Detalhes;
+           * - Configurações;
+           * - Alteração de e-mail;
+           * - Verificação em duas etapas.
+           */
           swipeEnabled:
             isStackOnMainScreen(
               route,
               'ProfileScreen'
             ),
 
-
-          /*
-           * ==================================================
-           * PERFIL
-           * ==================================================
-           *
-           * Ativo:
-           * fa-solid fa-circle-user
-           *
-           * Inativo:
-           * fa-regular fa-circle-user
-           */
-
           tabBarIcon: ({
             color,
             focused,
           }) => (
-
-            <View
-              style={{
-                width:
-                  32,
-
-                height:
-                  32,
-
-                alignItems:
-                  'center',
-
-                justifyContent:
-                  'center',
-
-                overflow:
-                  'visible',
-              }}
-            >
-
-              <FontAwesome6
-
-                name="circle-user"
-
-                size={
-                  focused
-                    ? 26
-                    : 25
-                }
-
-                color={
-                  color
-                }
-
-                solid={
-                  focused
-                }
-
-              />
-
-            </View>
-
+            <TabIcon
+              name="circle-user"
+              color={
+                color
+              }
+              size={
+                focused
+                  ? 26
+                  : 25
+              }
+              solid={
+                focused
+              }
+            />
           ),
-
         })}
-
-
-        listeners={({ navigation }) => ({
-
+        listeners={({
+          navigation,
+        }) => ({
           tabPress: () => {
-
             navigation.navigate(
               'Conta',
               {
@@ -978,13 +727,9 @@ export default function AppRoutes() {
                   'ProfileScreen',
               }
             );
-
           },
-
         })}
-
       />
-
     </Tab.Navigator>
   );
 }

@@ -145,12 +145,8 @@ export default function LoginVerificationScreen() {
       : COLORS.lightBlue;
 
   /*
-   * ESCONDER PARTE DO E-MAIL
-   *
-   * Exemplo:
-   *
-   * anthony@email.com
-   * ant***@email.com
+   * ESCONDER PARTE
+   * DO E-MAIL
    */
   function maskEmail(
     value
@@ -192,9 +188,6 @@ export default function LoginVerificationScreen() {
 
   /*
    * NORMALIZAR CÓDIGO
-   *
-   * Aceita apenas números e
-   * limita a seis dígitos.
    */
   function handleCodeChange(
     value
@@ -371,7 +364,9 @@ export default function LoginVerificationScreen() {
 
     cancelTwoFactorChallenge();
 
-    setVerificationCode('');
+    setVerificationCode(
+      ''
+    );
 
     navigation.reset({
       index:
@@ -397,9 +392,13 @@ export default function LoginVerificationScreen() {
       ]}
     >
       <StatusBar
-        barStyle="light-content"
+        barStyle={
+          darkMode
+            ? 'light-content'
+            : 'dark-content'
+        }
         backgroundColor={
-          COLORS.navyBlue
+          screenBackground
         }
       />
 
@@ -465,25 +464,16 @@ export default function LoginVerificationScreen() {
           bounces={false}
         >
           {/*
-           * IDENTIDADE DO DOALIZE
+           * LOGO DO DOALIZE
+           *
+           * Sem fundo, sem card,
+           * sem decorações e sem sombra.
            */}
           <View
             style={
               styles.logoArea
             }
           >
-            <View
-              style={
-                styles.logoDecorationOne
-              }
-            />
-
-            <View
-              style={
-                styles.logoDecorationTwo
-              }
-            />
-
             <Image
               source={
                 logo
@@ -987,19 +977,20 @@ const styles =
 
     /*
      * ÁREA DA LOGO
+     *
+     * Totalmente transparente.
+     * Não cria quadrado, card,
+     * borda, sombra ou decoração.
      */
     logoArea: {
-      position:
-        'relative',
-
       width:
         '100%',
 
       maxWidth:
         330,
 
-      height:
-        116,
+      minHeight:
+        105,
 
       alignItems:
         'center',
@@ -1007,89 +998,11 @@ const styles =
       justifyContent:
         'center',
 
-      overflow:
-        'hidden',
-
       paddingHorizontal:
-        28,
-
-      borderRadius:
-        25,
+        10,
 
       backgroundColor:
-        COLORS.navyBlue,
-
-      shadowColor:
-        COLORS.darkBlue,
-
-      shadowOffset: {
-        width:
-          0,
-
-        height:
-          8,
-      },
-
-      shadowOpacity:
-        0.22,
-
-      shadowRadius:
-        13,
-
-      elevation:
-        7,
-    },
-
-    logoDecorationOne: {
-      position:
-        'absolute',
-
-      top:
-        -62,
-
-      right:
-        -38,
-
-      width:
-        155,
-
-      height:
-        155,
-
-      borderRadius:
-        78,
-
-      backgroundColor:
-        COLORS.darkBlue,
-
-      opacity:
-        0.7,
-    },
-
-    logoDecorationTwo: {
-      position:
-        'absolute',
-
-      bottom:
-        -58,
-
-      left:
-        -38,
-
-      width:
-        135,
-
-      height:
-        135,
-
-      borderRadius:
-        68,
-
-      backgroundColor:
-        COLORS.accent,
-
-      opacity:
-        0.48,
+        'transparent',
     },
 
     logoImage: {
@@ -1097,7 +1010,10 @@ const styles =
         '100%',
 
       height:
-        80,
+        92,
+
+      backgroundColor:
+        'transparent',
     },
 
     /*
@@ -1576,4 +1492,3 @@ const styles =
         '500',
     },
   });
-``

@@ -30,6 +30,10 @@ import Header from '../../components/Header';
 
 import PostCard from '../../components/PostCard';
 
+import {
+  useTheme,
+} from '../../hooks/useTheme';
+
 import api from '../../services/api';
 
 import {
@@ -45,24 +49,58 @@ import styles from './styles';
  * ============================================================
  * CORES DA HOME
  * ============================================================
- *
- * Nesta etapa a Home começa diretamente no mesmo Dark Mode
- * utilizado na tela inicial e no Login.
  */
+
 const COLORS = {
-  background: '#141414',
+  /*
+   * MODO ESCURO
+   */
 
-  text: '#F5F5F5',
+  background:
+    '#141414',
 
-  textSecondary: 'rgba(245, 245, 245, 0.72)',
+  text:
+    '#F5F5F5',
 
-  primary: '#3AC2F8',
+  textSecondary:
+    'rgba(245, 245, 245, 0.72)',
 
-  deepBlue: '#155269',
+  divider:
+    'rgba(245, 245, 245, 0.22)',
 
-  white: '#FFFFFF',
 
-  divider: 'rgba(245, 245, 245, 0.22)',
+  /*
+   * MODO CLARO
+   */
+
+  lightBackground:
+    '#F5F5F5',
+
+  lightText:
+    '#141414',
+
+  lightTextSecondary:
+    'rgba(20, 20, 20, 0.72)',
+
+  lightDivider:
+    'rgba(20, 20, 20, 0.22)',
+
+  lightSupportBackground:
+    '#E8E8E8',
+
+
+  /*
+   * CORES COMPARTILHADAS
+   */
+
+  primary:
+    '#3AC2F8',
+
+  deepBlue:
+    '#155269',
+
+  white:
+    '#FFFFFF',
 };
 
 
@@ -75,7 +113,6 @@ const COLORS = {
 function extractPostsFromResponse(
   responseData
 ) {
-
   if (
     Array.isArray(
       responseData
@@ -138,27 +175,25 @@ function extractPostsFromResponse(
 function normalizeFeedPost(
   post
 ) {
-
   if (
     !post ||
-    typeof post !== 'object'
+    typeof post !==
+      'object'
   ) {
     return null;
   }
 
 
-  let normalizedPost = null;
+  let normalizedPost =
+    null;
 
 
   try {
-
     normalizedPost =
       normalizePost(
         post
       );
-
   } catch (error) {
-
     console.log(
       'ERRO AO NORMALIZAR PUBLICAÇÃO:',
       {
@@ -169,7 +204,6 @@ function normalizeFeedPost(
           error.message,
       }
     );
-
   }
 
 
@@ -181,11 +215,11 @@ function normalizeFeedPost(
       : post;
 
 
-  let normalizedImages = [];
+  let normalizedImages =
+    [];
 
 
   try {
-
     normalizedImages =
       parsePostImages(
         safePost?.images ||
@@ -193,9 +227,7 @@ function normalizeFeedPost(
         safePost?.image ||
         post?.image
       );
-
   } catch (error) {
-
     console.log(
       'ERRO AO NORMALIZAR IMAGENS:',
       {
@@ -206,12 +238,10 @@ function normalizeFeedPost(
           error.message,
       }
     );
-
   }
 
 
   return {
-
     ...post,
 
     ...safePost,
@@ -227,11 +257,9 @@ function normalizeFeedPost(
 
 
     user: {
-
       ...post?.user,
 
       ...safePost?.user,
-
     },
 
 
@@ -262,7 +290,6 @@ function normalizeFeedPost(
           0
         )
       ),
-
   };
 }
 
@@ -276,6 +303,64 @@ function normalizeFeedPost(
 export default function HomeScreen({
   navigation,
 }) {
+  /*
+   * ==========================================================
+   * TEMA
+   * ==========================================================
+   */
+
+  const {
+    darkMode,
+  } = useTheme();
+
+
+  /*
+   * ==========================================================
+   * CORES CONFORME O TEMA
+   * ==========================================================
+   */
+
+  const screenBackground =
+    darkMode
+      ? COLORS.background
+      : COLORS.lightBackground;
+
+
+  const mainTextColor =
+    darkMode
+      ? COLORS.text
+      : COLORS.lightText;
+
+
+  const secondaryTextColor =
+    darkMode
+      ? COLORS.textSecondary
+      : COLORS.lightTextSecondary;
+
+
+  const dividerColor =
+    darkMode
+      ? COLORS.divider
+      : COLORS.lightDivider;
+
+
+  const supportBackgroundColor =
+    darkMode
+      ? COLORS.deepBlue
+      : COLORS.lightSupportBackground;
+
+
+  const buttonContentColor =
+    darkMode
+      ? COLORS.white
+      : COLORS.lightText;
+
+
+  /*
+   * ==========================================================
+   * ESTADOS
+   * ==========================================================
+   */
 
   const [
     posts,
@@ -308,8 +393,30 @@ export default function HomeScreen({
 
 
   /*
+   * ==========================================================
+   * COR DA ÁREA DO FEED
+   * ==========================================================
+   *
+   * Enquanto o PostCard ainda estiver usando o fundo escuro,
+   * a área restante do feed também precisa ficar escura.
+   *
+   * Isso impede que uma faixa branca apareça depois do último
+   * post no modo claro.
+   *
+   * Quando a lista estiver vazia, o fundo acompanha o tema.
+   */
+
+  const feedBackgroundColor =
+    posts.length >
+    0
+      ? COLORS.background
+      : screenBackground;
+
+
+  /*
    * Quantidade de posts atual.
    */
+
   const postsCountRef =
     useRef(0);
 
@@ -326,31 +433,25 @@ export default function HomeScreen({
         showInitialLoading = false,
         showRefreshLoading = false,
       } = {}) => {
-
         try {
-
           setFeedError('');
 
 
           if (
             showInitialLoading
           ) {
-
             setLoading(
               true
             );
-
           }
 
 
           if (
             showRefreshLoading
           ) {
-
             setRefreshing(
               true
             );
-
           }
 
 
@@ -444,7 +545,9 @@ export default function HomeScreen({
           console.log(
             'FEED NORMALIZADO:',
             normalizedPosts.map(
-              (post) => ({
+              (
+                post
+              ) => ({
                 id:
                   post?.id,
 
@@ -486,9 +589,7 @@ export default function HomeScreen({
           setPosts(
             normalizedPosts
           );
-
         } catch (error) {
-
           const errorMessage =
             error.response
               ?.data
@@ -536,26 +637,21 @@ export default function HomeScreen({
             postsCountRef.current ===
             0
           ) {
-
             Alert.alert(
               'Erro ao carregar',
               errorMessage
             );
-
           }
-
         } finally {
-
           setLoading(
             false
           );
 
+
           setRefreshing(
             false
           );
-
         }
-
       },
       []
     );
@@ -569,13 +665,11 @@ export default function HomeScreen({
 
   useFocusEffect(
     useCallback(() => {
-
       loadPosts({
         showInitialLoading:
           postsCountRef.current ===
           0,
       });
-
     }, [
       loadPosts,
     ])
@@ -589,7 +683,6 @@ export default function HomeScreen({
    */
 
   function handleRefresh() {
-
     if (
       refreshing ||
       loading
@@ -602,7 +695,6 @@ export default function HomeScreen({
       showRefreshLoading:
         true,
     });
-
   }
 
 
@@ -613,7 +705,6 @@ export default function HomeScreen({
    */
 
   function handleRetry() {
-
     if (
       loading ||
       refreshing
@@ -626,7 +717,6 @@ export default function HomeScreen({
       showInitialLoading:
         true,
     });
-
   }
 
 
@@ -639,7 +729,6 @@ export default function HomeScreen({
   function handleOpenPost(
     post
   ) {
-
     if (!post) {
       return;
     }
@@ -651,7 +740,6 @@ export default function HomeScreen({
         post,
       }
     );
-
   }
 
 
@@ -664,7 +752,6 @@ export default function HomeScreen({
   function getImageExtension(
     imageUrl
   ) {
-
     if (
       !imageUrl ||
       typeof imageUrl !==
@@ -720,7 +807,6 @@ export default function HomeScreen({
   function createShareMessage(
     post
   ) {
-
     const responsibleName =
       typeof post?.user?.name ===
         'string' &&
@@ -773,11 +859,9 @@ export default function HomeScreen({
 
 
     if (summary) {
-
       messageParts.push(
         `Resumo:\n${summary}`
       );
-
     }
 
 
@@ -786,11 +870,9 @@ export default function HomeScreen({
       description !==
         summary
     ) {
-
       messageParts.push(
         `Descrição:\n${description}`
       );
-
     }
 
 
@@ -800,17 +882,13 @@ export default function HomeScreen({
 
 
     if (contactEmail) {
-
       messageParts.push(
         `Contato:\n${contactEmail}`
       );
-
     } else {
-
       messageParts.push(
         'Contato:\nEntre em contato pelo aplicativo Doalize.'
       );
-
     }
 
 
@@ -822,7 +900,6 @@ export default function HomeScreen({
     return messageParts.join(
       '\n\n'
     );
-
   }
 
 
@@ -835,20 +912,17 @@ export default function HomeScreen({
   async function prepareImageForShare(
     post
   ) {
-
-    let parsedImages = [];
+    let parsedImages =
+      [];
 
 
     try {
-
       parsedImages =
         parsePostImages(
           post?.images ||
           post?.image
         );
-
     } catch (error) {
-
       console.log(
         'ERRO AO IDENTIFICAR IMAGEM PARA COMPARTILHAR:',
         {
@@ -862,13 +936,15 @@ export default function HomeScreen({
 
 
       return null;
-
     }
 
 
     if (
+      !Array.isArray(
+        parsedImages
+      ) ||
       parsedImages.length ===
-      0
+        0
     ) {
       return null;
     }
@@ -923,7 +999,6 @@ export default function HomeScreen({
     if (
       previousFile.exists
     ) {
-
       await FileSystem
         .deleteAsync(
           temporaryFileUri,
@@ -932,7 +1007,6 @@ export default function HomeScreen({
               true,
           }
         );
-
     }
 
 
@@ -952,7 +1026,6 @@ export default function HomeScreen({
 
 
     return downloadResult.uri;
-
   }
 
 
@@ -965,13 +1038,12 @@ export default function HomeScreen({
   async function handleShare(
     post
   ) {
-
     if (!post?.id) {
-
       Alert.alert(
         'Erro',
         'A publicação selecionada é inválida.'
       );
+
 
       return;
     }
@@ -981,14 +1053,11 @@ export default function HomeScreen({
       sharingPostId !==
       null
     ) {
-
       return;
-
     }
 
 
     try {
-
       setSharingPostId(
         post.id
       );
@@ -1000,18 +1069,16 @@ export default function HomeScreen({
         );
 
 
-      let imageUri = null;
+      let imageUri =
+        null;
 
 
       try {
-
         imageUri =
           await prepareImageForShare(
             post
           );
-
       } catch (imageError) {
-
         console.log(
           'NÃO FOI POSSÍVEL PREPARAR A IMAGEM:',
           {
@@ -1022,26 +1089,21 @@ export default function HomeScreen({
               imageError.message,
           }
         );
-
       }
 
 
       const shareContent = {
-
         title:
           'Publicação do Doalize',
 
         message:
           shareMessage,
-
       };
 
 
       if (imageUri) {
-
         shareContent.url =
           imageUri;
-
       }
 
 
@@ -1076,9 +1138,7 @@ export default function HomeScreen({
             ),
         }
       );
-
     } catch (error) {
-
       const errorMessage =
         String(
           error?.message ||
@@ -1110,23 +1170,17 @@ export default function HomeScreen({
 
 
       if (!canceled) {
-
         Alert.alert(
           'Erro',
           error.message ||
             'Não foi possível compartilhar a publicação.'
         );
-
       }
-
     } finally {
-
       setSharingPostId(
         null
       );
-
     }
-
   }
 
 
@@ -1139,21 +1193,18 @@ export default function HomeScreen({
   async function handlePromote(
     post
   ) {
-
     if (!post?.id) {
-
       Alert.alert(
         'Erro',
         'A publicação selecionada é inválida.'
       );
 
-      return;
 
+      return;
     }
 
 
     try {
-
       const response =
         await api.post(
           `/posts/promote/${post.id}`
@@ -1191,10 +1242,13 @@ export default function HomeScreen({
 
 
       setPosts(
-        (currentPosts) =>
+        (
+          currentPosts
+        ) =>
           currentPosts.map(
-            (currentPost) => {
-
+            (
+              currentPost
+            ) => {
               if (
                 Number(
                   currentPost.id
@@ -1203,14 +1257,11 @@ export default function HomeScreen({
                   post.id
                 )
               ) {
-
                 return currentPost;
-
               }
 
 
               return {
-
                 ...currentPost,
 
                 promoted,
@@ -1220,9 +1271,7 @@ export default function HomeScreen({
 
                 promotion_count:
                   promotionCount,
-
               };
-
             }
           )
       );
@@ -1238,9 +1287,7 @@ export default function HomeScreen({
               : 'Promoção removida.'
           )
       );
-
     } catch (error) {
-
       console.log(
         'ERRO AO PROMOVER PUBLICAÇÃO:',
         {
@@ -1268,9 +1315,7 @@ export default function HomeScreen({
           ?.message ||
           'Não foi possível alterar a promoção.'
       );
-
     }
-
   }
 
 
@@ -1283,77 +1328,75 @@ export default function HomeScreen({
   function renderItem({
     item,
   }) {
-
     return (
-
       <View
-        style={
-          localStyles.postWrapper
-        }
+        style={[
+          localStyles.postWrapper,
+          {
+            backgroundColor:
+              feedBackgroundColor,
+          },
+        ]}
       >
-
         <PostCard
-
           post={
             item
           }
-
           onPress={() =>
             handleOpenPost(
               item
             )
           }
-
           onShare={() =>
             handleShare(
               item
             )
           }
-
           onPromote={() =>
             handlePromote(
               item
             )
           }
-
         />
 
 
-        {
-          sharingPostId ===
-          item?.id ? (
+        {sharingPostId ===
+        item?.id ? (
+          <View
+            style={[
+              localStyles.sharingIndicator,
+              {
+                backgroundColor:
+                  supportBackgroundColor,
 
-            <View
-              style={
-                localStyles.sharingIndicator
+                borderColor:
+                  dividerColor,
+              },
+            ]}
+          >
+            <ActivityIndicator
+              size="small"
+              color={
+                COLORS.primary
               }
+            />
+
+
+            <Text
+              style={[
+                localStyles.sharingText,
+                {
+                  color:
+                    secondaryTextColor,
+                },
+              ]}
             >
-
-              <ActivityIndicator
-                size="small"
-                color={
-                  COLORS.primary
-                }
-              />
-
-
-              <Text
-                style={
-                  localStyles.sharingText
-                }
-              >
-                Preparando compartilhamento...
-              </Text>
-
-            </View>
-
-          ) : null
-        }
-
+              Preparando compartilhamento...
+            </Text>
+          </View>
+        ) : null}
       </View>
-
     );
-
   }
 
 
@@ -1368,26 +1411,30 @@ export default function HomeScreen({
     posts.length ===
       0
   ) {
-
     return (
-
       <View
-        style={
-          styles.container
-        }
+        style={[
+          styles.container,
+          {
+            backgroundColor:
+              screenBackground,
+          },
+        ]}
       >
-
         <Header
           title="DOALIZE"
         />
 
 
         <View
-          style={
-            localStyles.loadingContainer
-          }
+          style={[
+            localStyles.loadingContainer,
+            {
+              backgroundColor:
+                screenBackground,
+            },
+          ]}
         >
-
           <ActivityIndicator
             size="large"
             color={
@@ -1397,19 +1444,19 @@ export default function HomeScreen({
 
 
           <Text
-            style={
-              localStyles.loadingText
-            }
+            style={[
+              localStyles.loadingText,
+              {
+                color:
+                  secondaryTextColor,
+              },
+            ]}
           >
             Carregando publicações...
           </Text>
-
         </View>
-
       </View>
-
     );
-
   }
 
 
@@ -1420,23 +1467,30 @@ export default function HomeScreen({
    */
 
   return (
-
     <View
-      style={
-        styles.container
-      }
+      style={[
+        styles.container,
+        {
+          backgroundColor:
+            screenBackground,
+        },
+      ]}
     >
-
       <Header
         title="DOALIZE"
       />
 
 
       <FlatList
-
         data={
           posts
         }
+
+        bounces={false}
+
+        alwaysBounceVertical={false}
+
+        overScrollMode="never"
 
 
         keyExtractor={(
@@ -1460,12 +1514,37 @@ export default function HomeScreen({
         }
 
 
+        /*
+         * Quando existem posts, a área restante
+         * usa a mesma cor escura do PostCard.
+         *
+         * Quando não existem posts, acompanha
+         * o tema atual.
+         */
+        style={{
+          backgroundColor:
+            feedBackgroundColor,
+        }}
+
+
         contentContainerStyle={[
           styles.feed,
 
+          {
+            backgroundColor:
+              feedBackgroundColor,
+          },
+
           posts.length ===
           0
-            ? localStyles.emptyList
+            ? [
+                localStyles.emptyList,
+
+                {
+                  backgroundColor:
+                    screenBackground,
+                },
+              ]
             : null,
         ]}
 
@@ -1480,9 +1559,7 @@ export default function HomeScreen({
 
 
         refreshControl={
-
           <RefreshControl
-
             refreshing={
               refreshing
             }
@@ -1500,22 +1577,22 @@ export default function HomeScreen({
             ]}
 
             progressBackgroundColor={
-              COLORS.deepBlue
+              supportBackgroundColor
             }
-
           />
-
         }
 
 
         ListEmptyComponent={
-
           <View
-            style={
-              localStyles.emptyContainer
-            }
+            style={[
+              localStyles.emptyContainer,
+              {
+                backgroundColor:
+                  screenBackground,
+              },
+            ]}
           >
-
             <Ionicons
               name={
                 feedError
@@ -1524,110 +1601,98 @@ export default function HomeScreen({
               }
               size={54}
               color={
-                COLORS.textSecondary
+                secondaryTextColor
               }
             />
 
 
             <Text
-              style={
-                localStyles.emptyTitle
-              }
+              style={[
+                localStyles.emptyTitle,
+                {
+                  color:
+                    mainTextColor,
+                },
+              ]}
             >
-              {
-                feedError
-                  ? 'Não foi possível carregar'
-                  : 'Nenhuma publicação'
-              }
+              {feedError
+                ? 'Não foi possível carregar'
+                : 'Nenhuma publicação'}
             </Text>
 
 
             <Text
-              style={
-                localStyles.emptyDescription
-              }
+              style={[
+                localStyles.emptyDescription,
+                {
+                  color:
+                    secondaryTextColor,
+                },
+              ]}
             >
-              {
-                feedError
-                  ? feedError
-                  : 'As publicações criadas pelos usuários aparecerão aqui.'
-              }
+              {feedError
+                ? feedError
+                : 'As publicações criadas pelos usuários aparecerão aqui.'}
             </Text>
 
 
-            {
-              feedError ? (
-
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={
-                    handleRetry
-                  }
-                  disabled={
-                    loading
-                  }
-                  style={[
-                    localStyles.retryButton,
-                    {
-                      opacity:
-                        loading
-                          ? 0.6
-                          : 1,
-                    },
-                  ]}
-                >
-
+            {feedError ? (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={
+                  handleRetry
+                }
+                disabled={
+                  loading
+                }
+                style={[
+                  localStyles.retryButton,
                   {
-                    loading ? (
+                    opacity:
+                      loading
+                        ? 0.6
+                        : 1,
+                  },
+                ]}
+              >
+                {loading ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={
+                      buttonContentColor
+                    }
+                  />
+                ) : (
+                  <>
+                    <Ionicons
+                      name="refresh-outline"
+                      size={19}
+                      color={
+                        buttonContentColor
+                      }
+                    />
 
-                      <ActivityIndicator
-                        size="small"
-                        color={
-                          COLORS.white
-                        }
-                      />
 
-                    ) : (
-
-                      <>
-
-                        <Ionicons
-                          name="refresh-outline"
-                          size={19}
-                          color={
-                            COLORS.white
-                          }
-                        />
-
-
-                        <Text
-                          style={
-                            localStyles.retryText
-                          }
-                        >
-                          Tentar novamente
-                        </Text>
-
-                      </>
-
-                    )
-                  }
-
-                </TouchableOpacity>
-
-              ) : null
-            }
-
+                    <Text
+                      style={[
+                        localStyles.retryText,
+                        {
+                          color:
+                            buttonContentColor,
+                        },
+                      ]}
+                    >
+                      Tentar novamente
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            ) : null}
           </View>
-
         }
-
       />
-
     </View>
-
   );
-
 }
 
 
@@ -1639,20 +1704,21 @@ export default function HomeScreen({
 
 const localStyles =
   StyleSheet.create({
-
     /*
      * ========================================================
      * WRAPPER DA PUBLICAÇÃO
      * ========================================================
-     *
-     * Mantém as publicações em uma coluna contínua.
      */
+
     postWrapper: {
-      width: '100%',
+      width:
+        '100%',
 
-      margin: 0,
+      margin:
+        0,
 
-      padding: 0,
+      padding:
+        0,
 
       backgroundColor:
         COLORS.background,
@@ -1664,8 +1730,10 @@ const localStyles =
      * LOADING
      * ========================================================
      */
+
     loadingContainer: {
-      flex: 1,
+      flex:
+        1,
 
       alignItems:
         'center',
@@ -1710,8 +1778,10 @@ const localStyles =
      * LISTA VAZIA
      * ========================================================
      */
+
     emptyList: {
-      flexGrow: 1,
+      flexGrow:
+        1,
 
       backgroundColor:
         COLORS.background,
@@ -1719,7 +1789,8 @@ const localStyles =
 
 
     emptyContainer: {
-      flex: 1,
+      flex:
+        1,
 
       alignItems:
         'center',
@@ -1794,6 +1865,7 @@ const localStyles =
      * BOTÃO DE RETRY
      * ========================================================
      */
+
     retryButton: {
       minWidth:
         180,
@@ -1853,6 +1925,7 @@ const localStyles =
      * INDICADOR DE COMPARTILHAMENTO
      * ========================================================
      */
+
     sharingIndicator: {
       flexDirection:
         'row',
@@ -1874,6 +1947,12 @@ const localStyles =
 
       paddingVertical:
         7,
+
+      borderWidth:
+        1,
+
+      borderColor:
+        COLORS.divider,
 
       borderRadius:
         15,
@@ -1902,5 +1981,4 @@ const localStyles =
       includeFontPadding:
         false,
     },
-
   });

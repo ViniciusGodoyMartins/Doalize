@@ -9,13 +9,28 @@ export default StyleSheet.create({
    * ============================================================
    * PUBLICAÇÃO
    * ============================================================
+   *
+   * O container acompanha somente o conteúdo real do post.
+   *
+   * A linha inferior não fica mais aqui. Ela foi transferida
+   * para a área de ações, ficando imediatamente abaixo dos
+   * ícones e da data.
    */
 
   container: {
     width:
       '100%',
 
+    alignSelf:
+      'stretch',
+
+    marginTop:
+      0,
+
     marginBottom:
+      0,
+
+    padding:
       0,
 
     borderRadius:
@@ -31,8 +46,11 @@ export default StyleSheet.create({
       'transparent',
 
     shadowOffset: {
-      width: 0,
-      height: 0,
+      width:
+        0,
+
+      height:
+        0,
     },
 
     shadowOpacity:
@@ -45,10 +63,10 @@ export default StyleSheet.create({
       0,
 
     borderBottomWidth:
-      1,
+      0,
 
     borderBottomColor:
-      'rgba(245, 245, 245, 0.22)',
+      'transparent',
   },
 
 
@@ -67,6 +85,9 @@ export default StyleSheet.create({
 
     paddingVertical:
       12,
+
+    margin:
+      0,
 
     backgroundColor:
       'transparent',
@@ -94,6 +115,12 @@ export default StyleSheet.create({
 
     minWidth:
       0,
+
+    margin:
+      0,
+
+    padding:
+      0,
   },
 
 
@@ -101,8 +128,6 @@ export default StyleSheet.create({
    * ============================================================
    * NOME
    * ============================================================
-   *
-   * Aumentado um pouco em relação ao anterior.
    */
 
   username: {
@@ -136,11 +161,6 @@ export default StyleSheet.create({
    * ============================================================
    * DATA
    * ============================================================
-   *
-   * Agora fica na área inferior, ao lado das ações.
-   *
-   * O texto da publicação usa 15px, então a data fica
-   * somente um pouco menor: 13px.
    */
 
   date: {
@@ -184,10 +204,8 @@ export default StyleSheet.create({
    * IMAGEM
    * ============================================================
    *
-   * NÃO existe mais uma altura fixa.
-   *
-   * A altura é calculada pela proporção real de cada imagem
-   * no PostCard/index.js.
+   * A altura continua sendo calculada pela proporção real
+   * da imagem no index.js do PostCard.
    */
 
   postImage: {
@@ -229,6 +247,9 @@ export default StyleSheet.create({
 
     paddingBottom:
       13,
+
+    margin:
+      0,
 
     backgroundColor:
       '#141414',
@@ -273,9 +294,11 @@ export default StyleSheet.create({
    * AÇÕES
    * ============================================================
    *
-   * A linha superior foi removida.
+   * A linha inferior agora pertence diretamente à área de ações.
    *
-   * A data fica do lado direito.
+   * Dessa forma, a linha aparece imediatamente abaixo dos
+   * ícones e da data, independentemente do espaço restante
+   * existente na tela.
    */
 
   actions: {
@@ -303,11 +326,23 @@ export default StyleSheet.create({
     paddingVertical:
       5,
 
+    marginTop:
+      0,
+
+    marginBottom:
+      0,
+
     borderTopWidth:
       0,
 
     borderTopColor:
       'transparent',
+
+    borderBottomWidth:
+      1,
+
+    borderBottomColor:
+      'rgba(245, 245, 245, 0.22)',
 
     backgroundColor:
       '#141414',
@@ -354,8 +389,6 @@ export default StyleSheet.create({
    * ============================================================
    * TEXTO DAS AÇÕES
    * ============================================================
-   *
-   * Mantido apenas para compatibilidade.
    */
 
   actionText: {

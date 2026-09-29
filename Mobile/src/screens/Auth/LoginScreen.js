@@ -31,56 +31,48 @@ import {
   useAuth,
 } from '../../hooks/useAuth';
 
-import logo from '../../../assets/logo.png';
+import {
+  useTheme,
+} from '../../hooks/useTheme';
 
+/*
+ * LOGOS DO DOALIZE
+ *
+ * Modo escuro:
+ * logo.png
+ *
+ * Modo claro:
+ * logomodoclaro.png
+ */
+const logoDark =
+  require(
+    '../../../assets/logo.png'
+  );
+
+const logoLight =
+  require(
+    '../../../assets/logomodoclaro.png'
+  );
 
 /*
  * ============================================================
  * CORES OFICIAIS DO DOALIZE
  * ============================================================
- *
- * DARK MODE ATUAL
- *
- * Fundo:
- * #141414
- *
- * Azul principal:
- * #3AC2F8
- *
- * Azul dos campos:
- * #05618D
- *
- * Azul secundário:
- * #2594BD
- *
- * Azul de apoio:
- * #128090
- *
- * Azul profundo:
- * #155269
  */
 
 const COLORS = {
-
   /*
-   * ==========================================================
-   * FUNDO
-   * ==========================================================
+   * FUNDOS
    */
-
   background:
     '#141414',
 
   lightBackground:
     '#F5F5F5',
 
-
   /*
-   * ==========================================================
    * AZUIS
-   * ==========================================================
    */
-
   primary:
     '#3AC2F8',
 
@@ -96,13 +88,9 @@ const COLORS = {
   deepBlue:
     '#155269',
 
-
   /*
-   * ==========================================================
    * TEXTOS
-   * ==========================================================
    */
-
   lightText:
     '#F5F5F5',
 
@@ -112,18 +100,15 @@ const COLORS = {
   white:
     '#FFFFFF',
 
-
   /*
-   * ==========================================================
-   * BORDA
-   * ==========================================================
+   * BORDAS
    */
-
   border:
     'rgba(245, 245, 245, 0.30)',
 
+  lightBorder:
+    'rgba(20, 20, 20, 0.18)',
 };
-
 
 /*
  * ============================================================
@@ -132,23 +117,28 @@ const COLORS = {
  */
 
 export default function LoginScreen() {
-
   const navigation =
     useNavigation();
-
 
   /*
    * ==========================================================
    * AUTENTICAÇÃO
    * ==========================================================
-   *
-   * A lógica continua exatamente ligada ao seu AuthContext.
    */
 
   const {
     signIn,
   } = useAuth();
 
+  /*
+   * ==========================================================
+   * TEMA
+   * ==========================================================
+   */
+
+  const {
+    darkMode,
+  } = useTheme();
 
   /*
    * ==========================================================
@@ -161,37 +151,54 @@ export default function LoginScreen() {
     setEmail,
   ] = useState('');
 
-
   const [
     password,
     setPassword,
   ] = useState('');
-
 
   const [
     loading,
     setLoading,
   ] = useState(false);
 
-
   /*
    * ==========================================================
-   * CORES DA TELA
+   * CORES E LOGO DA TELA
    * ==========================================================
    *
-   * Neste momento o Login inicia diretamente em Dark Mode,
-   * como a tela inicial do aplicativo.
+   * As dimensões e posições permanecem
+   * exatamente iguais às da versão original.
    */
 
   const screenBackground =
-    COLORS.background;
+    darkMode
+      ? COLORS.background
+      : COLORS.lightBackground;
 
   const mainTextColor =
-    COLORS.lightText;
+    darkMode
+      ? COLORS.lightText
+      : COLORS.darkText;
 
   const secondaryTextColor =
-    'rgba(245, 245, 245, 0.72)';
+    darkMode
+      ? 'rgba(245, 245, 245, 0.72)'
+      : 'rgba(20, 20, 20, 0.72)';
 
+  const backIconColor =
+    darkMode
+      ? COLORS.lightText
+      : COLORS.darkText;
+
+  const buttonTextColor =
+    darkMode
+      ? COLORS.white
+      : COLORS.darkText;
+
+  const selectedLogo =
+    darkMode
+      ? logoDark
+      : logoLight;
 
   /*
    * ==========================================================
@@ -200,29 +207,19 @@ export default function LoginScreen() {
    */
 
   async function handleLogin() {
-
     if (loading) {
       return;
     }
 
-
-    /*
-     * Normaliza o e-mail antes de enviar.
-     */
     const normalizedEmail =
       email
         .trim()
         .toLowerCase();
 
-
-    /*
-     * Validação básica.
-     */
     if (
       !normalizedEmail ||
       !password
     ) {
-
       Alert.alert(
         'Atenção',
         'Preencha o e-mail e a senha.'
@@ -231,40 +228,26 @@ export default function LoginScreen() {
       return;
     }
 
-
     try {
-
       setLoading(
         true
       );
 
-
-      /*
-       * Chamada original do backend/AuthContext.
-       *
-       * Não foi alterada.
-       */
       const response =
         await signIn(
           normalizedEmail,
           password
         );
 
-
       console.log(
         'RESPOSTA DO LOGIN:',
         response
       );
 
-
       /*
-       * ========================================================
        * LOGIN FALHOU
-       * ========================================================
        */
-
       if (!response?.success) {
-
         Alert.alert(
           'Não foi possível entrar',
           response?.message ||
@@ -274,20 +257,13 @@ export default function LoginScreen() {
         return;
       }
 
-
       /*
-       * ========================================================
        * VERIFICAÇÃO EM DUAS ETAPAS
-       * ========================================================
-       *
-       * Mantém exatamente o fluxo existente.
        */
-
       if (
         response?.requiresTwoFactor ===
         true
       ) {
-
         navigation.navigate(
           'LoginVerificationScreen',
           {
@@ -305,21 +281,13 @@ export default function LoginScreen() {
         return;
       }
 
-
       /*
-       * ========================================================
        * LOGIN NORMAL
-       * ========================================================
-       *
-       * O AuthContext continua responsável pela sessão.
        */
-
       console.log(
         'LOGIN REALIZADO COM SUCESSO'
       );
-
     } catch (error) {
-
       console.log(
         'ERRO AO FAZER LOGIN:',
         {
@@ -336,7 +304,6 @@ export default function LoginScreen() {
         }
       );
 
-
       Alert.alert(
         'Erro',
         error.response
@@ -344,17 +311,12 @@ export default function LoginScreen() {
           ?.message ||
           'Não foi possível fazer login.'
       );
-
     } finally {
-
       setLoading(
         false
       );
-
     }
-
   }
-
 
   /*
    * ==========================================================
@@ -363,11 +325,9 @@ export default function LoginScreen() {
    */
 
   function handleForgotPassword() {
-
     if (loading) {
       return;
     }
-
 
     navigation.navigate(
       'ForgotPasswordScreen',
@@ -378,9 +338,7 @@ export default function LoginScreen() {
             .toLowerCase(),
       }
     );
-
   }
-
 
   /*
    * ==========================================================
@@ -389,18 +347,14 @@ export default function LoginScreen() {
    */
 
   function handleOpenRegister() {
-
     if (loading) {
       return;
     }
 
-
     navigation.navigate(
       'RegisterScreen'
     );
-
   }
-
 
   /*
    * ==========================================================
@@ -409,28 +363,22 @@ export default function LoginScreen() {
    */
 
   function handleBack() {
-
     if (loading) {
       return;
     }
 
-
     if (
       navigation.canGoBack()
     ) {
-
       navigation.goBack();
 
       return;
     }
 
-
     navigation.navigate(
       'WelcomeScreen'
     );
-
   }
-
 
   /*
    * ============================================================
@@ -448,34 +396,38 @@ export default function LoginScreen() {
         },
       ]}
     >
-
-      {/* ======================================================
-          STATUS BAR
-          ====================================================== */}
-
+      {/*
+       * STATUS BAR
+       */}
       <StatusBar
-        barStyle="light-content"
+        barStyle={
+          darkMode
+            ? 'light-content'
+            : 'dark-content'
+        }
         backgroundColor={
           screenBackground
         }
       />
 
-
       <KeyboardAvoidingView
-        style={
-          styles.container
-        }
+        style={[
+          styles.container,
+          {
+            backgroundColor:
+              screenBackground,
+          },
+        ]}
         behavior={
-          Platform.OS === 'ios'
+          Platform.OS ===
+          'ios'
             ? 'padding'
             : undefined
         }
       >
-
-        {/* ====================================================
-            BOTÃO VOLTAR
-            ==================================================== */}
-
+        {/*
+         * BOTÃO VOLTAR
+         */}
         <TouchableOpacity
           activeOpacity={0.72}
           onPress={
@@ -496,22 +448,18 @@ export default function LoginScreen() {
             },
           ]}
         >
-
           <Ionicons
             name="arrow-back"
             size={22}
             color={
-              COLORS.lightText
+              backIconColor
             }
           />
-
         </TouchableOpacity>
 
-
-        {/* ====================================================
-            ÁREA ROLÁVEL
-            ==================================================== */}
-
+        {/*
+         * ÁREA ROLÁVEL
+         */}
         <ScrollView
           contentContainerStyle={
             styles.scrollContent
@@ -522,38 +470,32 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           bounces={false}
         >
-
-          {/* ==================================================
-              CONTEÚDO CENTRAL
-              ================================================== */}
-
+          {/*
+           * CONTEÚDO CENTRAL
+           */}
           <View
             style={
               styles.mainContent
             }
           >
-
-            {/* =================================================
-                LOGO
-                ================================================= */}
-
+            {/*
+             * LOGO
+             */}
             <Image
               source={
-                logo
+                selectedLogo
               }
               style={
                 styles.logoImage
               }
               resizeMode="contain"
-              accessible={true}
+              accessible
               accessibilityLabel="Doalize"
             />
 
-
-            {/* =================================================
-                TÍTULO
-                ================================================= */}
-
+            {/*
+             * TÍTULO
+             */}
             <Text
               style={[
                 styles.title,
@@ -566,27 +508,22 @@ export default function LoginScreen() {
               Entrar
             </Text>
 
-
-            {/* =================================================
-                FORMULÁRIO
-                ================================================= */}
-
+            {/*
+             * FORMULÁRIO
+             */}
             <View
               style={
                 styles.form
               }
             >
-
-              {/* =============================================
-                  E-MAIL
-                  ============================================= */}
-
+              {/*
+               * E-MAIL
+               */}
               <View
                 style={
                   styles.fieldContainer
                 }
               >
-
                 <Text
                   style={[
                     styles.label,
@@ -598,7 +535,6 @@ export default function LoginScreen() {
                 >
                   E-mail
                 </Text>
-
 
                 <Input
                   placeholder="Digite seu e-mail"
@@ -617,20 +553,16 @@ export default function LoginScreen() {
                   returnKeyType="next"
                   maxLength={160}
                 />
-
               </View>
 
-
-              {/* =============================================
-                  SENHA
-                  ============================================= */}
-
+              {/*
+               * SENHA
+               */}
               <View
                 style={
                   styles.fieldContainer
                 }
               >
-
                 <Text
                   style={[
                     styles.label,
@@ -642,7 +574,6 @@ export default function LoginScreen() {
                 >
                   Senha
                 </Text>
-
 
                 <Input
                   placeholder="Digite sua senha"
@@ -663,14 +594,11 @@ export default function LoginScreen() {
                     handleLogin
                   }
                 />
-
               </View>
 
-
-              {/* =============================================
-                  ESQUECI MINHA SENHA
-                  ============================================= */}
-
+              {/*
+               * ESQUECI MINHA SENHA
+               */}
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={
@@ -685,13 +613,14 @@ export default function LoginScreen() {
                   styles.forgotPasswordButton
                 }
               >
-
                 <Text
                   style={[
                     styles.forgotPasswordText,
                     {
                       color:
-                        COLORS.primary,
+                        darkMode
+                          ? COLORS.primary
+                          : COLORS.secondary,
 
                       opacity:
                         loading
@@ -702,14 +631,11 @@ export default function LoginScreen() {
                 >
                   Esqueci minha senha
                 </Text>
-
               </TouchableOpacity>
 
-
-              {/* =============================================
-                  BOTÃO ENTRAR
-                  ============================================= */}
-
+              {/*
+               * BOTÃO ENTRAR
+               */}
               <TouchableOpacity
                 activeOpacity={0.82}
                 onPress={
@@ -733,43 +659,37 @@ export default function LoginScreen() {
                   },
                 ]}
               >
-
                 {loading ? (
-
                   <ActivityIndicator
                     size="small"
                     color={
-                      COLORS.white
+                      buttonTextColor
                     }
                   />
-
                 ) : (
-
                   <Text
-                    style={
-                      styles.loginButtonText
-                    }
+                    style={[
+                      styles.loginButtonText,
+                      {
+                        color:
+                          buttonTextColor,
+                      },
+                    ]}
                   >
                     Entrar
                   </Text>
-
                 )}
-
               </TouchableOpacity>
-
             </View>
 
-
-            {/* =================================================
-                CADASTRO
-                ================================================= */}
-
+            {/*
+             * CADASTRO
+             */}
             <View
               style={
                 styles.footer
               }
             >
-
               <Text
                 style={[
                   styles.footerText,
@@ -781,7 +701,6 @@ export default function LoginScreen() {
               >
                 Não tem uma conta?
               </Text>
-
 
               <TouchableOpacity
                 activeOpacity={0.7}
@@ -797,13 +716,14 @@ export default function LoginScreen() {
                   styles.registerButton
                 }
               >
-
                 <Text
                   style={[
                     styles.registerText,
                     {
                       color:
-                        COLORS.primary,
+                        darkMode
+                          ? COLORS.primary
+                          : COLORS.secondary,
 
                       opacity:
                         loading
@@ -814,488 +734,523 @@ export default function LoginScreen() {
                 >
                   Cadastrar-se
                 </Text>
-
               </TouchableOpacity>
-
             </View>
-
           </View>
-
         </ScrollView>
-
       </KeyboardAvoidingView>
-
     </SafeAreaView>
   );
 }
-
 
 /*
  * ============================================================
  * ESTILOS
  * ============================================================
+ *
+ * As medidas abaixo foram mantidas
+ * exatamente como no arquivo original.
  */
 
 const styles =
   StyleSheet.create({
-
     /*
-     * ========================================================
      * SAFE AREA
-     * ========================================================
      */
-
     safeArea: {
-      flex: 1,
+      flex:
+        1,
 
-      width: '100%',
-
-      backgroundColor:
-        COLORS.background,
+      width:
+        '100%',
     },
 
-
     /*
-     * ========================================================
      * CONTAINER
-     * ========================================================
      */
-
     container: {
-      flex: 1,
+      flex:
+        1,
 
-      width: '100%',
-
-      backgroundColor:
-        COLORS.background,
+      width:
+        '100%',
     },
 
-
     /*
-     * ========================================================
      * BOTÃO VOLTAR
-     * ========================================================
      */
-
     backButton: {
-      position: 'absolute',
+      position:
+        'absolute',
 
       top:
-        Platform.OS === 'android'
+        Platform.OS ===
+        'android'
           ? 8
           : 6,
 
-      left: 12,
+      left:
+        12,
 
-      zIndex: 10,
+      zIndex:
+        10,
 
-      width: 40,
+      width:
+        40,
 
-      height: 40,
+      height:
+        40,
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
-      borderRadius: 20,
+      borderRadius:
+        20,
 
       backgroundColor:
         'transparent',
 
-      padding: 0,
+      padding:
+        0,
 
-      margin: 0,
+      margin:
+        0,
     },
 
-
     /*
-     * ========================================================
      * ÁREA ROLÁVEL
-     * ========================================================
-     *
-     * O conteúdo inteiro pode se adaptar à altura disponível.
      */
-
     scrollContent: {
-      flexGrow: 1,
+      flexGrow:
+        1,
 
-      width: '100%',
+      width:
+        '100%',
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
-      paddingHorizontal: 24,
+      paddingHorizontal:
+        24,
 
-      paddingTop: 44,
+      paddingTop:
+        44,
 
-      paddingBottom: 28,
+      paddingBottom:
+        28,
     },
 
-
     /*
-     * ========================================================
      * BLOCO PRINCIPAL
-     * ========================================================
      */
-
     mainContent: {
-      width: '100%',
+      width:
+        '100%',
 
-      maxWidth: 338,
+      maxWidth:
+        338,
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
-      alignSelf: 'center',
+      alignSelf:
+        'center',
 
-      flexShrink: 1,
+      flexShrink:
+        1,
     },
 
-
     /*
-     * ========================================================
      * LOGO
-     * ========================================================
-     *
-     * Usa:
-     *
-     * assets/logo.png
      */
-
     logoImage: {
-      width: 166,
+      width:
+        166,
 
-      height: 50,
+      height:
+        50,
 
-      maxWidth: '60%',
+      maxWidth:
+        '60%',
 
-      alignSelf: 'center',
+      alignSelf:
+        'center',
 
-      resizeMode: 'contain',
+      resizeMode:
+        'contain',
 
-      margin: 0,
+      margin:
+        0,
 
-      padding: 0,
+      padding:
+        0,
 
       backgroundColor:
         'transparent',
 
-      flexShrink: 0,
+      flexShrink:
+        0,
     },
 
-
     /*
-     * ========================================================
      * TÍTULO
-     * ========================================================
      */
-
     title: {
-      marginTop: 27,
+      marginTop:
+        27,
 
-      fontSize: 23,
+      fontSize:
+        23,
 
-      lineHeight: 29,
+      lineHeight:
+        29,
 
-      fontWeight: '500',
+      fontWeight:
+        '500',
 
-      textAlign: 'center',
+      textAlign:
+        'center',
 
-      includeFontPadding: false,
+      includeFontPadding:
+        false,
 
-      letterSpacing: 0,
+      letterSpacing:
+        0,
 
-      marginBottom: 0,
+      marginBottom:
+        0,
 
-      padding: 0,
+      padding:
+        0,
     },
 
-
     /*
-     * ========================================================
      * FORMULÁRIO
-     * ========================================================
-     *
-     * Não existe card ao redor dos campos.
      */
-
     form: {
-      width: '100%',
+      width:
+        '100%',
 
-      marginTop: 30,
+      marginTop:
+        30,
 
-      padding: 0,
+      padding:
+        0,
 
       backgroundColor:
         'transparent',
 
-      borderWidth: 0,
+      borderWidth:
+        0,
 
-      borderRadius: 0,
+      borderRadius:
+        0,
 
       shadowColor:
         'transparent',
 
       shadowOffset: {
-        width: 0,
+        width:
+          0,
 
-        height: 0,
+        height:
+          0,
       },
 
-      shadowOpacity: 0,
+      shadowOpacity:
+        0,
 
-      shadowRadius: 0,
+      shadowRadius:
+        0,
 
-      elevation: 0,
+      elevation:
+        0,
     },
 
-
     /*
-     * ========================================================
      * CONTAINER DE CADA CAMPO
-     * ========================================================
      */
-
     fieldContainer: {
-      width: '100%',
+      width:
+        '100%',
 
-      marginBottom: 17,
+      marginBottom:
+        17,
 
-      padding: 0,
+      padding:
+        0,
 
       backgroundColor:
         'transparent',
     },
 
-
     /*
-     * ========================================================
      * LABEL
-     * ========================================================
      */
-
     label: {
-      width: '100%',
+      width:
+        '100%',
 
-      marginBottom: 8,
+      marginBottom:
+        8,
 
-      marginLeft: 0,
+      marginLeft:
+        0,
 
-      fontSize: 15,
+      fontSize:
+        15,
 
-      lineHeight: 20,
+      lineHeight:
+        20,
 
-      fontWeight: '600',
+      fontWeight:
+        '600',
 
-      includeFontPadding: false,
+      includeFontPadding:
+        false,
 
-      textAlign: 'left',
+      textAlign:
+        'left',
 
-      padding: 0,
+      padding:
+        0,
     },
 
-
     /*
-     * ========================================================
-     * BOTÃO "ESQUECI MINHA SENHA"
-     * ========================================================
+     * BOTÃO ESQUECI MINHA SENHA
      */
-
     forgotPasswordButton: {
-      alignSelf: 'flex-end',
+      alignSelf:
+        'flex-end',
 
-      minHeight: 30,
+      minHeight:
+        30,
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
-      marginTop: -5,
+      marginTop:
+        -5,
 
-      marginBottom: 13,
+      marginBottom:
+        13,
 
-      paddingHorizontal: 2,
+      paddingHorizontal:
+        2,
 
-      paddingVertical: 3,
+      paddingVertical:
+        3,
 
       backgroundColor:
         'transparent',
     },
-
 
     forgotPasswordText: {
-      fontSize: 11,
+      fontSize:
+        11,
 
-      lineHeight: 16,
+      lineHeight:
+        16,
 
-      fontWeight: '500',
+      fontWeight:
+        '500',
 
-      textAlign: 'right',
+      textAlign:
+        'right',
 
-      includeFontPadding: false,
+      includeFontPadding:
+        false,
 
-      margin: 0,
+      margin:
+        0,
 
-      padding: 0,
+      padding:
+        0,
     },
 
-
     /*
-     * ========================================================
      * BOTÃO ENTRAR
-     * ========================================================
      */
-
     loginButton: {
-      width: '100%',
+      width:
+        '100%',
 
-      height: 44,
+      height:
+        44,
 
-      minHeight: 44,
+      minHeight:
+        44,
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
-      paddingHorizontal: 16,
+      paddingHorizontal:
+        16,
 
-      paddingVertical: 0,
+      paddingVertical:
+        0,
 
-      borderRadius: 10,
+      borderRadius:
+        10,
 
-      margin: 0,
+      margin:
+        0,
 
-      backgroundColor:
-        COLORS.primary,
+      overflow:
+        'hidden',
 
-      overflow: 'hidden',
-
-      flexShrink: 0,
+      flexShrink:
+        0,
     },
 
-
     /*
-     * ========================================================
      * TEXTO DO BOTÃO
-     * ========================================================
      */
-
     loginButtonText: {
-      color:
-        COLORS.white,
+      fontSize:
+        17,
 
-      fontSize: 17,
+      lineHeight:
+        20,
 
-      lineHeight: 20,
+      fontWeight:
+        '600',
 
-      fontWeight: '600',
+      textAlign:
+        'center',
 
-      textAlign: 'center',
+      includeFontPadding:
+        false,
 
-      includeFontPadding: false,
+      margin:
+        0,
 
-      margin: 0,
-
-      padding: 0,
+      padding:
+        0,
     },
 
-
     /*
-     * ========================================================
      * RODAPÉ
-     * ========================================================
      */
-
     footer: {
-      width: '100%',
+      width:
+        '100%',
 
-      flexDirection: 'row',
+      flexDirection:
+        'row',
 
-      flexWrap: 'wrap',
+      flexWrap:
+        'wrap',
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
-      marginTop: 10,
+      marginTop:
+        10,
 
-      paddingHorizontal: 4,
+      paddingHorizontal:
+        4,
 
-      paddingVertical: 0,
+      paddingVertical:
+        0,
 
-      alignSelf: 'center',
+      alignSelf:
+        'center',
     },
 
-
     /*
-     * ========================================================
      * TEXTO DO RODAPÉ
-     * ========================================================
      */
-
     footerText: {
-      fontSize: 11,
+      fontSize:
+        11,
 
-      lineHeight: 16,
+      lineHeight:
+        16,
 
-      fontWeight: '400',
+      fontWeight:
+        '400',
 
-      textAlign: 'center',
+      textAlign:
+        'center',
 
-      includeFontPadding: false,
+      includeFontPadding:
+        false,
 
-      margin: 0,
+      margin:
+        0,
 
-      padding: 0,
+      padding:
+        0,
     },
 
-
     /*
-     * ========================================================
      * BOTÃO CADASTRAR
-     * ========================================================
      */
-
     registerButton: {
-      minHeight: 26,
+      minHeight:
+        26,
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
-      marginLeft: 3,
+      marginLeft:
+        3,
 
-      paddingHorizontal: 2,
+      paddingHorizontal:
+        2,
 
-      paddingVertical: 2,
+      paddingVertical:
+        2,
 
       backgroundColor:
         'transparent',
     },
 
-
     /*
-     * ========================================================
      * TEXTO CADASTRAR
-     * ========================================================
      */
-
     registerText: {
-      fontSize: 11,
+      fontSize:
+        11,
 
-      lineHeight: 16,
+      lineHeight:
+        16,
 
-      fontWeight: '600',
+      fontWeight:
+        '600',
 
-      textAlign: 'center',
+      textAlign:
+        'center',
 
-      includeFontPadding: false,
+      includeFontPadding:
+        false,
 
-      margin: 0,
+      margin:
+        0,
 
-      padding: 0,
+      padding:
+        0,
     },
-
   });

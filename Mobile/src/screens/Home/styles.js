@@ -4,18 +4,18 @@ import {
 
 
 export default StyleSheet.create({
-
   /*
    * ============================================================
    * CONTAINER PRINCIPAL
    * ============================================================
-   *
-   * Fundo oficial do Dark Mode.
    */
-  container: {
-    flex: 1,
 
-    width: '100%',
+  container: {
+    flex:
+      1,
+
+    width:
+      '100%',
 
     backgroundColor:
       '#141414',
@@ -30,19 +30,25 @@ export default StyleSheet.create({
    * FEED
    * ============================================================
    *
-   * O feed ocupa toda a largura disponível.
-   *
-   * O espaçamento lateral da publicação é tratado pelos
-   * componentes internos para manter o alinhamento visual.
+   * O padding inferior extra foi removido.
+   * As cores dinâmicas são aplicadas pelo HomeScreen.
    */
+
   feed: {
-    width: '100%',
+    width:
+      '100%',
 
-    paddingTop: 0,
+    paddingTop:
+      0,
 
-    paddingHorizontal: 0,
+    paddingHorizontal:
+      0,
 
-    paddingBottom: 24,
+    paddingBottom:
+      0,
+
+    margin:
+      0,
 
     backgroundColor:
       '#141414',
@@ -53,11 +59,11 @@ export default StyleSheet.create({
    * ============================================================
    * CONTAINER DO USUÁRIO
    * ============================================================
-   *
-   * Mantido para compatibilidade com outras partes da Home.
    */
+
   userContainer: {
-    width: '100%',
+    width:
+      '100%',
 
     flexDirection:
       'row',
@@ -81,12 +87,16 @@ export default StyleSheet.create({
    * AVATAR
    * ============================================================
    */
+
   avatar: {
-    width: 46,
+    width:
+      46,
 
-    height: 46,
+    height:
+      46,
 
-    borderRadius: 23,
+    borderRadius:
+      23,
 
     overflow:
       'hidden',
@@ -101,17 +111,22 @@ export default StyleSheet.create({
    * INFORMAÇÕES DO USUÁRIO
    * ============================================================
    */
+
   userInfo: {
-    flex: 1,
+    flex:
+      1,
 
-    minWidth: 0,
+    minWidth:
+      0,
 
-    marginLeft: 12,
+    marginLeft:
+      12,
 
     justifyContent:
       'center',
 
-    paddingVertical: 0,
+    paddingVertical:
+      0,
   },
 
 
@@ -120,19 +135,25 @@ export default StyleSheet.create({
    * NOME
    * ============================================================
    */
+
   username: {
-    fontSize: 15,
+    fontSize:
+      15,
 
-    lineHeight: 20,
+    lineHeight:
+      20,
 
-    fontWeight: '600',
+    fontWeight:
+      '600',
 
     includeFontPadding:
       false,
 
-    margin: 0,
+    margin:
+      0,
 
-    padding: 0,
+    padding:
+      0,
 
     color:
       '#F5F5F5',
@@ -144,21 +165,28 @@ export default StyleSheet.create({
    * DATA
    * ============================================================
    */
+
   date: {
-    marginTop: 2,
+    marginTop:
+      2,
 
-    fontSize: 11,
+    fontSize:
+      11,
 
-    lineHeight: 15,
+    lineHeight:
+      15,
 
-    fontWeight: '400',
+    fontWeight:
+      '400',
 
     includeFontPadding:
       false,
 
-    marginBottom: 0,
+    marginBottom:
+      0,
 
-    padding: 0,
+    padding:
+      0,
 
     color:
       'rgba(245, 245, 245, 0.65)',
@@ -170,15 +198,19 @@ export default StyleSheet.create({
    * IMAGEM
    * ============================================================
    */
-  image: {
-    width: '100%',
 
-    height: 300,
+  image: {
+    width:
+      '100%',
+
+    height:
+      300,
 
     alignSelf:
       'center',
 
-    borderRadius: 8,
+    borderRadius:
+      8,
 
     resizeMode:
       'cover',
@@ -196,8 +228,10 @@ export default StyleSheet.create({
    * CONTEÚDO
    * ============================================================
    */
+
   content: {
-    width: '100%',
+    width:
+      '100%',
 
     paddingHorizontal:
       16,
@@ -218,12 +252,16 @@ export default StyleSheet.create({
    * DESCRIÇÃO
    * ============================================================
    */
+
   description: {
-    fontSize: 14,
+    fontSize:
+      14,
 
-    lineHeight: 20,
+    lineHeight:
+      20,
 
-    fontWeight: '400',
+    fontWeight:
+      '400',
 
     includeFontPadding:
       false,
@@ -231,9 +269,11 @@ export default StyleSheet.create({
     textAlign:
       'left',
 
-    margin: 0,
+    margin:
+      0,
 
-    padding: 0,
+    padding:
+      0,
 
     color:
       '#F5F5F5',
@@ -245,19 +285,25 @@ export default StyleSheet.create({
    * BOTÃO DE MENSAGEM
    * ============================================================
    */
-  chatButton: {
-    minWidth: 0,
 
-    height: 44,
+  chatButton: {
+    minWidth:
+      0,
+
+    height:
+      44,
 
     marginHorizontal:
       16,
 
-    marginTop: 4,
+    marginTop:
+      4,
 
-    marginBottom: 22,
+    marginBottom:
+      22,
 
-    borderRadius: 10,
+    borderRadius:
+      10,
 
     flexDirection:
       'row',
@@ -284,15 +330,19 @@ export default StyleSheet.create({
    * TEXTO DO BOTÃO
    * ============================================================
    */
+
   chatButtonText: {
     color:
       '#141414',
 
-    fontSize: 15,
+    fontSize:
+      15,
 
-    lineHeight: 19,
+    lineHeight:
+      19,
 
-    fontWeight: '600',
+    fontWeight:
+      '600',
 
     includeFontPadding:
       false,
@@ -300,9 +350,10 @@ export default StyleSheet.create({
     textAlign:
       'center',
 
-    marginLeft: 7,
+    marginLeft:
+      7,
 
-    padding: 0,
+    padding:
+      0,
   },
-
 });

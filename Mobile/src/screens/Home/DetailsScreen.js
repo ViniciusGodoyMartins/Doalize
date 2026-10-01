@@ -37,150 +37,245 @@ import imageUserDark from '../../../assets/imageuserdark.png';
 
 import styles from './styles';
 
+
 const {
   width: SCREEN_WIDTH,
-} = Dimensions.get('window');
+} = Dimensions.get(
+  'window'
+);
 
-const POST_IMAGE_HEIGHT = 340;
+
+const POST_IMAGE_HEIGHT =
+  340;
+
+
+/*
+ * ============================================================
+ * DETAILS SCREEN
+ * ============================================================
+ */
 
 export default function DetailsScreen({
   route,
   navigation,
 }) {
+
   const {
     theme,
     darkMode,
   } = useTheme();
 
+
+  /*
+   * ==========================================================
+   * COR DO CONTEÚDO DO BOTÃO
+   * ==========================================================
+   *
+   * Modo claro:
+   * texto e ícone pretos.
+   *
+   * Modo escuro:
+   * texto e ícone brancos.
+   */
+
+  const chatButtonContentColor =
+    darkMode
+      ? '#FFFFFF'
+      : '#000000';
+
+
   const carouselRef =
     useRef(null);
+
 
   const [
     activeImageIndex,
     setActiveImageIndex,
   ] = useState(0);
 
+
   const [
     remoteAvatarFailed,
     setRemoteAvatarFailed,
   ] = useState(false);
+
 
   const [
     failedPostImages,
     setFailedPostImages,
   ] = useState({});
 
+
   /*
-   * NORMALIZAR A PUBLICAÇÃO RECEBIDA
-   * PELA NAVEGAÇÃO.
+   * ==========================================================
+   * NORMALIZAR PUBLICAÇÃO
+   * ==========================================================
    */
-  const post = useMemo(() => {
-    const receivedPost =
-      route?.params?.post;
 
-    if (!receivedPost) {
-      return null;
-    }
+  const post =
+    useMemo(() => {
 
-    return normalizePost(
-      receivedPost
-    );
-  }, [route?.params?.post]);
+      const receivedPost =
+        route?.params?.post;
+
+
+      if (!receivedPost) {
+
+        return null;
+
+      }
+
+
+      return normalizePost(
+        receivedPost
+      );
+
+    }, [
+      route?.params?.post,
+    ]);
+
 
   /*
-   * NORMALIZAR TODAS AS IMAGENS
-   * DA PUBLICAÇÃO.
+   * ==========================================================
+   * IMAGENS DA PUBLICAÇÃO
+   * ==========================================================
    */
-  const postImages = useMemo(() => {
-    return parsePostImages(
-      post?.images
-    );
-  }, [post?.images]);
+
+  const postImages =
+    useMemo(() => {
+
+      return parsePostImages(
+        post?.images
+      );
+
+    }, [
+      post?.images,
+    ]);
+
 
   /*
+   * ==========================================================
    * BIOGRAFIA DO USUÁRIO
-   *
-   * Exemplo:
-   *
-   * "Tenho 18 anos e estudo
-   * Desenvolvimento de Sistemas."
+   * ==========================================================
    */
-  const userBiography = useMemo(() => {
-    const biography =
-      post?.user?.description;
 
-    if (
-      !biography ||
-      typeof biography !== 'string'
-    ) {
-      return '';
-    }
+  const userBiography =
+    useMemo(() => {
 
-    return biography.trim();
-  }, [post?.user?.description]);
+      const biography =
+        post?.user?.description;
+
+
+      if (
+        !biography ||
+        typeof biography !==
+          'string'
+      ) {
+
+        return '';
+
+      }
+
+
+      return biography.trim();
+
+    }, [
+      post?.user?.description,
+    ]);
+
 
   /*
-   * LOCALIZAÇÃO DO USUÁRIO.
+   * ==========================================================
+   * LOCALIZAÇÃO DO USUÁRIO
+   * ==========================================================
    */
-  const userLocation = useMemo(() => {
-    const location =
-      post?.user?.location;
 
-    if (
-      !location ||
-      typeof location !== 'string'
-    ) {
-      return '';
-    }
+  const userLocation =
+    useMemo(() => {
 
-    return location.trim();
-  }, [post?.user?.location]);
+      const location =
+        post?.user?.location;
+
+
+      if (
+        !location ||
+        typeof location !==
+          'string'
+      ) {
+
+        return '';
+
+      }
+
+
+      return location.trim();
+
+    }, [
+      post?.user?.location,
+    ]);
+
 
   /*
-   * DESCRIÇÃO COMPLETA DA PUBLICAÇÃO.
-   *
-   * O resumo curto não é utilizado
-   * nesta tela.
+   * ==========================================================
+   * DESCRIÇÃO COMPLETA
+   * ==========================================================
    */
+
   const fullDescription =
     useMemo(() => {
+
       const description =
         post?.description;
+
 
       if (
         !description ||
         typeof description !==
           'string'
       ) {
+
         return '';
+
       }
 
+
       return description.trim();
-    }, [post?.description]);
+
+    }, [
+      post?.description,
+    ]);
+
 
   /*
-   * REGRA DO AVATAR PADRÃO:
-   *
-   * Tema claro:
-   * imageuserdark.png
-   *
-   * Tema escuro:
-   * imageuserlight.png
+   * ==========================================================
+   * AVATAR PADRÃO
+   * ==========================================================
    */
+
   const defaultAvatarSource =
     useMemo(() => {
+
       return darkMode
         ? imageUserLight
         : imageUserDark;
-    }, [darkMode]);
+
+    }, [
+      darkMode,
+    ]);
+
 
   /*
-   * FOTO REAL DO USUÁRIO.
+   * ==========================================================
+   * FOTO REAL DO USUÁRIO
+   * ==========================================================
    */
+
   const remoteAvatarUrl =
     useMemo(() => {
+
       const photo =
         post?.user?.photo;
+
 
       if (
         !photo ||
@@ -188,91 +283,126 @@ export default function DetailsScreen({
           'string' ||
         !photo.trim()
       ) {
+
         return null;
+
       }
+
 
       return resolveImageUrl(
         photo
       );
-    }, [post?.user?.photo]);
+
+    }, [
+      post?.user?.photo,
+    ]);
+
 
   /*
-   * REINICIAR O AVATAR QUANDO
-   * A FOTO DO USUÁRIO MUDAR.
+   * ==========================================================
+   * REINICIAR AVATAR
+   * ==========================================================
    */
+
   useEffect(() => {
+
     setRemoteAvatarFailed(
       false
     );
-  }, [remoteAvatarUrl]);
+
+  }, [
+    remoteAvatarUrl,
+  ]);
+
 
   /*
-   * REINICIAR O CARROSSEL QUANDO
-   * OUTRA PUBLICAÇÃO FOR ABERTA.
+   * ==========================================================
+   * REINICIAR CARROSSEL
+   * ==========================================================
    */
+
   useEffect(() => {
-    setFailedPostImages({});
-    setActiveImageIndex(0);
+
+    setFailedPostImages(
+      {}
+    );
+
+
+    setActiveImageIndex(
+      0
+    );
+
 
     if (
       carouselRef.current &&
       postImages.length > 0
     ) {
+
       try {
+
         carouselRef.current
           .scrollToOffset({
-            offset: 0,
-            animated: false,
+            offset:
+              0,
+
+            animated:
+              false,
           });
+
       } catch (error) {
+
         console.log(
           'NÃO FOI POSSÍVEL REINICIAR O CARROSSEL DOS DETALHES:',
           error.message
         );
+
       }
+
     }
+
   }, [
     post?.id,
     postImages.length,
   ]);
 
+
   const hasRemoteAvatar =
-    Boolean(remoteAvatarUrl) &&
+    Boolean(
+      remoteAvatarUrl
+    ) &&
     !remoteAvatarFailed;
 
+
   /*
-   * FORMATAR A DATA DA PUBLICAÇÃO
-   *
-   * Entrada:
-   *
-   * 2026-08-20T15:05:42.000Z
-   *
-   * Saída:
-   *
-   * 20/08/2026
+   * ==========================================================
+   * FORMATAR DATA
+   * ==========================================================
    */
+
   function formatPostDate(
     dateValue
   ) {
+
     if (!dateValue) {
+
       return '';
+
     }
 
-    /*
-     * Quando a API envia uma data no formato
-     * YYYY-MM-DD, utilizamos diretamente seus
-     * componentes para evitar alterações de
-     * dia causadas pelo fuso horário.
-     */
+
     if (
-      typeof dateValue === 'string'
+      typeof dateValue ===
+      'string'
     ) {
+
       const dateMatch =
         dateValue.match(
           /^(\d{4})-(\d{2})-(\d{2})/
         );
 
+
       if (dateMatch) {
+
         const [
           ,
           year,
@@ -280,41 +410,59 @@ export default function DetailsScreen({
           day,
         ] = dateMatch;
 
+
         return `${day}/${month}/${year}`;
+
       }
+
     }
 
-    /*
-     * Fallback para outros formatos de data.
-     */
+
     const parsedDate =
-      new Date(dateValue);
+      new Date(
+        dateValue
+      );
+
 
     if (
       Number.isNaN(
         parsedDate.getTime()
       )
     ) {
+
       return '';
+
     }
+
 
     return parsedDate
       .toLocaleDateString(
         'pt-BR',
         {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
+          day:
+            '2-digit',
+
+          month:
+            '2-digit',
+
+          year:
+            'numeric',
         }
       );
+
   }
 
+
   /*
-   * ERRO NA FOTO REAL DO USUÁRIO.
+   * ==========================================================
+   * ERRO NO AVATAR
+   * ==========================================================
    */
+
   function handleRemoteAvatarError(
     event
   ) {
+
     console.log(
       'ERRO AO CARREGAR AVATAR NOS DETALHES:',
       {
@@ -329,20 +477,26 @@ export default function DetailsScreen({
       }
     );
 
+
     setRemoteAvatarFailed(
       true
     );
+
   }
 
+
   /*
-   * ERRO EM UMA IMAGEM ESPECÍFICA
-   * DA PUBLICAÇÃO.
+   * ==========================================================
+   * ERRO NA IMAGEM
+   * ==========================================================
    */
+
   function handlePostImageError(
     image,
     index,
     event
   ) {
+
     console.log(
       'ERRO AO CARREGAR IMAGEM NOS DETALHES:',
       {
@@ -358,31 +512,46 @@ export default function DetailsScreen({
       }
     );
 
+
     setFailedPostImages(
-      (currentErrors) => {
+      (
+        currentErrors
+      ) => {
+
         const updatedErrors = {
           ...currentErrors,
         };
 
-        updatedErrors[index] =
-          true;
+
+        updatedErrors[
+          index
+        ] = true;
+
 
         return updatedErrors;
+
       }
     );
+
   }
 
+
   /*
-   * ATUALIZAR A IMAGEM ATIVA
-   * DEPOIS DO DESLIZE.
+   * ==========================================================
+   * ATUALIZAR IMAGEM ATIVA
+   * ==========================================================
    */
+
   function handleImageScrollEnd(
     event
   ) {
+
     const offsetX =
       event.nativeEvent
         ?.contentOffset
-        ?.x || 0;
+        ?.x ||
+      0;
+
 
     const calculatedIndex =
       Math.round(
@@ -390,45 +559,59 @@ export default function DetailsScreen({
         SCREEN_WIDTH
       );
 
+
     const safeIndex =
       Math.max(
         0,
         Math.min(
           calculatedIndex,
-          postImages.length - 1
+          postImages.length -
+            1
         )
       );
+
 
     setActiveImageIndex(
       safeIndex
     );
+
   }
 
+
   /*
-   * RENDERIZAR UMA IMAGEM
-   * DO CARROSSEL.
+   * ==========================================================
+   * RENDERIZAR IMAGEM
+   * ==========================================================
    */
+
   function renderPostImage({
     item,
     index,
   }) {
+
     const imageFailed =
       failedPostImages[
         index
       ] === true;
 
+
     if (imageFailed) {
+
       return (
+
         <View
           style={[
             localStyles.postImage,
+
             localStyles.unavailableImage,
+
             {
               backgroundColor:
                 theme.card,
             },
           ]}
         >
+
           <Ionicons
             name="image-outline"
             size={48}
@@ -437,9 +620,11 @@ export default function DetailsScreen({
             }
           />
 
+
           <Text
             style={[
               localStyles.unavailableText,
+
               {
                 color:
                   theme.textSecondary,
@@ -448,43 +633,65 @@ export default function DetailsScreen({
           >
             Imagem indisponível
           </Text>
+
         </View>
+
       );
+
     }
 
+
     return (
+
       <Image
         source={{
-          uri: item,
+          uri:
+            item,
         }}
         style={
           localStyles.postImage
         }
         resizeMode="cover"
-        onError={(event) => {
+        onError={(
+          event
+        ) => {
+
           handlePostImageError(
             item,
             index,
             event
           );
+
         }}
       />
+
     );
+
   }
 
+
   /*
-   * ABRIR O CHAT COM O RESPONSÁVEL
-   * PELA PUBLICAÇÃO.
+   * ==========================================================
+   * ABRIR CHAT
+   * ==========================================================
    */
+
   function handleOpenChat() {
-    if (!post?.user?.id) {
+
+    if (
+      !post?.user?.id
+    ) {
+
       return;
+
     }
+
 
     navigation.navigate(
       'Contatos',
       {
-        screen: 'ChatScreen',
+        screen:
+          'ChatScreen',
 
         params: {
           chatId:
@@ -495,32 +702,43 @@ export default function DetailsScreen({
         },
       }
     );
+
   }
 
+
   /*
-   * ESTADO SEM PUBLICAÇÃO.
+   * ==========================================================
+   * ESTADO SEM PUBLICAÇÃO
+   * ==========================================================
    */
+
   if (!post) {
+
     return (
+
       <View
         style={[
           styles.container,
+
           {
             backgroundColor:
               theme.background,
           },
         ]}
       >
+
         <Header
           title="Detalhes"
           showBackButton
         />
+
 
         <View
           style={
             localStyles.emptyContent
           }
         >
+
           <Ionicons
             name="alert-circle-outline"
             size={48}
@@ -529,9 +747,11 @@ export default function DetailsScreen({
             }
           />
 
+
           <Text
             style={[
               localStyles.emptyTitle,
+
               {
                 color:
                   theme.text,
@@ -541,9 +761,11 @@ export default function DetailsScreen({
             Publicação indisponível
           </Text>
 
+
           <Text
             style={[
               localStyles.emptyDescription,
+
               {
                 color:
                   theme.textSecondary,
@@ -552,25 +774,40 @@ export default function DetailsScreen({
           >
             Não foi possível carregar os dados desta publicação.
           </Text>
+
         </View>
+
       </View>
+
     );
+
   }
 
+
+  /*
+   * ============================================================
+   * RENDER
+   * ============================================================
+   */
+
   return (
+
     <View
       style={[
         styles.container,
+
         {
           backgroundColor:
             theme.background,
         },
       ]}
     >
+
       <Header
         title="Detalhes"
         showBackButton
       />
+
 
       <ScrollView
         showsVerticalScrollIndicator={
@@ -581,330 +818,437 @@ export default function DetailsScreen({
         }
         nestedScrollEnabled
       >
+
         {/* USUÁRIO */}
+
         <View
           style={[
             styles.userContainer,
+
             localStyles.userContainer,
           ]}
         >
-          {hasRemoteAvatar ? (
-            <View
-              style={
-                localStyles.remoteAvatarContainer
-              }
-            >
-              <Image
-                source={{
-                  uri:
-                    remoteAvatarUrl,
-                }}
+
+          {
+            hasRemoteAvatar ? (
+
+              <View
                 style={
-                  localStyles.remoteAvatar
+                  localStyles.remoteAvatarContainer
                 }
-                resizeMode="cover"
-                onError={
-                  handleRemoteAvatarError
-                }
-              />
-            </View>
-          ) : (
-            <View
-              style={
-                localStyles.defaultAvatarContainer
-              }
-            >
-              <Image
-                source={
-                  defaultAvatarSource
-                }
+              >
+
+                <Image
+                  source={{
+                    uri:
+                      remoteAvatarUrl,
+                  }}
+                  style={
+                    localStyles.remoteAvatar
+                  }
+                  resizeMode="cover"
+                  onError={
+                    handleRemoteAvatarError
+                  }
+                />
+
+              </View>
+
+            ) : (
+
+              <View
                 style={
-                  localStyles.defaultAvatar
+                  localStyles.defaultAvatarContainer
                 }
-                resizeMode="contain"
-              />
-            </View>
-          )}
+              >
+
+                <Image
+                  source={
+                    defaultAvatarSource
+                  }
+                  style={
+                    localStyles.defaultAvatar
+                  }
+                  resizeMode="contain"
+                />
+
+              </View>
+
+            )
+          }
+
 
           <View
             style={[
               styles.userInfo,
+
               localStyles.userInfo,
             ]}
           >
+
             <Text
               numberOfLines={1}
               style={[
                 styles.username,
+
                 {
                   color:
                     theme.text,
                 },
               ]}
             >
-              {post?.user?.name ||
-                'Usuário'}
+              {
+                post?.user?.name ||
+                'Usuário'
+              }
             </Text>
 
-            {userLocation ? (
-              <View
-                style={
-                  localStyles.locationContainer
-                }
-              >
-                <Ionicons
-                  name="location-outline"
-                  size={15}
-                  color={
-                    theme.primary
-                  }
-                />
 
-                <Text
-                  numberOfLines={1}
-                  style={[
-                    localStyles.locationText,
-                    {
-                      color:
-                        theme.textSecondary,
-                    },
-                  ]}
+            {
+              userLocation ? (
+
+                <View
+                  style={
+                    localStyles.locationContainer
+                  }
                 >
-                  {userLocation}
-                </Text>
-              </View>
-            ) : null}
+
+                  <Ionicons
+                    name="location-outline"
+                    size={15}
+                    color={
+                      theme.primary
+                    }
+                  />
+
+
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      localStyles.locationText,
+
+                      {
+                        color:
+                          theme.textSecondary,
+                      },
+                    ]}
+                  >
+                    {
+                      userLocation
+                    }
+                  </Text>
+
+                </View>
+
+              ) : null
+            }
+
 
             <Text
               numberOfLines={1}
               style={[
                 styles.date,
+
                 {
                   color:
                     theme.textSecondary,
                 },
               ]}
             >
-              {formatPostDate(
-                post?.created_at ||
+              {
+                formatPostDate(
+                  post?.created_at ||
                   post?.createdAt
-              )}
+                )
+              }
             </Text>
+
           </View>
+
         </View>
 
-        {/* BIOGRAFIA DO USUÁRIO */}
-        {userBiography ? (
-          <View
-            style={[
-              localStyles.biographyContainer,
-              {
-                backgroundColor:
-                  theme.card,
 
-                borderColor:
-                  theme.border,
-              },
-            ]}
-          >
+        {/* BIOGRAFIA */}
+
+        {
+          userBiography ? (
+
             <View
-              style={
-                localStyles.biographyHeader
-              }
+              style={[
+                localStyles.biographyContainer,
+
+                {
+                  backgroundColor:
+                    theme.card,
+
+                  borderColor:
+                    theme.border,
+                },
+              ]}
             >
-              <Ionicons
-                name="person-outline"
-                size={18}
-                color={
-                  theme.primary
+
+              <View
+                style={
+                  localStyles.biographyHeader
                 }
-              />
+              >
+
+                <Ionicons
+                  name="person-outline"
+                  size={18}
+                  color={
+                    theme.primary
+                  }
+                />
+
+
+                <Text
+                  style={[
+                    localStyles.biographyTitle,
+
+                    {
+                      color:
+                        theme.text,
+                    },
+                  ]}
+                >
+                  Sobre o responsável
+                </Text>
+
+              </View>
+
 
               <Text
+                numberOfLines={3}
                 style={[
-                  localStyles.biographyTitle,
+                  localStyles.biographyText,
+
                   {
                     color:
-                      theme.text,
+                      theme.textSecondary,
                   },
                 ]}
               >
-                Sobre o responsável
-              </Text>
-            </View>
-
-            <Text
-              numberOfLines={3}
-              style={[
-                localStyles.biographyText,
                 {
-                  color:
-                    theme.textSecondary,
-                },
-              ]}
-            >
-              {userBiography}
-            </Text>
-          </View>
-        ) : null}
-
-        {/* CARROSSEL DE IMAGENS */}
-        {postImages.length > 0 ? (
-          <>
-            <View
-              style={
-                localStyles.carouselContainer
-              }
-            >
-              <FlatList
-                ref={carouselRef}
-                data={postImages}
-                horizontal
-                pagingEnabled
-                nestedScrollEnabled
-                bounces={false}
-                decelerationRate="fast"
-                showsHorizontalScrollIndicator={
-                  false
+                  userBiography
                 }
-                keyExtractor={(
-                  item,
-                  index
-                ) =>
-                  `${post?.id || 'post'}-${item}-${index}`
-                }
-                renderItem={
-                  renderPostImage
-                }
-                onMomentumScrollEnd={
-                  handleImageScrollEnd
-                }
-                getItemLayout={(
-                  _,
-                  index
-                ) => ({
-                  length:
-                    SCREEN_WIDTH,
+              </Text>
 
-                  offset:
-                    SCREEN_WIDTH *
-                    index,
-
-                  index,
-                })}
-                initialNumToRender={1}
-                windowSize={3}
-              />
-
-              {/* CONTADOR 1/3 */}
-              {postImages.length > 1 ? (
-                <View
-                  pointerEvents="none"
-                  style={
-                    localStyles.imageCounter
-                  }
-                >
-                  <Text
-                    style={
-                      localStyles.imageCounterText
-                    }
-                  >
-                    {activeImageIndex + 1}/
-                    {postImages.length}
-                  </Text>
-                </View>
-              ) : null}
             </View>
 
-            {/* BOLINHAS */}
-            {postImages.length > 1 ? (
+          ) : null
+        }
+
+
+        {/* CARROSSEL */}
+
+        {
+          postImages.length > 0 ? (
+
+            <>
+
               <View
                 style={
-                  localStyles.pagination
+                  localStyles.carouselContainer
                 }
               >
-                {postImages.map(
-                  (
+
+                <FlatList
+                  ref={
+                    carouselRef
+                  }
+                  data={
+                    postImages
+                  }
+                  horizontal
+                  pagingEnabled
+                  nestedScrollEnabled
+                  bounces={false}
+                  decelerationRate="fast"
+                  showsHorizontalScrollIndicator={
+                    false
+                  }
+                  keyExtractor={(
+                    item,
+                    index
+                  ) =>
+                    `${post?.id || 'post'}-${item}-${index}`
+                  }
+                  renderItem={
+                    renderPostImage
+                  }
+                  onMomentumScrollEnd={
+                    handleImageScrollEnd
+                  }
+                  getItemLayout={(
                     _,
                     index
-                  ) => {
-                    const isActive =
-                      index ===
-                      activeImageIndex;
+                  ) => ({
+                    length:
+                      SCREEN_WIDTH,
 
-                    return (
-                      <View
-                        key={`detail-dot-${post?.id}-${index}`}
-                        style={[
-                          localStyles.paginationDot,
-                          {
-                            width:
-                              isActive
-                                ? 18
-                                : 7,
+                    offset:
+                      SCREEN_WIDTH *
+                      index,
 
-                            backgroundColor:
-                              isActive
-                                ? theme.primary
-                                : theme
-                                    .textSecondary,
+                    index,
+                  })}
+                  initialNumToRender={1}
+                  windowSize={3}
+                />
 
-                            opacity:
-                              isActive
-                                ? 1
-                                : 0.35,
-                          },
-                        ]}
-                      />
-                    );
-                  }
-                )}
-              </View>
-            ) : null}
-          </>
-        ) : (
-          <View
-            style={[
-              localStyles.postImage,
-              localStyles.unavailableImage,
-              {
-                backgroundColor:
-                  theme.card,
-              },
-            ]}
-          >
-            <Ionicons
-              name="image-outline"
-              size={48}
-              color={
-                theme.textSecondary
-              }
-            />
 
-            <Text
-              style={[
-                localStyles.unavailableText,
                 {
-                  color:
-                    theme.textSecondary,
+                  postImages.length > 1 ? (
+
+                    <View
+                      pointerEvents="none"
+                      style={
+                        localStyles.imageCounter
+                      }
+                    >
+
+                      <Text
+                        style={
+                          localStyles.imageCounterText
+                        }
+                      >
+                        {
+                          activeImageIndex +
+                          1
+                        }/
+                        {
+                          postImages.length
+                        }
+                      </Text>
+
+                    </View>
+
+                  ) : null
+                }
+
+              </View>
+
+
+              {
+                postImages.length > 1 ? (
+
+                  <View
+                    style={
+                      localStyles.pagination
+                    }
+                  >
+
+                    {
+                      postImages.map(
+                        (
+                          _,
+                          index
+                        ) => {
+
+                          const isActive =
+                            index ===
+                            activeImageIndex;
+
+
+                          return (
+
+                            <View
+                              key={
+                                `detail-dot-${post?.id}-${index}`
+                              }
+                              style={[
+                                localStyles.paginationDot,
+
+                                {
+                                  width:
+                                    isActive
+                                      ? 18
+                                      : 7,
+
+                                  backgroundColor:
+                                    isActive
+                                      ? theme.primary
+                                      : theme.textSecondary,
+
+                                  opacity:
+                                    isActive
+                                      ? 1
+                                      : 0.35,
+                                },
+                              ]}
+                            />
+
+                          );
+
+                        }
+                      )
+                    }
+
+                  </View>
+
+                ) : null
+              }
+
+            </>
+
+          ) : (
+
+            <View
+              style={[
+                localStyles.postImage,
+
+                localStyles.unavailableImage,
+
+                {
+                  backgroundColor:
+                    theme.card,
                 },
               ]}
             >
-              Publicação sem imagem
-            </Text>
-          </View>
-        )}
+
+              <Ionicons
+                name="image-outline"
+                size={48}
+                color={
+                  theme.textSecondary
+                }
+              />
+
+
+              <Text
+                style={[
+                  localStyles.unavailableText,
+
+                  {
+                    color:
+                      theme.textSecondary,
+                  },
+                ]}
+              >
+                Publicação sem imagem
+              </Text>
+
+            </View>
+
+          )
+        }
+
 
         {/* DESCRIÇÃO COMPLETA */}
+
         <View
           style={[
             styles.content,
+
             localStyles.descriptionContainer,
           ]}
         >
+
           <Text
             style={[
               localStyles.descriptionTitle,
+
               {
                 color:
                   theme.text,
@@ -914,29 +1258,39 @@ export default function DetailsScreen({
             Descrição completa
           </Text>
 
+
           <Text
             style={[
               styles.description,
+
               {
                 color:
                   theme.text,
               },
             ]}
           >
-            {fullDescription ||
-              'Nenhuma descrição informada.'}
+            {
+              fullDescription ||
+              'Nenhuma descrição informada.'
+            }
           </Text>
+
         </View>
 
+
         {/* BOTÃO CONVERSAR */}
+
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={handleOpenChat}
+          onPress={
+            handleOpenChat
+          }
           disabled={
             !post?.user?.id
           }
           style={[
             styles.chatButton,
+
             {
               backgroundColor:
                 theme.primary,
@@ -948,303 +1302,470 @@ export default function DetailsScreen({
             },
           ]}
         >
+
           <Ionicons
             name="chatbubble"
             size={22}
-            color="#ffffff"
+            color={
+              chatButtonContentColor
+            }
           />
 
+
           <Text
-            style={
-              styles.chatButtonText
-            }
+            style={[
+              styles.chatButtonText,
+
+              {
+                color:
+                  chatButtonContentColor,
+              },
+            ]}
           >
             Conversar
           </Text>
+
         </TouchableOpacity>
+
       </ScrollView>
+
     </View>
+
   );
+
 }
+
+
+/*
+ * ============================================================
+ * ESTILOS LOCAIS
+ * ============================================================
+ */
 
 const localStyles =
   StyleSheet.create({
+
     scrollContent: {
-      paddingBottom: 40,
+      paddingBottom:
+        40,
     },
+
 
     /*
+     * ========================================================
      * CABEÇALHO DO USUÁRIO
+     * ========================================================
      */
+
     userContainer: {
-      flexDirection: 'row',
+      flexDirection:
+        'row',
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      paddingHorizontal: 20,
+      paddingHorizontal:
+        20,
 
-      paddingVertical: 18,
+      paddingVertical:
+        18,
     },
+
 
     userInfo: {
-      flex: 1,
+      flex:
+        1,
 
-      marginLeft: 14,
+      marginLeft:
+        14,
 
-      minWidth: 0,
+      minWidth:
+        0,
     },
+
 
     /*
+     * ========================================================
      * LOCALIZAÇÃO
+     * ========================================================
      */
+
     locationContainer: {
-      flexDirection: 'row',
+      flexDirection:
+        'row',
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      marginTop: 4,
+      marginTop:
+        4,
     },
+
 
     locationText: {
-      flex: 1,
+      flex:
+        1,
 
-      marginLeft: 4,
+      marginLeft:
+        4,
 
-      fontSize: 13,
+      fontSize:
+        13,
     },
 
+
     /*
+     * ========================================================
      * AVATAR PADRÃO
+     * ========================================================
      */
+
     defaultAvatarContainer: {
-      width: 58,
+      width:
+        58,
 
-      height: 58,
+      height:
+        58,
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
-      overflow: 'hidden',
+      overflow:
+        'hidden',
 
       backgroundColor:
         'transparent',
     },
 
-    defaultAvatar: {
-      width: 58,
 
-      height: 58,
+    defaultAvatar: {
+      width:
+        58,
+
+      height:
+        58,
 
       transform: [
         {
-          scale: 4.2,
+          scale:
+            4.2,
         },
       ],
     },
 
+
     /*
+     * ========================================================
      * FOTO REAL
+     * ========================================================
      */
+
     remoteAvatarContainer: {
-      width: 58,
+      width:
+        58,
 
-      height: 58,
+      height:
+        58,
 
-      borderRadius: 29,
+      borderRadius:
+        29,
 
-      overflow: 'hidden',
+      overflow:
+        'hidden',
 
       backgroundColor:
         'transparent',
     },
 
-    remoteAvatar: {
-      width: '100%',
 
-      height: '100%',
+    remoteAvatar: {
+      width:
+        '100%',
+
+      height:
+        '100%',
     },
+
 
     /*
+     * ========================================================
      * BIOGRAFIA DO USUÁRIO
+     * ========================================================
      */
+
     biographyContainer: {
-      marginHorizontal: 20,
+      marginHorizontal:
+        20,
 
-      marginBottom: 18,
+      marginBottom:
+        18,
 
-      paddingHorizontal: 16,
+      paddingHorizontal:
+        16,
 
-      paddingVertical: 14,
+      paddingVertical:
+        14,
 
-      borderWidth: 1,
+      borderWidth:
+        1,
 
-      borderRadius: 16,
+      borderRadius:
+        16,
     },
+
 
     biographyHeader: {
-      flexDirection: 'row',
+      flexDirection:
+        'row',
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      marginBottom: 8,
+      marginBottom:
+        8,
     },
+
 
     biographyTitle: {
-      marginLeft: 7,
+      marginLeft:
+        7,
 
-      fontSize: 14,
+      fontSize:
+        14,
 
-      fontWeight: '700',
+      fontWeight:
+        '700',
     },
+
 
     biographyText: {
-      fontSize: 14,
+      fontSize:
+        14,
 
-      lineHeight: 21,
+      lineHeight:
+        21,
     },
 
-    /*
-     * CARROSSEL
-     */
-    carouselContainer: {
-      position: 'relative',
 
-      width: SCREEN_WIDTH,
+    /*
+     * ========================================================
+     * CARROSSEL
+     * ========================================================
+     */
+
+    carouselContainer: {
+      position:
+        'relative',
+
+      width:
+        SCREEN_WIDTH,
 
       height:
         POST_IMAGE_HEIGHT,
 
-      overflow: 'hidden',
+      overflow:
+        'hidden',
     },
+
 
     postImage: {
-      width: SCREEN_WIDTH,
+      width:
+        SCREEN_WIDTH,
 
       height:
         POST_IMAGE_HEIGHT,
     },
 
-    unavailableImage: {
-      alignItems: 'center',
 
-      justifyContent: 'center',
+    unavailableImage: {
+      alignItems:
+        'center',
+
+      justifyContent:
+        'center',
     },
+
 
     unavailableText: {
-      marginTop: 10,
+      marginTop:
+        10,
 
-      fontSize: 14,
+      fontSize:
+        14,
 
-      fontWeight: '600',
+      fontWeight:
+        '600',
     },
 
+
     /*
-     * CONTADOR 1/3
+     * ========================================================
+     * CONTADOR
+     * ========================================================
      */
+
     imageCounter: {
-      position: 'absolute',
+      position:
+        'absolute',
 
-      top: 12,
+      top:
+        12,
 
-      right: 12,
+      right:
+        12,
 
-      minWidth: 42,
+      minWidth:
+        42,
 
-      height: 28,
+      height:
+        28,
 
-      borderRadius: 14,
+      borderRadius:
+        14,
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
-      paddingHorizontal: 9,
+      paddingHorizontal:
+        9,
 
       backgroundColor:
         'rgba(0, 0, 0, 0.62)',
     },
 
+
     imageCounterText: {
-      color: '#ffffff',
+      color:
+        '#FFFFFF',
 
-      fontSize: 12,
+      fontSize:
+        12,
 
-      fontWeight: '800',
+      fontWeight:
+        '800',
     },
+
 
     /*
-     * BOLINHAS DO CARROSSEL
+     * ========================================================
+     * PAGINAÇÃO
+     * ========================================================
      */
+
     pagination: {
-      minHeight: 30,
+      minHeight:
+        30,
 
-      flexDirection: 'row',
+      flexDirection:
+        'row',
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
-      paddingTop: 10,
+      paddingTop:
+        10,
 
-      paddingBottom: 6,
+      paddingBottom:
+        6,
 
-      paddingHorizontal: 16,
+      paddingHorizontal:
+        16,
     },
+
 
     paginationDot: {
-      height: 7,
+      height:
+        7,
 
-      borderRadius: 4,
+      borderRadius:
+        4,
 
-      marginHorizontal: 3,
+      marginHorizontal:
+        3,
     },
+
 
     /*
+     * ========================================================
      * DESCRIÇÃO COMPLETA
+     * ========================================================
      */
+
     descriptionContainer: {
-      paddingTop: 16,
+      paddingTop:
+        16,
     },
+
 
     descriptionTitle: {
-      marginBottom: 10,
+      marginBottom:
+        10,
 
-      fontSize: 17,
+      fontSize:
+        17,
 
-      fontWeight: '800',
+      fontWeight:
+        '800',
     },
+
 
     /*
+     * ========================================================
      * PUBLICAÇÃO INDISPONÍVEL
+     * ========================================================
      */
+
     emptyContent: {
-      flex: 1,
+      flex:
+        1,
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
-      justifyContent: 'center',
+      justifyContent:
+        'center',
 
-      paddingHorizontal: 30,
+      paddingHorizontal:
+        30,
     },
+
 
     emptyTitle: {
-      marginTop: 14,
+      marginTop:
+        14,
 
-      fontSize: 18,
+      fontSize:
+        18,
 
-      fontWeight: '700',
+      fontWeight:
+        '700',
 
-      textAlign: 'center',
+      textAlign:
+        'center',
     },
+
 
     emptyDescription: {
-      marginTop: 8,
+      marginTop:
+        8,
 
-      fontSize: 14,
+      fontSize:
+        14,
 
-      lineHeight: 20,
+      lineHeight:
+        20,
 
-      textAlign: 'center',
+      textAlign:
+        'center',
     },
+
   });

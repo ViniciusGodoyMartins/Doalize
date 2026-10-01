@@ -11,25 +11,26 @@ export default StyleSheet.create({
    * CONTAINER PRINCIPAL
    * ============================================================
    *
-   * Fundo oficial do Dark Mode:
+   * As cores são substituídas dinamicamente
+   * no index.js do Header.
    *
-   * #141414
-   *
-   * A linha inferior possui exatamente 1px:
-   *
-   * #F5F5F5
+   * Todas as medidas originais foram preservadas.
    */
+
   container: {
-    width: '100%',
+    width:
+      '100%',
 
     height:
       70 +
       (
-        StatusBar.currentHeight || 0
+        StatusBar.currentHeight ||
+        0
       ),
 
     paddingTop:
-      StatusBar.currentHeight || 0,
+      StatusBar.currentHeight ||
+      0,
 
     paddingHorizontal:
       12,
@@ -62,8 +63,11 @@ export default StyleSheet.create({
       'transparent',
 
     shadowOffset: {
-      width: 0,
-      height: 0,
+      width:
+        0,
+
+      height:
+        0,
     },
 
     shadowOpacity:
@@ -86,10 +90,13 @@ export default StyleSheet.create({
    * a logo permaneça verdadeiramente centralizada mesmo quando
    * existir botão voltar.
    */
-  leftContainer: {
-    width: 44,
 
-    height: 44,
+  leftContainer: {
+    width:
+      44,
+
+    height:
+      44,
 
     alignItems:
       'flex-start',
@@ -110,10 +117,13 @@ export default StyleSheet.create({
    * ÁREA CENTRAL
    * ============================================================
    */
-  centerContainer: {
-    flex: 1,
 
-    height: '100%',
+  centerContainer: {
+    flex:
+      1,
+
+    height:
+      '100%',
 
     alignItems:
       'center',
@@ -137,10 +147,13 @@ export default StyleSheet.create({
    * ÁREA DIREITA
    * ============================================================
    */
-  rightContainer: {
-    width: 44,
 
-    height: 44,
+  rightContainer: {
+    width:
+      44,
+
+    height:
+      44,
 
     alignItems:
       'flex-end',
@@ -165,29 +178,37 @@ export default StyleSheet.create({
    *
    * assets/logo.png
    *
-   * A largura é limitada para que a logo não fique grande
-   * demais em aparelhos pequenos ou grandes.
+   * A posição e as medidas originais foram mantidas.
    */
-    logoImage: {
-      width: 125,
 
-      height: 38,
+  logoImage: {
+    width:
+      125,
 
-      maxWidth: '100%',
+    height:
+      38,
 
-      alignSelf: 'center',
+    maxWidth:
+      '100%',
 
-      resizeMode: 'contain',
+    alignSelf:
+      'center',
 
-      margin: 0,
+    resizeMode:
+      'contain',
 
-      marginTop: -20,
+    margin:
+      0,
 
-      padding: 0,
+    marginTop:
+      -20,
 
-      backgroundColor:
-        'transparent',
-    },
+    padding:
+      0,
+
+    backgroundColor:
+      'transparent',
+  },
 
 
   /*
@@ -197,10 +218,13 @@ export default StyleSheet.create({
    *
    * Sem círculo de fundo e sem sombra.
    */
-  iconButton: {
-    width: 40,
 
-    height: 40,
+  iconButton: {
+    width:
+      40,
+
+    height:
+      40,
 
     alignItems:
       'center',
@@ -214,9 +238,11 @@ export default StyleSheet.create({
     backgroundColor:
       'transparent',
 
-    padding: 0,
+    padding:
+      0,
 
-    margin: 0,
+    margin:
+      0,
 
     overflow:
       'visible',

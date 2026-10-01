@@ -44,21 +44,26 @@ import imageUserDark from '../../../assets/imageuserdark.png';
  */
 
 const COLORS = {
-  background: '#141414',
+  background:
+    '#141414',
 
-  text: '#F5F5F5',
+  text:
+    '#F5F5F5',
 
   textSecondary:
     'rgba(245, 245, 245, 0.65)',
 
-  primary: '#3AC2F8',
+  primary:
+    '#3AC2F8',
 
-  deepBlue: '#155269',
+  deepBlue:
+    '#155269',
 
   divider:
     'rgba(245, 245, 245, 0.22)',
 
-  white: '#FFFFFF',
+  white:
+    '#FFFFFF',
 };
 
 
@@ -120,17 +125,6 @@ export default function PostCard({
   ] = useState(false);
 
 
-  /*
-   * Guarda a proporção real de cada imagem.
-   *
-   * Exemplo:
-   *
-   * imagem 1200x800
-   * ratio = 1200 / 800
-   *
-   * Assim a altura deixa de ser fixa e a imagem
-   * passa a ocupar seu tamanho proporcional real.
-   */
   const [
     imageRatios,
     setImageRatios,
@@ -147,8 +141,7 @@ export default function PostCard({
     Math.max(
       0,
       Number(
-        post
-          ?.promotion_count ||
+        post?.promotion_count ||
         0
       )
     );
@@ -156,8 +149,7 @@ export default function PostCard({
 
   const promotedByMe =
     Boolean(
-      post
-        ?.promoted_by_me
+      post?.promoted_by_me
     );
 
 
@@ -187,19 +179,93 @@ export default function PostCard({
 
   /*
    * ==========================================================
-   * IMAGENS
+   * IMAGENS DA PUBLICAÇÃO
    * ==========================================================
    */
 
   const postImages =
     useMemo(() => {
 
-      return parsePostImages(
-        post?.images
-      );
+      try {
+
+        const parsedImages =
+          parsePostImages(
+            post?.images ||
+            post?.image
+          );
+
+
+        if (
+          !Array.isArray(
+            parsedImages
+          )
+        ) {
+
+          return [];
+
+        }
+
+
+        return parsedImages
+          .map(
+            (
+              image
+            ) => {
+
+              try {
+
+                return resolveImageUrl(
+                  image
+                );
+
+              } catch (error) {
+
+                console.log(
+                  'ERRO AO RESOLVER IMAGEM DA PUBLICAÇÃO:',
+                  {
+                    postId:
+                      post?.id,
+
+                    image,
+
+                    message:
+                      error?.message,
+                  }
+                );
+
+
+                return null;
+
+              }
+
+            }
+          )
+          .filter(
+            Boolean
+          );
+
+      } catch (error) {
+
+        console.log(
+          'ERRO AO PROCESSAR IMAGENS DA PUBLICAÇÃO:',
+          {
+            postId:
+              post?.id,
+
+            message:
+              error?.message,
+          }
+        );
+
+
+        return [];
+
+      }
 
     }, [
+      post?.id,
       post?.images,
+      post?.image,
     ]);
 
 
@@ -224,8 +290,7 @@ export default function PostCard({
 
 
       if (
-        typeof post
-          ?.description ===
+        typeof post?.description ===
           'string' &&
         post.description.trim()
       ) {
@@ -259,7 +324,6 @@ export default function PostCard({
 
 
       if (
-        !photo ||
         typeof photo !==
           'string' ||
         !photo.trim()
@@ -270,13 +334,71 @@ export default function PostCard({
       }
 
 
-      return resolveImageUrl(
-        photo
-      );
+      try {
+
+        return resolveImageUrl(
+          photo
+        );
+
+      } catch (error) {
+
+        console.log(
+          'ERRO AO RESOLVER FOTO DO USUÁRIO:',
+          {
+            postId:
+              post?.id,
+
+            photo,
+
+            message:
+              error?.message,
+          }
+        );
+
+
+        return null;
+
+      }
 
     }, [
+      post?.id,
       post?.user?.photo,
     ]);
+
+
+  /*
+   * ==========================================================
+   * ALTURA DO CARROSSEL
+   * ==========================================================
+   *
+   * A altura precisa ser definida explicitamente.
+   *
+   * Sem uma altura explícita, a FlatList horizontal pode
+   * ocupar o espaço vertical restante da Home e empurrar
+   * a próxima publicação para o final da tela.
+   */
+
+  const activeImageRatio =
+    imageRatios[
+      activeImageIndex
+    ] ||
+    imageRatios[0] ||
+    1.5;
+
+
+  const calculatedCarouselHeight =
+    imageWidth > 0 &&
+    activeImageRatio > 0
+      ? imageWidth /
+        activeImageRatio
+      : 180;
+
+
+  const carouselHeight =
+    Math.max(
+      180,
+      calculatedCarouselHeight
+    );
 
 
   /*
@@ -298,28 +420,26 @@ export default function PostCard({
 
   /*
    * ==========================================================
-   * DESCOBRIR PROPORÇÃO REAL DAS IMAGENS
+   * DESCOBRIR PROPORÇÃO DAS IMAGENS
    * ==========================================================
-   *
-   * Isso elimina a altura fixa que estava cortando as fotos.
    */
 
   useEffect(() => {
 
-    setImageRatios({});
+    let effectIsActive =
+      true;
+
+
+    setImageRatios(
+      {}
+    );
 
 
     postImages.forEach(
       (
-        image,
+        imageUrl,
         index
       ) => {
-
-        const imageUrl =
-          resolveImageUrl(
-            image
-          );
-
 
         if (!imageUrl) {
           return;
@@ -335,30 +455,44 @@ export default function PostCard({
           ) => {
 
             if (
-              width > 0 &&
-              height > 0
+              !effectIsActive ||
+              width <= 0 ||
+              height <= 0
             ) {
 
-              setImageRatios(
-                current => ({
-
-                  ...current,
-
-                  [index]:
-                    width / height,
-
-                })
-              );
+              return;
 
             }
 
+
+            setImageRatios(
+              (
+                currentRatios
+              ) => {
+
+                return {
+                  ...currentRatios,
+
+                  [index]:
+                    width /
+                    height,
+                };
+
+              }
+            );
+
           },
 
-          error => {
+          (
+            error
+          ) => {
 
             console.log(
               'ERRO AO OBTER DIMENSÕES DA IMAGEM:',
               {
+                postId:
+                  post?.id,
+
                 image:
                   imageUrl,
 
@@ -374,10 +508,18 @@ export default function PostCard({
         );
 
       }
-
     );
 
+
+    return () => {
+
+      effectIsActive =
+        false;
+
+    };
+
   }, [
+    post?.id,
     postImages,
   ]);
 
@@ -394,6 +536,7 @@ export default function PostCard({
       0
     );
 
+
     setFailedPostImages(
       {}
     );
@@ -408,15 +551,18 @@ export default function PostCard({
 
         carouselRef.current
           .scrollToOffset({
-            offset: 0,
-            animated: false,
+            offset:
+              0,
+
+            animated:
+              false,
           });
 
       } catch (error) {
 
         console.log(
           'ERRO AO REINICIAR CARROSSEL:',
-          error.message
+          error?.message
         );
 
       }
@@ -444,7 +590,7 @@ export default function PostCard({
 
   /*
    * ==========================================================
-   * LARGURA DO CARROSSEL
+   * MEDIR LARGURA DO CARROSSEL
    * ==========================================================
    */
 
@@ -459,9 +605,19 @@ export default function PostCard({
 
 
     if (
-      measuredWidth &&
+      typeof measuredWidth !==
+        'number' ||
+      measuredWidth <= 0
+    ) {
+
+      return;
+
+    }
+
+
+    if (
       measuredWidth !==
-        imageWidth
+      imageWidth
     ) {
 
       setImageWidth(
@@ -525,7 +681,7 @@ export default function PostCard({
 
   /*
    * ==========================================================
-   * ERRO AVATAR
+   * ERRO NO AVATAR
    * ==========================================================
    */
 
@@ -557,7 +713,7 @@ export default function PostCard({
 
   /*
    * ==========================================================
-   * ERRO IMAGEM
+   * ERRO NA IMAGEM
    * ==========================================================
    */
 
@@ -584,14 +740,18 @@ export default function PostCard({
 
 
     setFailedPostImages(
-      currentErrors => ({
+      (
+        currentErrors
+      ) => {
 
-        ...currentErrors,
+        return {
+          ...currentErrors,
 
-        [index]:
-          true,
+          [index]:
+            true,
+        };
 
-      })
+      }
     );
 
   }
@@ -605,7 +765,10 @@ export default function PostCard({
 
   function handleOpenPost() {
 
-    if (onPress) {
+    if (
+      typeof onPress ===
+      'function'
+    ) {
 
       onPress(
         post
@@ -627,7 +790,9 @@ export default function PostCard({
   ) {
 
     if (
-      event?.stopPropagation
+      typeof event
+        ?.stopPropagation ===
+      'function'
     ) {
 
       event.stopPropagation();
@@ -635,7 +800,10 @@ export default function PostCard({
     }
 
 
-    if (onShare) {
+    if (
+      typeof onShare ===
+      'function'
+    ) {
 
       onShare(
         post
@@ -657,7 +825,9 @@ export default function PostCard({
   ) {
 
     if (
-      event?.stopPropagation
+      typeof event
+        ?.stopPropagation ===
+      'function'
     ) {
 
       event.stopPropagation();
@@ -665,7 +835,10 @@ export default function PostCard({
     }
 
 
-    if (onPromote) {
+    if (
+      typeof onPromote ===
+      'function'
+    ) {
 
       onPromote(
         post
@@ -693,7 +866,10 @@ export default function PostCard({
       ] === true;
 
 
-    if (imageFailed) {
+    if (
+      imageFailed ||
+      !item
+    ) {
 
       return (
 
@@ -703,12 +879,17 @@ export default function PostCard({
             handleOpenPost
           }
           style={[
-            styles.postImage,
+            localStyles.imageWrapper,
+
             localStyles.unavailableImage,
+
             {
               width:
                 imageWidth ||
                 '100%',
+
+              height:
+                carouselHeight,
             },
           ]}
         >
@@ -737,10 +918,6 @@ export default function PostCard({
     }
 
 
-    const ratio =
-      imageRatios[index];
-
-
     return (
 
       <TouchableOpacity
@@ -750,20 +927,14 @@ export default function PostCard({
         }
         style={[
           localStyles.imageWrapper,
+
           {
             width:
               imageWidth ||
               '100%',
 
-            ...(ratio
-              ? {
-                  aspectRatio:
-                    ratio,
-                }
-              : {
-                  minHeight:
-                    180,
-                }),
+            height:
+              carouselHeight,
           },
         ]}
       >
@@ -775,6 +946,7 @@ export default function PostCard({
           }}
           style={[
             styles.postImage,
+
             {
               width:
                 '100%',
@@ -784,7 +956,9 @@ export default function PostCard({
             },
           ]}
           resizeMode="contain"
-          onError={(event) => {
+          onError={(
+            event
+          ) => {
 
             handlePostImageError(
               item,
@@ -962,9 +1136,14 @@ export default function PostCard({
             onLayout={
               handleCarouselLayout
             }
-            style={
-              localStyles.carouselContainer
-            }
+            style={[
+              localStyles.carouselContainer,
+
+              {
+                height:
+                  carouselHeight,
+              },
+            ]}
           >
 
             {
@@ -985,11 +1164,28 @@ export default function PostCard({
                   showsHorizontalScrollIndicator={
                     false
                   }
+                  style={{
+                    width:
+                      imageWidth,
+
+                    height:
+                      carouselHeight,
+
+                    flexGrow:
+                      0,
+
+                    flexShrink:
+                      0,
+                  }}
+                  contentContainerStyle={{
+                    height:
+                      carouselHeight,
+                  }}
                   keyExtractor={(
                     item,
                     index
                   ) =>
-                    `${post?.id || 'post'}-${item}-${index}`
+                    `${post?.id || 'post'}-${String(item)}-${index}`
                   }
                   renderItem={
                     renderPostImage
@@ -1000,41 +1196,16 @@ export default function PostCard({
                   getItemLayout={(
                     _,
                     index
-                  ) => {
+                  ) => ({
+                    length:
+                      imageWidth,
 
-                    const ratio =
-                      imageRatios[
-                        index
-                      ] || 1.5;
-
-
-                    const calculatedHeight =
-                      imageWidth /
-                      ratio;
-
-
-                    return {
-
-                      length:
-                        imageWidth,
-
-                      offset:
-                        imageWidth *
-                        index,
-
+                    offset:
+                      imageWidth *
                       index,
 
-                      /*
-                       * O FlatList continua
-                       * usando a largura para
-                       * a paginação horizontal.
-                       */
-
-                      height:
-                        calculatedHeight,
-                    };
-
-                  }}
+                    index,
+                  })}
                   initialNumToRender={
                     1
                   }
@@ -1046,9 +1217,17 @@ export default function PostCard({
               ) : (
 
                 <View
-                  style={
-                    styles.postImage
-                  }
+                  style={[
+                    styles.postImage,
+
+                    {
+                      width:
+                        '100%',
+
+                      height:
+                        carouselHeight,
+                    },
+                  ]}
                 />
 
               )
@@ -1073,7 +1252,8 @@ export default function PostCard({
                     }
                   >
                     {
-                      activeImageIndex + 1
+                      activeImageIndex +
+                      1
                     }/
                     {
                       postImages.length
@@ -1092,7 +1272,7 @@ export default function PostCard({
 
 
       {/* ======================================================
-          BOLINHAS
+          PAGINAÇÃO
           ====================================================== */}
 
       {
@@ -1124,6 +1304,7 @@ export default function PostCard({
                       }
                       style={[
                         localStyles.paginationDot,
+
                         {
                           width:
                             isActive
@@ -1190,7 +1371,7 @@ export default function PostCard({
 
 
       {/* ======================================================
-          AÇÕES + DATA
+          AÇÕES E DATA
           ====================================================== */}
 
       <View
@@ -1198,8 +1379,6 @@ export default function PostCard({
           styles.actions
         }
       >
-
-        {/* GRUPO DOS DOIS BOTÕES */}
 
         <View
           style={
@@ -1213,6 +1392,7 @@ export default function PostCard({
             activeOpacity={0.7}
             style={[
               styles.actionButton,
+
               localStyles.shareActionButton,
             ]}
             onPress={
@@ -1270,7 +1450,7 @@ export default function PostCard({
         </View>
 
 
-        {/* DATA À DIREITA */}
+        {/* DATA */}
 
         <Text
           numberOfLines={1}
@@ -1291,6 +1471,7 @@ export default function PostCard({
     </View>
 
   );
+
 }
 
 
@@ -1310,18 +1491,23 @@ const localStyles =
      */
 
     defaultAvatarContainer: {
-      width: 48,
+      width:
+        48,
 
-      height: 48,
+      height:
+        48,
 
-      marginRight: 12,
+      marginRight:
+        12,
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
       justifyContent:
         'center',
 
-      overflow: 'hidden',
+      overflow:
+        'hidden',
 
       backgroundColor:
         'transparent',
@@ -1329,13 +1515,16 @@ const localStyles =
 
 
     defaultAvatar: {
-      width: 48,
+      width:
+        48,
 
-      height: 48,
+      height:
+        48,
 
       transform: [
         {
-          scale: 4.2,
+          scale:
+            4.2,
         },
       ],
     },
@@ -1348,15 +1537,20 @@ const localStyles =
      */
 
     remoteAvatarContainer: {
-      width: 48,
+      width:
+        48,
 
-      height: 48,
+      height:
+        48,
 
-      marginRight: 12,
+      marginRight:
+        12,
 
-      borderRadius: 24,
+      borderRadius:
+        24,
 
-      overflow: 'hidden',
+      overflow:
+        'hidden',
 
       backgroundColor:
         'transparent',
@@ -1364,11 +1558,14 @@ const localStyles =
 
 
     remoteAvatar: {
-      width: '100%',
+      width:
+        '100%',
 
-      height: '100%',
+      height:
+        '100%',
 
-      borderRadius: 24,
+      borderRadius:
+        24,
     },
 
 
@@ -1379,9 +1576,11 @@ const localStyles =
      */
 
     userTextContainer: {
-      flex: 1,
+      flex:
+        1,
 
-      minWidth: 0,
+      minWidth:
+        0,
     },
 
 
@@ -1392,42 +1591,56 @@ const localStyles =
      */
 
     promotedBadge: {
-      maxWidth: 125,
+      maxWidth:
+        125,
 
-      minHeight: 30,
+      minHeight:
+        30,
 
-      flexDirection: 'row',
+      flexDirection:
+        'row',
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
       justifyContent:
         'center',
 
-      paddingHorizontal: 9,
+      paddingHorizontal:
+        9,
 
-      paddingVertical: 5,
+      paddingVertical:
+        5,
 
-      borderRadius: 15,
+      borderRadius:
+        15,
 
-      marginLeft: 8,
+      marginLeft:
+        8,
 
       backgroundColor:
         'rgba(58, 194, 248, 0.12)',
 
-      flexShrink: 0,
+      flexShrink:
+        0,
     },
 
 
     promotedText: {
-      flexShrink: 1,
+      flexShrink:
+        1,
 
-      marginLeft: 5,
+      marginLeft:
+        5,
 
-      fontSize: 10,
+      fontSize:
+        10,
 
-      lineHeight: 14,
+      lineHeight:
+        14,
 
-      fontWeight: '600',
+      fontWeight:
+        '600',
 
       color:
         COLORS.primary,
@@ -1444,11 +1657,20 @@ const localStyles =
      */
 
     carouselContainer: {
-      position: 'relative',
+      position:
+        'relative',
 
-      width: '100%',
+      width:
+        '100%',
 
-      overflow: 'hidden',
+      flexGrow:
+        0,
+
+      flexShrink:
+        0,
+
+      overflow:
+        'hidden',
 
       backgroundColor:
         COLORS.background,
@@ -1456,9 +1678,17 @@ const localStyles =
 
 
     imageWrapper: {
-      alignSelf: 'flex-start',
+      flexGrow:
+        0,
 
-      overflow: 'hidden',
+      flexShrink:
+        0,
+
+      alignSelf:
+        'flex-start',
+
+      overflow:
+        'hidden',
 
       backgroundColor:
         COLORS.background,
@@ -1472,7 +1702,8 @@ const localStyles =
      */
 
     unavailableImage: {
-      alignItems: 'center',
+      alignItems:
+        'center',
 
       justifyContent:
         'center',
@@ -1483,11 +1714,14 @@ const localStyles =
 
 
     unavailableText: {
-      marginTop: 8,
+      marginTop:
+        8,
 
-      fontSize: 13,
+      fontSize:
+        13,
 
-      fontWeight: '500',
+      fontWeight:
+        '500',
 
       color:
         COLORS.textSecondary,
@@ -1504,24 +1738,32 @@ const localStyles =
      */
 
     imageCounter: {
-      position: 'absolute',
+      position:
+        'absolute',
 
-      top: 10,
+      top:
+        10,
 
-      right: 10,
+      right:
+        10,
 
-      minWidth: 42,
+      minWidth:
+        42,
 
-      height: 26,
+      height:
+        26,
 
-      borderRadius: 13,
+      borderRadius:
+        13,
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
       justifyContent:
         'center',
 
-      paddingHorizontal: 9,
+      paddingHorizontal:
+        9,
 
       backgroundColor:
         'rgba(20, 20, 20, 0.78)',
@@ -1532,11 +1774,14 @@ const localStyles =
       color:
         COLORS.white,
 
-      fontSize: 11,
+      fontSize:
+        11,
 
-      lineHeight: 14,
+      lineHeight:
+        14,
 
-      fontWeight: '600',
+      fontWeight:
+        '600',
 
       includeFontPadding:
         false,
@@ -1550,20 +1795,26 @@ const localStyles =
      */
 
     pagination: {
-      minHeight: 25,
+      minHeight:
+        25,
 
-      flexDirection: 'row',
+      flexDirection:
+        'row',
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
       justifyContent:
         'center',
 
-      paddingHorizontal: 12,
+      paddingHorizontal:
+        12,
 
-      paddingTop: 7,
+      paddingTop:
+        7,
 
-      paddingBottom: 4,
+      paddingBottom:
+        4,
 
       backgroundColor:
         COLORS.background,
@@ -1571,11 +1822,14 @@ const localStyles =
 
 
     paginationDot: {
-      height: 7,
+      height:
+        7,
 
-      borderRadius: 4,
+      borderRadius:
+        4,
 
-      marginHorizontal: 3,
+      marginHorizontal:
+        3,
     },
 
 
@@ -1586,35 +1840,29 @@ const localStyles =
      */
 
     actionGroup: {
-      flexDirection: 'row',
+      flexDirection:
+        'row',
 
-      alignItems: 'center',
+      alignItems:
+        'center',
 
       justifyContent:
         'flex-start',
 
-      flexShrink: 0,
+      flexShrink:
+        0,
     },
 
 
     /*
      * ========================================================
-     * ESPAÇO EXTRA ENTRE OS DOIS BOTÕES
+     * ESPAÇO ENTRE OS BOTÕES
      * ========================================================
-     *
-     * Antes:
-     *
-     * 10px
-     *
-     * Agora:
-     *
-     * 25px
-     *
-     * Aumento exato de 15px.
      */
 
     shareActionButton: {
-      marginRight: 25,
+      marginRight:
+        25,
     },
 
   });

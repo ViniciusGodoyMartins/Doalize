@@ -20,6 +20,11 @@ import {
   FontAwesome6,
 } from '@expo/vector-icons';
 
+import {
+  useTheme,
+} from '../hooks/useTheme';
+
+
 /*
  * ============================================================
  * TELAS DO FEED
@@ -30,6 +35,7 @@ import HomeScreen from '../screens/Home/HomeScreen';
 
 import DetailsScreen from '../screens/Home/DetailsScreen';
 
+
 /*
  * ============================================================
  * TELA DE PUBLICAÇÃO
@@ -37,6 +43,7 @@ import DetailsScreen from '../screens/Home/DetailsScreen';
  */
 
 import PublishScreen from '../screens/Publish/PublishScreen';
+
 
 /*
  * ============================================================
@@ -48,6 +55,7 @@ import ContactsScreen from '../screens/Contacts/ContactsScreen';
 
 import ChatScreen from '../screens/Chat/ChatScreen';
 
+
 /*
  * ============================================================
  * TELAS DO PERFIL
@@ -57,6 +65,7 @@ import ChatScreen from '../screens/Chat/ChatScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
 
 import PublishedScreen from '../screens/Profile/PublishedScreen';
+
 
 /*
  * ============================================================
@@ -70,6 +79,57 @@ import EmailChangeScreen from '../screens/Settings/EmailChangeScreen';
 
 import TwoFactorSettingsScreen from '../screens/Settings/TwoFactorSettingsScreen';
 
+
+/*
+ * ============================================================
+ * CORES
+ * ============================================================
+ */
+
+const COLORS = {
+  /*
+   * MODO ESCURO
+   */
+
+  darkBackground:
+    '#141414',
+
+  darkInactiveIcon:
+    '#F5F5F5',
+
+  darkBorder:
+    '#F5F5F5',
+
+  darkPress:
+    'rgba(245, 245, 245, 0.06)',
+
+
+  /*
+   * MODO CLARO
+   */
+
+  lightBackground:
+    '#F5F5F5',
+
+  lightInactiveIcon:
+    '#141414',
+
+  lightBorder:
+    'rgba(20, 20, 20, 0.45)',
+
+  lightPress:
+    'rgba(20, 20, 20, 0.06)',
+
+
+  /*
+   * COR PRINCIPAL
+   */
+
+  primary:
+    '#3AC2F8',
+};
+
+
 /*
  * ============================================================
  * NAVEGADORES
@@ -81,6 +141,7 @@ const Tab =
 
 const Stack =
   createNativeStackNavigator();
+
 
 /*
  * ============================================================
@@ -99,6 +160,7 @@ const stackScreenOptions = {
     true,
 };
 
+
 /*
  * ============================================================
  * PILHA DO FEED
@@ -106,13 +168,16 @@ const stackScreenOptions = {
  */
 
 function HomeStack() {
+
   return (
+
     <Stack.Navigator
       initialRouteName="HomeScreen"
       screenOptions={
         stackScreenOptions
       }
     >
+
       <Stack.Screen
         name="HomeScreen"
         component={
@@ -120,15 +185,20 @@ function HomeStack() {
         }
       />
 
+
       <Stack.Screen
         name="DetailsScreen"
         component={
           DetailsScreen
         }
       />
+
     </Stack.Navigator>
+
   );
+
 }
+
 
 /*
  * ============================================================
@@ -137,13 +207,16 @@ function HomeStack() {
  */
 
 function ContactsStack() {
+
   return (
+
     <Stack.Navigator
       initialRouteName="ContactsScreen"
       screenOptions={
         stackScreenOptions
       }
     >
+
       <Stack.Screen
         name="ContactsScreen"
         component={
@@ -151,47 +224,45 @@ function ContactsStack() {
         }
       />
 
+
       <Stack.Screen
         name="ChatScreen"
         component={
           ChatScreen
         }
       />
+
     </Stack.Navigator>
+
   );
+
 }
+
 
 /*
  * ============================================================
  * PILHA DO PERFIL
  * ============================================================
- *
- * DetailsScreen também precisa estar
- * registrada nesta pilha.
- *
- * Assim, a publicação pode ser aberta
- * por este caminho:
- *
- * Conta
- * → Publicados
- * → DetailsScreen
- * → voltar para Publicados
  */
 
 function ProfileStack() {
+
   return (
+
     <Stack.Navigator
       initialRouteName="ProfileScreen"
       screenOptions={
         stackScreenOptions
       }
     >
+
       <Stack.Screen
         name="ProfileScreen"
         component={
           ProfileScreen
         }
       />
+
 
       <Stack.Screen
         name="PublishedScreen"
@@ -200,12 +271,14 @@ function ProfileStack() {
         }
       />
 
+
       <Stack.Screen
         name="DetailsScreen"
         component={
           DetailsScreen
         }
       />
+
 
       <Stack.Screen
         name="SettingsScreen"
@@ -214,6 +287,7 @@ function ProfileStack() {
         }
       />
 
+
       <Stack.Screen
         name="EmailChangeScreen"
         component={
@@ -221,15 +295,20 @@ function ProfileStack() {
         }
       />
 
+
       <Stack.Screen
         name="TwoFactorSettingsScreen"
         component={
           TwoFactorSettingsScreen
         }
       />
+
     </Stack.Navigator>
+
   );
+
 }
+
 
 /*
  * ============================================================
@@ -241,20 +320,27 @@ function isStackOnMainScreen(
   route,
   mainScreenName
 ) {
+
   const focusedRouteName =
     getFocusedRouteNameFromRoute(
       route
     );
 
+
   if (!focusedRouteName) {
+
     return true;
+
   }
+
 
   return (
     focusedRouteName ===
     mainScreenName
   );
+
 }
+
 
 /*
  * ============================================================
@@ -268,7 +354,9 @@ function TabIcon({
   size,
   solid,
 }) {
+
   return (
+
     <View
       style={{
         width:
@@ -287,6 +375,7 @@ function TabIcon({
           'visible',
       }}
     >
+
       <FontAwesome6
         name={
           name
@@ -301,9 +390,13 @@ function TabIcon({
           solid
         }
       />
+
     </View>
+
   );
+
 }
+
 
 /*
  * ============================================================
@@ -312,7 +405,50 @@ function TabIcon({
  */
 
 export default function AppRoutes() {
+
+  /*
+   * ==========================================================
+   * TEMA
+   * ==========================================================
+   */
+
+  const {
+    darkMode,
+  } = useTheme();
+
+
+  /*
+   * ==========================================================
+   * CORES DO RODAPÉ
+   * ==========================================================
+   */
+
+  const tabBarBackgroundColor =
+    darkMode
+      ? COLORS.darkBackground
+      : COLORS.lightBackground;
+
+
+  const tabBarInactiveColor =
+    darkMode
+      ? COLORS.darkInactiveIcon
+      : COLORS.lightInactiveIcon;
+
+
+  const tabBarBorderColor =
+    darkMode
+      ? COLORS.darkBorder
+      : COLORS.lightBorder;
+
+
+  const tabBarPressColor =
+    darkMode
+      ? COLORS.darkPress
+      : COLORS.lightPress;
+
+
   return (
+
     <Tab.Navigator
       initialRouteName="Home"
       tabBarPosition="bottom"
@@ -320,48 +456,63 @@ export default function AppRoutes() {
         /*
          * Navegação por gesto.
          */
+
         swipeEnabled:
           true,
+
 
         /*
          * Carregamento preguiçoso.
          */
+
         lazy:
           true,
+
 
         /*
          * Mostrar ícones.
          */
+
         tabBarShowIcon:
           true,
+
 
         /*
          * Não usar rolagem horizontal.
          */
+
         tabBarScrollEnabled:
           false,
+
 
         /*
          * Não mostrar os textos.
          */
+
         tabBarShowLabel:
           false,
+
 
         /*
          * ÍCONE SELECIONADO
          */
+
         tabBarActiveTintColor:
-          '#3AC2F8',
+          COLORS.primary,
+
 
         /*
          * ÍCONE NÃO SELECIONADO
          */
+
         tabBarInactiveTintColor:
-          '#F5F5F5',
+          tabBarInactiveColor,
+
 
         /*
          * BARRA INFERIOR
          */
+
         tabBarStyle: {
           height:
             64,
@@ -385,13 +536,13 @@ export default function AppRoutes() {
             0,
 
           backgroundColor:
-            '#141414',
+            tabBarBackgroundColor,
 
           borderTopWidth:
             1,
 
           borderTopColor:
-            '#F5F5F5',
+            tabBarBorderColor,
 
           borderBottomWidth:
             0,
@@ -420,9 +571,11 @@ export default function AppRoutes() {
             'visible',
         },
 
+
         /*
          * INDICADOR DESATIVADO
          */
+
         tabBarIndicatorStyle: {
           height:
             0,
@@ -434,9 +587,11 @@ export default function AppRoutes() {
             0,
         },
 
+
         /*
          * ITENS DA BARRA
          */
+
         tabBarItemStyle: {
           flex:
             1,
@@ -481,9 +636,11 @@ export default function AppRoutes() {
             'visible',
         },
 
+
         /*
          * TEXTO OCULTO
          */
+
         tabBarLabelStyle: {
           margin:
             0,
@@ -501,16 +658,19 @@ export default function AppRoutes() {
             'none',
         },
 
+
         /*
          * EFEITO DE TOQUE
          */
+
         tabBarPressColor:
-          'rgba(245, 245, 245, 0.06)',
+          tabBarPressColor,
 
         tabBarPressOpacity:
           0.75,
       }}
     >
+
       {/*
        * ======================================================
        * INÍCIO
@@ -538,6 +698,7 @@ export default function AppRoutes() {
             color,
             focused,
           }) => (
+
             <TabIcon
               name="house"
               color={
@@ -552,12 +713,14 @@ export default function AppRoutes() {
                 focused
               }
             />
+
           ),
         })}
         listeners={({
           navigation,
         }) => ({
           tabPress: () => {
+
             navigation.navigate(
               'Home',
               {
@@ -565,9 +728,11 @@ export default function AppRoutes() {
                   'HomeScreen',
               }
             );
+
           },
         })}
       />
+
 
       {/*
        * ======================================================
@@ -590,6 +755,7 @@ export default function AppRoutes() {
           tabBarIcon: ({
             color,
           }) => (
+
             <TabIcon
               name="feather"
               color={
@@ -598,9 +764,11 @@ export default function AppRoutes() {
               size={24}
               solid
             />
+
           ),
         }}
       />
+
 
       {/*
        * ======================================================
@@ -629,6 +797,7 @@ export default function AppRoutes() {
             color,
             focused,
           }) => (
+
             <TabIcon
               name="comment"
               color={
@@ -643,12 +812,14 @@ export default function AppRoutes() {
                 focused
               }
             />
+
           ),
         })}
         listeners={({
           navigation,
         }) => ({
           tabPress: () => {
+
             navigation.navigate(
               'Contatos',
               {
@@ -656,9 +827,11 @@ export default function AppRoutes() {
                   'ContactsScreen',
               }
             );
+
           },
         })}
       />
+
 
       {/*
        * ======================================================
@@ -678,18 +851,10 @@ export default function AppRoutes() {
             'Conta',
 
           /*
-           * O gesto entre abas fica
-           * disponível somente na
-           * tela principal do perfil.
-           *
-           * O gesto fica bloqueado em:
-           *
-           * - Publicados;
-           * - Detalhes;
-           * - Configurações;
-           * - Alteração de e-mail;
-           * - Verificação em duas etapas.
+           * O gesto entre abas fica disponível somente
+           * na tela principal do perfil.
            */
+
           swipeEnabled:
             isStackOnMainScreen(
               route,
@@ -700,6 +865,7 @@ export default function AppRoutes() {
             color,
             focused,
           }) => (
+
             <TabIcon
               name="circle-user"
               color={
@@ -714,12 +880,14 @@ export default function AppRoutes() {
                 focused
               }
             />
+
           ),
         })}
         listeners={({
           navigation,
         }) => ({
           tabPress: () => {
+
             navigation.navigate(
               'Conta',
               {
@@ -727,9 +895,13 @@ export default function AppRoutes() {
                   'ProfileScreen',
               }
             );
+
           },
         })}
       />
+
     </Tab.Navigator>
+
   );
+
 }

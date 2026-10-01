@@ -14,27 +14,66 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 
+import {
+  useTheme,
+} from '../../hooks/useTheme';
+
 import styles from './styles';
 
 
 /*
  * ============================================================
- * LOGO OFICIAL
+ * LOGOS
  * ============================================================
  *
- * Localização:
+ * Modo escuro:
  *
  * assets/logo.png
  *
- * Este Header está em:
+ * Modo claro:
  *
- * src/components/Header/index.js
- *
- * Portanto:
- *
- * ../../../assets/logo.png
+ * assets/logomodoclaro.png
  */
-import logo from '../../../assets/logo.png';
+
+import logoModoEscuro from '../../../assets/logo.png';
+
+import logoModoClaro from '../../../assets/logomodoclaro.png';
+
+
+/*
+ * ============================================================
+ * CORES
+ * ============================================================
+ */
+
+const COLORS = {
+  /*
+   * MODO ESCURO
+   */
+
+  darkBackground:
+    '#141414',
+
+  darkIcon:
+    '#F5F5F5',
+
+  darkDivider:
+    '#F5F5F5',
+
+
+  /*
+   * MODO CLARO
+   */
+
+  lightBackground:
+    '#F5F5F5',
+
+  lightIcon:
+    '#141414',
+
+  lightDivider:
+    'rgba(20, 20, 20, 0.45)',
+};
 
 
 /*
@@ -55,22 +94,66 @@ export default function Header({
    * Quando não for informada,
    * será utilizado navigation.goBack().
    */
+
   onBackPress = null,
 
   /*
    * ÍCONE DA DIREITA
    */
+
   rightIcon = null,
 
   /*
    * AÇÃO DO ÍCONE DA DIREITA
    */
+
   onRightPress = null,
 
 }) {
 
   const navigation =
     useNavigation();
+
+
+  const {
+    darkMode,
+  } = useTheme();
+
+
+  /*
+   * ==========================================================
+   * CORES DO TEMA
+   * ==========================================================
+   */
+
+  const headerBackgroundColor =
+    darkMode
+      ? COLORS.darkBackground
+      : COLORS.lightBackground;
+
+
+  const iconColor =
+    darkMode
+      ? COLORS.darkIcon
+      : COLORS.lightIcon;
+
+
+  const dividerColor =
+    darkMode
+      ? COLORS.darkDivider
+      : COLORS.lightDivider;
+
+
+  /*
+   * ==========================================================
+   * LOGO DO TEMA
+   * ==========================================================
+   */
+
+  const logoSource =
+    darkMode
+      ? logoModoEscuro
+      : logoModoClaro;
 
 
   /*
@@ -85,6 +168,7 @@ export default function Header({
      * Se existir uma ação personalizada,
      * ela tem prioridade.
      */
+
     if (
       typeof onBackPress ===
       'function'
@@ -93,12 +177,14 @@ export default function Header({
       onBackPress();
 
       return;
+
     }
 
 
     /*
      * Comportamento padrão.
      */
+
     if (
       navigation.canGoBack()
     ) {
@@ -139,11 +225,18 @@ export default function Header({
   return (
 
     <View
-      style={
-        styles.container
-      }
-    >
+      style={[
+        styles.container,
 
+        {
+          backgroundColor:
+            headerBackgroundColor,
+
+          borderBottomColor:
+            dividerColor,
+        },
+      ]}
+    >
 
       {/* ====================================================
           ÁREA ESQUERDA
@@ -175,7 +268,9 @@ export default function Header({
               <Ionicons
                 name="arrow-back"
                 size={24}
-                color="#F5F5F5"
+                color={
+                  iconColor
+                }
               />
 
             </TouchableOpacity>
@@ -198,13 +293,13 @@ export default function Header({
 
         <Image
           source={
-            logo
+            logoSource
           }
           style={
             styles.logoImage
           }
           resizeMode="contain"
-          accessible={true}
+          accessible
           accessibilityLabel={
             title
               ? `Doalize - ${title}`
@@ -251,7 +346,9 @@ export default function Header({
                   rightIcon
                 }
                 size={24}
-                color="#F5F5F5"
+                color={
+                  iconColor
+                }
               />
 
             </TouchableOpacity>

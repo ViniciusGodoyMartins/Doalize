@@ -357,6 +357,18 @@ export default function HomeScreen({
 
 
   /*
+   * O feed inteiro acompanha o tema.
+   *
+   * Antes, quando existiam posts, o fundo era
+   * forçado para COLORS.background, mantendo
+   * a Home escura mesmo no modo claro.
+   */
+
+  const feedBackgroundColor =
+    screenBackground;
+
+
+  /*
    * ==========================================================
    * ESTADOS
    * ==========================================================
@@ -393,28 +405,7 @@ export default function HomeScreen({
 
 
   /*
-   * ==========================================================
-   * COR DA ÁREA DO FEED
-   * ==========================================================
-   *
-   * Enquanto o PostCard ainda estiver usando o fundo escuro,
-   * a área restante do feed também precisa ficar escura.
-   *
-   * Isso impede que uma faixa branca apareça depois do último
-   * post no modo claro.
-   *
-   * Quando a lista estiver vazia, o fundo acompanha o tema.
-   */
-
-  const feedBackgroundColor =
-    posts.length >
-    0
-      ? COLORS.background
-      : screenBackground;
-
-
-  /*
-   * Quantidade de posts atual.
+   * Quantidade atual de publicações.
    */
 
   const postsCountRef =
@@ -700,7 +691,7 @@ export default function HomeScreen({
 
   /*
    * ============================================================
-   * RETRY
+   * TENTAR NOVAMENTE
    * ============================================================
    */
 
@@ -1332,6 +1323,7 @@ export default function HomeScreen({
       <View
         style={[
           localStyles.postWrapper,
+
           {
             backgroundColor:
               feedBackgroundColor,
@@ -1365,6 +1357,7 @@ export default function HomeScreen({
           <View
             style={[
               localStyles.sharingIndicator,
+
               {
                 backgroundColor:
                   supportBackgroundColor,
@@ -1385,6 +1378,7 @@ export default function HomeScreen({
             <Text
               style={[
                 localStyles.sharingText,
+
                 {
                   color:
                     secondaryTextColor,
@@ -1415,6 +1409,7 @@ export default function HomeScreen({
       <View
         style={[
           styles.container,
+
           {
             backgroundColor:
               screenBackground,
@@ -1429,6 +1424,7 @@ export default function HomeScreen({
         <View
           style={[
             localStyles.loadingContainer,
+
             {
               backgroundColor:
                 screenBackground,
@@ -1446,6 +1442,7 @@ export default function HomeScreen({
           <Text
             style={[
               localStyles.loadingText,
+
               {
                 color:
                   secondaryTextColor,
@@ -1470,6 +1467,7 @@ export default function HomeScreen({
     <View
       style={[
         styles.container,
+
         {
           backgroundColor:
             screenBackground,
@@ -1486,12 +1484,15 @@ export default function HomeScreen({
           posts
         }
 
-        bounces={false}
+        bounces={
+          false
+        }
 
-        alwaysBounceVertical={false}
+        alwaysBounceVertical={
+          false
+        }
 
         overScrollMode="never"
-
 
         keyExtractor={(
           item,
@@ -1503,29 +1504,18 @@ export default function HomeScreen({
           )
         }
 
-
         renderItem={
           renderItem
         }
-
 
         showsVerticalScrollIndicator={
           false
         }
 
-
-        /*
-         * Quando existem posts, a área restante
-         * usa a mesma cor escura do PostCard.
-         *
-         * Quando não existem posts, acompanha
-         * o tema atual.
-         */
         style={{
           backgroundColor:
             feedBackgroundColor,
         }}
-
 
         contentContainerStyle={[
           styles.feed,
@@ -1535,8 +1525,7 @@ export default function HomeScreen({
               feedBackgroundColor,
           },
 
-          posts.length ===
-          0
+          posts.length === 0
             ? [
                 localStyles.emptyList,
 
@@ -1548,15 +1537,11 @@ export default function HomeScreen({
             : null,
         ]}
 
-
         nestedScrollEnabled
-
 
         directionalLockEnabled
 
-
         keyboardShouldPersistTaps="handled"
-
 
         refreshControl={
           <RefreshControl
@@ -1582,11 +1567,11 @@ export default function HomeScreen({
           />
         }
 
-
         ListEmptyComponent={
           <View
             style={[
               localStyles.emptyContainer,
+
               {
                 backgroundColor:
                   screenBackground,
@@ -1609,6 +1594,7 @@ export default function HomeScreen({
             <Text
               style={[
                 localStyles.emptyTitle,
+
                 {
                   color:
                     mainTextColor,
@@ -1624,6 +1610,7 @@ export default function HomeScreen({
             <Text
               style={[
                 localStyles.emptyDescription,
+
                 {
                   color:
                     secondaryTextColor,
@@ -1647,6 +1634,7 @@ export default function HomeScreen({
                 }
                 style={[
                   localStyles.retryButton,
+
                   {
                     opacity:
                       loading
@@ -1676,6 +1664,7 @@ export default function HomeScreen({
                     <Text
                       style={[
                         localStyles.retryText,
+
                         {
                           color:
                             buttonContentColor,

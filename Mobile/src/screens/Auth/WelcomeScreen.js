@@ -1,154 +1,313 @@
 import React from 'react';
+
 import {
-    View,
-    Text,
-    TouchableOpacity,
-    SafeAreaView,
-    StyleSheet,
-    StatusBar,
-    Image,
+  View,
+  Text,
+  TouchableOpacity,
+  SafeAreaView,
+  StyleSheet,
+  StatusBar,
+  Image,
 } from 'react-native';
 
 import {
-    useNavigation,
+  useNavigation,
 } from '@react-navigation/native';
 
 import {
-    useTheme,
+  useTheme,
 } from '../../hooks/useTheme';
 
+
+/*
+ * ============================================================
+ * LOGOS
+ * ============================================================
+ *
+ * Modo escuro:
+ *
+ * assets/logosejabemvindo.png
+ *
+ * Modo claro:
+ *
+ * assets/logosejabemvindomodoclaro.png
+ */
+
+import logoModoEscuro from '../../../assets/logosejabemvindo.png';
+
+import logoModoClaro from '../../../assets/logosejabemvindomodoclaro.png';
+
+
+/*
+ * ============================================================
+ * CORES
+ * ============================================================
+ */
+
+const COLORS = {
+  /*
+   * MODO ESCURO
+   */
+
+  darkBackground:
+    '#141414',
+
+
+  /*
+   * MODO CLARO
+   */
+
+  lightBackground:
+    '#F5F5F5',
+
+
+  /*
+   * CORES COMPARTILHADAS
+   */
+
+  primary:
+    '#3AC2F8',
+
+  buttonText:
+    '#141414',
+};
+
+
+/*
+ * ============================================================
+ * WELCOME SCREEN
+ * ============================================================
+ */
+
 export default function WelcomeScreen() {
-    const navigation = useNavigation();
-    const { theme, } = useTheme();
 
-    /*
-     * ============================================================
-     * ABRIR LOGIN
-     * ============================================================
-     */
+  /*
+   * ==========================================================
+   * NAVEGAÇÃO
+   * ==========================================================
+   */
 
-    function handleOpenLogin() {
-        navigation.navigate(
-            'LoginScreen'
-        );
-    }
+  const navigation =
+    useNavigation();
 
-    /*
-     * ============================================================
-     * ABRIR CADASTRO
-     * ============================================================
-     */
 
-    function handleOpenRegister() {
-        navigation.navigate(
-            'RegisterScreen'
-        );
-    }
+  /*
+   * ==========================================================
+   * TEMA
+   * ==========================================================
+   */
 
-    return (
-        <SafeAreaView
-            style={[
-                styles.container,
-                {
-                    backgroundColor: '#141414',
-                },
-            ]}
+  const {
+    darkMode,
+  } = useTheme();
+
+
+  /*
+   * ==========================================================
+   * APARÊNCIA CONFORME O TEMA
+   * ==========================================================
+   */
+
+  const backgroundColor =
+    darkMode
+      ? COLORS.darkBackground
+      : COLORS.lightBackground;
+
+
+  const statusBarStyle =
+    darkMode
+      ? 'light-content'
+      : 'dark-content';
+
+
+  const logoSource =
+    darkMode
+      ? logoModoEscuro
+      : logoModoClaro;
+
+
+  /*
+   * ==========================================================
+   * ABRIR LOGIN
+   * ==========================================================
+   */
+
+  function handleOpenLogin() {
+
+    navigation.navigate(
+      'LoginScreen'
+    );
+
+  }
+
+
+  /*
+   * ==========================================================
+   * ABRIR CADASTRO
+   * ==========================================================
+   */
+
+  function handleOpenRegister() {
+
+    navigation.navigate(
+      'RegisterScreen'
+    );
+
+  }
+
+
+  /*
+   * ==========================================================
+   * RENDER
+   * ==========================================================
+   */
+
+  return (
+
+    <SafeAreaView
+      style={[
+        styles.container,
+
+        {
+          backgroundColor:
+            backgroundColor,
+        },
+      ]}
+    >
+
+      <StatusBar
+        barStyle={
+          statusBarStyle
+        }
+        backgroundColor={
+          backgroundColor
+        }
+      />
+
+
+      {/* ======================================================
+          CONTEÚDO COMPLETO
+          ====================================================== */}
+
+      <View
+        style={[
+          styles.content,
+
+          {
+            backgroundColor:
+              backgroundColor,
+          },
+        ]}
+      >
+
+        {/* ====================================================
+            BLOCO CENTRAL
+            ==================================================== */}
+
+        <View
+          style={
+            styles.mainContent
+          }
         >
-            <StatusBar
-                barStyle="light-content"
-                backgroundColor="#141414"
-            />
 
-            {/* ======================================================
-                CONTEÚDO COMPLETO
-            ====================================================== */}
+          {/* ==================================================
+              LOGO
+              ==================================================
+              
+              As duas imagens usam exatamente o mesmo estilo.
+              
+              Não existe scale, largura ou altura diferente
+              entre os modos claro e escuro.
+              ================================================== */}
 
-            <View
-                style={styles.content}
+          <Image
+            source={
+              logoSource
+            }
+            style={
+              styles.logoImage
+            }
+            resizeMode="contain"
+            accessible
+            accessibilityLabel="Doalize, seja bem-vindo"
+          />
+
+
+          {/* ==================================================
+              BOTÕES
+              ================================================== */}
+
+          <View
+            style={
+              styles.actionsContainer
+            }
+          >
+
+            {/* =================================================
+                ENTRAR
+                ================================================= */}
+
+            <TouchableOpacity
+              activeOpacity={0.82}
+              onPress={
+                handleOpenLogin
+              }
+              accessibilityRole="button"
+              accessibilityLabel="Entrar na conta"
+              style={
+                styles.primaryButton
+              }
             >
 
-                {/* ====================================================
-                    BLOCO CENTRAL
-                ==================================================== */}
+              <Text
+                style={
+                  styles.primaryButtonText
+                }
+              >
+                Entrar
+              </Text>
 
-                <View
-                    style={styles.mainContent}
-                >
+            </TouchableOpacity>
 
-                    {/* ==================================================
-                        LOGO OFICIAL
 
-                        O arquivo já contém:
-                        - coração;
-                        - Doalize;
-                        - Seja Bem Vindo!
+            {/* =================================================
+                CADASTRAR
+                ================================================= */}
 
-                        Não existe nenhum texto separado.
-                    ================================================== */}
+            <TouchableOpacity
+              activeOpacity={0.82}
+              onPress={
+                handleOpenRegister
+              }
+              accessibilityRole="button"
+              accessibilityLabel="Criar uma conta"
+              style={
+                styles.secondaryButton
+              }
+            >
 
-                    <Image
-                        source={require(
-                            '../../../assets/logosejabemvindo.png'
-                        )}
-                        style={styles.logoImage}
-                        resizeMode="contain"
-                        accessible={true}
-                        accessibilityLabel="Doalize, seja bem-vindo"
-                    />
+              <Text
+                style={
+                  styles.secondaryButtonText
+                }
+              >
+                Cadastrar
+              </Text>
 
-                    {/* ==================================================
-                        BOTÕES
-                    ================================================== */}
+            </TouchableOpacity>
 
-                    <View
-                        style={styles.actionsContainer}
-                    >
+          </View>
 
-                        {/* =================================================
-                            ENTRAR
-                        ================================================= */}
+        </View>
 
-                        <TouchableOpacity
-                            activeOpacity={0.82}
-                            onPress={handleOpenLogin}
-                            accessibilityRole="button"
-                            accessibilityLabel="Entrar na conta"
-                            style={styles.primaryButton}
-                        >
-                            <Text
-                                style={styles.primaryButtonText}
-                            >
-                                Entrar
-                            </Text>
-                        </TouchableOpacity>
+      </View>
 
-                        {/* =================================================
-                            CADASTRAR
-                        ================================================= */}
+    </SafeAreaView>
 
-                        <TouchableOpacity
-                            activeOpacity={0.82}
-                            onPress={handleOpenRegister}
-                            accessibilityRole="button"
-                            accessibilityLabel="Criar uma conta"
-                            style={styles.secondaryButton}
-                        >
-                            <Text
-                                style={styles.secondaryButtonText}
-                            >
-                                Cadastrar
-                            </Text>
-                        </TouchableOpacity>
+  );
 
-                    </View>
-
-                </View>
-
-            </View>
-
-        </SafeAreaView>
-    );
 }
+
 
 /*
  * ============================================================
@@ -156,7 +315,8 @@ export default function WelcomeScreen() {
  * ============================================================
  */
 
-const styles = StyleSheet.create({
+const styles =
+  StyleSheet.create({
 
     /*
      * ========================================================
@@ -165,137 +325,209 @@ const styles = StyleSheet.create({
      */
 
     container: {
-        flex: 1,
-        width: '100%',
-        backgroundColor: '#141414',
-        overflow: 'hidden',
+      flex:
+        1,
+
+      width:
+        '100%',
+
+      backgroundColor:
+        COLORS.darkBackground,
+
+      overflow:
+        'hidden',
     },
+
 
     /*
      * ========================================================
      * CONTEÚDO PRINCIPAL
      * ========================================================
-     *
-     * O conteúdo inteiro é centralizado na área disponível.
-     *
-     * Não existe mais marginTop calculado manualmente.
-     *
-     * Isso evita que os botões sejam empurrados para fora
-     * da tela em aparelhos com alturas diferentes.
      */
 
     content: {
-        flex: 1,
-        width: '100%',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 20,
-        alignSelf: 'center',
+      flex:
+        1,
+
+      width:
+        '100%',
+
+      alignItems:
+        'center',
+
+      justifyContent:
+        'center',
+
+      paddingHorizontal:
+        20,
+
+      paddingVertical:
+        20,
+
+      alignSelf:
+        'center',
     },
+
 
     /*
      * ========================================================
      * BLOCO CENTRAL
      * ========================================================
-     *
-     * A largura máxima impede que o conteúdo fique exagerado
-     * em aparelhos maiores.
-     *
-     * Em aparelhos pequenos, a largura automaticamente diminui.
      */
 
     mainContent: {
-        width: '100%',
-        maxWidth: 320,
-        alignItems: 'center',
-        justifyContent: 'center',
-        alignSelf: 'center',
-        flexShrink: 1,
+      width:
+        '100%',
+
+      maxWidth:
+        320,
+
+      alignItems:
+        'center',
+
+      justifyContent:
+        'center',
+
+      alignSelf:
+        'center',
+
+      flexShrink:
+        1,
+
+      overflow:
+        'visible',
     },
+
 
     /*
      * ========================================================
-     * LOGO OFICIAL
+     * LOGO
      * ========================================================
      *
-     * O tamanho original que estávamos utilizando era:
+     * Este único estilo é utilizado pelas duas imagens.
      *
-     * 315px
-     *
-     * Redução de 20%:
-     *
-     * 315 × 0.80 = 252px
-     *
-     * Portanto:
-     *
-     * maxWidth: 252
-     *
-     * A largura de 100% faz com que ela também se adapte
-     * automaticamente em telas menores.
+     * Não existe transformação ou escala condicional.
      */
 
     logoImage: {
-        width: '100%',
-        maxWidth: 252,
-        aspectRatio: 1816 / 534,
-        alignSelf: 'center',
-        resizeMode: 'contain',
-        margin: 0,
-        marginTop: -200,
-        padding: 0,
-        backgroundColor: 'transparent',
-        flexShrink: 1,
+      width:
+        '100%',
+
+      maxWidth:
+        252,
+
+      aspectRatio:
+        1816 / 534,
+
+      alignSelf:
+        'center',
+
+      resizeMode:
+        'contain',
+
+      margin:
+        0,
+
+      marginTop:
+        -200,
+
+      padding:
+        0,
+
+      backgroundColor:
+        'transparent',
+
+      flexShrink:
+        1,
     },
+
 
     /*
      * ========================================================
      * ÁREA DOS BOTÕES
      * ========================================================
      *
-     * Os dois botões fazem parte do mesmo bloco da logo.
-     *
-     * A distância entre a logo e os botões permanece fixa,
-     * mas o bloco inteiro é centralizado na tela.
+     * O tamanho deste contêiner é igual
+     * nos modos claro e escuro.
      */
 
     actionsContainer: {
-        width: '100%',
-        maxWidth: 300,
-        alignItems: 'center',
-        justifyContent: 'center',
-        alignSelf: 'center',
-        marginTop: -140,
-        padding: 0,
-        flexShrink: 1,
+      width:
+        '100%',
+
+      maxWidth:
+        300,
+
+      alignItems:
+        'center',
+
+      justifyContent:
+        'center',
+
+      alignSelf:
+        'center',
+
+      marginTop:
+        -140,
+
+      padding:
+        0,
+
+      flexShrink:
+        1,
     },
+
 
     /*
      * ========================================================
      * BOTÃO ENTRAR
      * ========================================================
      *
-     * Azul principal do Doalize:
-     *
-     * #3AC2F8
+     * O botão possui exatamente a mesma largura
+     * e altura nos dois temas.
      */
 
     primaryButton: {
-        width: '100%',
-        maxWidth: 300,
-        height: 44,
-        minHeight: 44,
-        alignItems: 'center',
-        justifyContent: 'center',
-        alignSelf: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 0,
-        margin: 0,
-        borderRadius: 10,
-        backgroundColor: '#3AC2F8',
-        overflow: 'hidden',
-        flexShrink: 1,
+      width:
+        '100%',
+
+      height:
+        44,
+
+      minHeight:
+        44,
+
+      alignItems:
+        'center',
+
+      justifyContent:
+        'center',
+
+      alignSelf:
+        'center',
+
+      paddingHorizontal:
+        16,
+
+      paddingVertical:
+        0,
+
+      margin:
+        0,
+
+      borderRadius:
+        10,
+
+      backgroundColor:
+        COLORS.primary,
+
+      overflow:
+        'hidden',
+
+      flexShrink:
+        1,
     },
+
 
     /*
      * ========================================================
@@ -304,48 +536,91 @@ const styles = StyleSheet.create({
      */
 
     primaryButtonText: {
-        color: '#141414',
-        fontSize: 17,
-        lineHeight: 20,
-        fontWeight: '600',
-        textAlign: 'center',
-        includeFontPadding: false,
-        margin: 0,
-        padding: 0,
+      color:
+        COLORS.buttonText,
+
+      fontSize:
+        17,
+
+      lineHeight:
+        20,
+
+      fontWeight:
+        '600',
+
+      textAlign:
+        'center',
+
+      includeFontPadding:
+        false,
+
+      margin:
+        0,
+
+      padding:
+        0,
     },
+
 
     /*
      * ========================================================
      * BOTÃO CADASTRAR
      * ========================================================
      *
-     * Segundo botão:
-     *
-     * - transparente;
-     * - contorno azul;
-     * - mesma largura;
-     * - mesma altura.
+     * O botão possui exatamente a mesma largura
+     * e altura nos dois temas.
      */
 
     secondaryButton: {
-        width: '100%',
-        maxWidth: 300,
-        height: 44,
-        minHeight: 44,
-        alignItems: 'center',
-        justifyContent: 'center',
-        alignSelf: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 0,
-        marginTop: 10,
-        marginBottom: 0,
-        borderWidth: 1,
-        borderColor: '#3AC2F8',
-        borderRadius: 10,
-        backgroundColor: 'transparent',
-        overflow: 'hidden',
-        flexShrink: 1,
+      width:
+        '100%',
+
+      height:
+        44,
+
+      minHeight:
+        44,
+
+      alignItems:
+        'center',
+
+      justifyContent:
+        'center',
+
+      alignSelf:
+        'center',
+
+      paddingHorizontal:
+        16,
+
+      paddingVertical:
+        0,
+
+      marginTop:
+        10,
+
+      marginBottom:
+        0,
+
+      borderWidth:
+        1,
+
+      borderColor:
+        COLORS.primary,
+
+      borderRadius:
+        10,
+
+      backgroundColor:
+        'transparent',
+
+      overflow:
+        'hidden',
+
+      flexShrink:
+        1,
     },
+
 
     /*
      * ========================================================
@@ -354,14 +629,29 @@ const styles = StyleSheet.create({
      */
 
     secondaryButtonText: {
-        color: '#3AC2F8',
-        fontSize: 17,
-        lineHeight: 20,
-        fontWeight: '600',
-        textAlign: 'center',
-        includeFontPadding: false,
-        margin: 0,
-        padding: 0,
+      color:
+        COLORS.primary,
+
+      fontSize:
+        17,
+
+      lineHeight:
+        20,
+
+      fontWeight:
+        '600',
+
+      textAlign:
+        'center',
+
+      includeFontPadding:
+        false,
+
+      margin:
+        0,
+
+      padding:
+        0,
     },
 
-});
+  });

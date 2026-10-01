@@ -34,98 +34,42 @@ import {
 import imageUserLight from '../../../assets/imageuserlight.png';
 import imageUserDark from '../../../assets/imageuserdark.png';
 
-/*
- * IMPORTANTE:
- *
- * O arquivo dentro da pasta Profile
- * chama-se:
- *
- * style.js
- *
- * Portanto o caminho correto é:
- *
- * ./style
- */
 import styles from './style';
 
 
 /*
  * ============================================================
- * CORES DO DOALIZE
+ * CORES
  * ============================================================
  */
 
 const COLORS = {
-
-  /*
-   * FUNDO DARK
-   */
-  background:
+  darkBackground:
     '#141414',
 
-  /*
-   * FUNDO LIGHT
-   *
-   * Mantido para o funcionamento futuro
-   * do modo claro.
-   */
   lightBackground:
     '#F5F5F5',
 
-  /*
-   * TEXTO PRINCIPAL
-   */
-  text:
+  darkText:
     '#F5F5F5',
 
-  /*
-   * TEXTO DARK
-   */
   lightText:
     '#141414',
 
-  /*
-   * TEXTO SECUNDÁRIO
-   */
-  textSecondary:
+  darkTextSecondary:
     'rgba(245, 245, 245, 0.68)',
 
-  /*
-   * AZUL PRINCIPAL
-   */
-  primary:
-    '#3AC2F8',
+  lightTextSecondary:
+    'rgba(20, 20, 20, 0.68)',
 
-  /*
-   * AZUL SECUNDÁRIO
-   */
-  secondary:
-    '#2594BD',
-
-  /*
-   * AZUL DOS CAMPOS
-   */
-  input:
-    '#05618D',
-
-  /*
-   * AZUL PROFUNDO
-   */
-  deepBlue:
-    '#155269',
-
-  /*
-   * BRANCO
-   */
-  white:
-    '#FFFFFF',
-
-  /*
-   * DIVISÓRIA
-   */
-  divider:
+  darkDivider:
     'rgba(245, 245, 245, 0.20)',
 
+  lightDivider:
+    'rgba(20, 20, 20, 0.20)',
+
+  primary:
+    '#3AC2F8',
 };
 
 
@@ -143,15 +87,36 @@ export default function ProfileScreen({
    * ==========================================================
    * TEMA
    * ==========================================================
-   *
-   * O useTheme continua sendo utilizado porque o usuário
-   * ainda possui a opção de alternar o tema através da tela.
    */
 
   const {
     darkMode,
     toggleTheme,
   } = useTheme();
+
+
+  const backgroundColor =
+    darkMode
+      ? COLORS.darkBackground
+      : COLORS.lightBackground;
+
+
+  const mainTextColor =
+    darkMode
+      ? COLORS.darkText
+      : COLORS.lightText;
+
+
+  const secondaryTextColor =
+    darkMode
+      ? COLORS.darkTextSecondary
+      : COLORS.lightTextSecondary;
+
+
+  const dividerColor =
+    darkMode
+      ? COLORS.darkDivider
+      : COLORS.lightDivider;
 
 
   /*
@@ -181,12 +146,6 @@ export default function ProfileScreen({
    * ==========================================================
    * AVATAR PADRÃO
    * ==========================================================
-   *
-   * Dark Mode:
-   * imageuserlight.png
-   *
-   * Light Mode:
-   * imageuserdark.png
    */
 
   const defaultAvatarSource =
@@ -222,9 +181,29 @@ export default function ProfileScreen({
       }
 
 
-      return resolveImageUrl(
-        user.photo
-      );
+      try {
+
+        return resolveImageUrl(
+          user.photo
+        );
+
+      } catch (error) {
+
+        console.log(
+          'ERRO AO RESOLVER FOTO DO PERFIL:',
+          {
+            originalPhoto:
+              user?.photo,
+
+            message:
+              error?.message,
+          }
+        );
+
+
+        return null;
+
+      }
 
     }, [
       user?.photo,
@@ -250,7 +229,7 @@ export default function ProfileScreen({
 
   /*
    * ==========================================================
-   * AVATAR DISPONÍVEL?
+   * AVATAR DISPONÍVEL
    * ==========================================================
    */
 
@@ -325,6 +304,104 @@ export default function ProfileScreen({
 
   /*
    * ==========================================================
+   * RENDERIZAR AÇÃO DO PERFIL
+   * ==========================================================
+   */
+
+  function renderAction({
+    icon,
+    label,
+    accessibilityLabel,
+    onPress,
+    isLast = false,
+  }) {
+
+    return (
+
+      <TouchableOpacity
+        activeOpacity={0.78}
+        onPress={
+          onPress
+        }
+        style={[
+          styles.actionButton,
+
+          {
+            backgroundColor:
+              'transparent',
+
+            borderBottomColor:
+              dividerColor,
+
+            borderBottomWidth:
+              isLast
+                ? 0
+                : 1,
+          },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={
+          accessibilityLabel
+        }
+      >
+
+        <View
+          style={[
+            styles.actionIconContainer,
+
+            {
+              backgroundColor:
+                'transparent',
+            },
+          ]}
+        >
+
+          <Ionicons
+            name={
+              icon
+            }
+            size={22}
+            color={
+              COLORS.primary
+            }
+          />
+
+        </View>
+
+
+        <Text
+          style={[
+            styles.actionText,
+
+            {
+              color:
+                mainTextColor,
+            },
+          ]}
+        >
+          {
+            label
+          }
+        </Text>
+
+
+        <Ionicons
+          name="chevron-forward"
+          size={19}
+          color={
+            secondaryTextColor
+          }
+        />
+
+      </TouchableOpacity>
+
+    );
+
+  }
+
+
+  /*
+   * ==========================================================
    * RENDER
    * ==========================================================
    */
@@ -332,34 +409,37 @@ export default function ProfileScreen({
   return (
 
     <View
-      style={
-        styles.container
-      }
-    >
+      style={[
+        styles.container,
 
-      {/* ====================================================
-          HEADER
-          ==================================================== */}
+        {
+          backgroundColor:
+            backgroundColor,
+        },
+      ]}
+    >
 
       <Header
         title="Conta"
       />
 
 
-      {/* ====================================================
-          CONTEÚDO
-          ==================================================== */}
-
       <ScrollView
-
         showsVerticalScrollIndicator={
           false
         }
+        style={{
+          backgroundColor:
+            backgroundColor,
+        }}
+        contentContainerStyle={[
+          localStyles.scrollContent,
 
-        contentContainerStyle={
-          localStyles.scrollContent
-        }
-
+          {
+            backgroundColor:
+              backgroundColor,
+          },
+        ]}
       >
 
         {/* ==================================================
@@ -367,23 +447,28 @@ export default function ProfileScreen({
             ================================================== */}
 
         <View
-          style={
-            styles.profileContainer
-          }
+          style={[
+            styles.profileContainer,
+
+            {
+              backgroundColor:
+                'transparent',
+            },
+          ]}
         >
-
-
-          {/* =================================================
-              AVATAR
-              ================================================= */}
 
           {
             hasRemoteAvatar ? (
 
               <View
-                style={
-                  localStyles.remoteAvatarContainer
-                }
+                style={[
+                  localStyles.remoteAvatarContainer,
+
+                  {
+                    borderColor:
+                      dividerColor,
+                  },
+                ]}
               >
 
                 <Image
@@ -426,15 +511,16 @@ export default function ProfileScreen({
           }
 
 
-          {/* =================================================
-              NOME
-              ================================================= */}
-
           <Text
             numberOfLines={2}
-            style={
-              styles.name
-            }
+            style={[
+              styles.name,
+
+              {
+                color:
+                  mainTextColor,
+              },
+            ]}
           >
             {
               user?.name ||
@@ -443,14 +529,15 @@ export default function ProfileScreen({
           </Text>
 
 
-          {/* =================================================
-              DESCRIÇÃO
-              ================================================= */}
-
           <Text
-            style={
-              styles.description
-            }
+            style={[
+              styles.description,
+
+              {
+                color:
+                  secondaryTextColor,
+              },
+            ]}
           >
             {
               user?.description ||
@@ -466,181 +553,77 @@ export default function ProfileScreen({
             ================================================== */}
 
         <View
-          style={
-            styles.actionsContainer
-          }
+          style={[
+            styles.actionsContainer,
+
+            {
+              backgroundColor:
+                'transparent',
+
+              borderColor:
+                dividerColor,
+            },
+          ]}
         >
 
+          {
+            renderAction({
+              icon:
+                'images-outline',
 
-          {/* =================================================
-              PUBLICADOS
-              ================================================= */}
+              label:
+                'Publicados',
 
-          <TouchableOpacity
-            activeOpacity={0.78}
-            onPress={
-              handlePublished
-            }
-            style={
-              styles.actionButton
-            }
-            accessibilityRole="button"
-            accessibilityLabel="Ver publicações"
-          >
+              accessibilityLabel:
+                'Ver publicações',
 
-            <View
-              style={
-                styles.actionIconContainer
-              }
-            >
-
-              <Ionicons
-                name="images-outline"
-                size={22}
-                color={
-                  COLORS.primary
-                }
-              />
-
-            </View>
+              onPress:
+                handlePublished,
+            })
+          }
 
 
-            <Text
-              style={
-                styles.actionText
-              }
-            >
-              Publicados
-            </Text>
+          {
+            renderAction({
+              icon:
+                darkMode
+                  ? 'sunny-outline'
+                  : 'moon-outline',
 
-
-            <Ionicons
-              name="chevron-forward"
-              size={19}
-              color={
-                COLORS.textSecondary
-              }
-            />
-
-          </TouchableOpacity>
-
-
-          {/* =================================================
-              MODO ESCURO / CLARO
-              ================================================= */}
-
-          <TouchableOpacity
-            activeOpacity={0.78}
-            onPress={
-              toggleTheme
-            }
-            style={
-              styles.actionButton
-            }
-            accessibilityRole="button"
-            accessibilityLabel={
-              darkMode
-                ? 'Ativar modo claro'
-                : 'Ativar modo escuro'
-            }
-          >
-
-            <View
-              style={
-                styles.actionIconContainer
-              }
-            >
-
-              <Ionicons
-                name={
-                  darkMode
-                    ? 'sunny-outline'
-                    : 'moon-outline'
-                }
-                size={22}
-                color={
-                  COLORS.primary
-                }
-              />
-
-            </View>
-
-
-            <Text
-              style={
-                styles.actionText
-              }
-            >
-              {
+              label:
                 darkMode
                   ? 'Modo Claro'
-                  : 'Modo Escuro'
-              }
-            </Text>
+                  : 'Modo Escuro',
+
+              accessibilityLabel:
+                darkMode
+                  ? 'Ativar modo claro'
+                  : 'Ativar modo escuro',
+
+              onPress:
+                toggleTheme,
+            })
+          }
 
 
-            <Ionicons
-              name="chevron-forward"
-              size={19}
-              color={
-                COLORS.textSecondary
-              }
-            />
+          {
+            renderAction({
+              icon:
+                'settings-outline',
 
-          </TouchableOpacity>
+              label:
+                'Configurações',
 
+              accessibilityLabel:
+                'Abrir configurações',
 
-          {/* =================================================
-              CONFIGURAÇÕES
-              ================================================= */}
+              onPress:
+                handleSettings,
 
-          <TouchableOpacity
-            activeOpacity={0.78}
-            onPress={
-              handleSettings
-            }
-            style={
-              styles.actionButton
-            }
-            accessibilityRole="button"
-            accessibilityLabel="Abrir configurações"
-          >
-
-            <View
-              style={
-                styles.actionIconContainer
-              }
-            >
-
-              <Ionicons
-                name="settings-outline"
-                size={22}
-                color={
-                  COLORS.primary
-                }
-              />
-
-            </View>
-
-
-            <Text
-              style={
-                styles.actionText
-              }
-            >
-              Configurações
-            </Text>
-
-
-            <Ionicons
-              name="chevron-forward"
-              size={19}
-              color={
-                COLORS.textSecondary
-              }
-            />
-
-          </TouchableOpacity>
+              isLast:
+                true,
+            })
+          }
 
         </View>
 
@@ -662,29 +645,21 @@ export default function ProfileScreen({
 const localStyles =
   StyleSheet.create({
 
-    /*
-     * ========================================================
-     * SCROLL
-     * ========================================================
-     */
-
     scrollContent: {
-      flexGrow: 1,
+      flexGrow:
+        1,
 
-      paddingBottom: 24,
+      paddingBottom:
+        24,
     },
 
 
-    /*
-     * ========================================================
-     * AVATAR PADRÃO
-     * ========================================================
-     */
-
     defaultAvatarContainer: {
-      width: 126,
+      width:
+        126,
 
-      height: 126,
+      height:
+        126,
 
       alignItems:
         'center',
@@ -701,30 +676,33 @@ const localStyles =
 
 
     defaultAvatar: {
-      width: 126,
+      width:
+        126,
 
-      height: 126,
+      height:
+        126,
 
       transform: [
         {
-          scale: 4.2,
+          scale:
+            4.2,
         },
       ],
     },
 
 
-    /*
-     * ========================================================
-     * AVATAR REAL
-     * ========================================================
-     */
-
     remoteAvatarContainer: {
-      width: 126,
+      width:
+        126,
 
-      height: 126,
+      height:
+        126,
 
-      borderRadius: 63,
+      borderRadius:
+        63,
+
+      borderWidth:
+        1,
 
       overflow:
         'hidden',
@@ -735,11 +713,14 @@ const localStyles =
 
 
     remoteAvatar: {
-      width: '100%',
+      width:
+        '100%',
 
-      height: '100%',
+      height:
+        '100%',
 
-      borderRadius: 63,
+      borderRadius:
+        63,
     },
 
   });

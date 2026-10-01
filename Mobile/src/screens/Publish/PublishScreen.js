@@ -21,16 +21,106 @@ import {
 } from '@expo/vector-icons';
 
 import Header from '../../components/Header';
+
 import Input from '../../components/Input';
+
 import Button from '../../components/Button';
+
+import {
+  useTheme,
+} from '../../hooks/useTheme';
 
 import api from '../../services/api';
 
 import styles from './styles';
 
-const SUMMARY_MAX_LENGTH = 160;
-const DESCRIPTION_MAX_LENGTH = 2000;
-const MAX_IMAGES = 10;
+
+/*
+ * ============================================================
+ * LIMITES
+ * ============================================================
+ */
+
+const SUMMARY_MAX_LENGTH =
+  160;
+
+const DESCRIPTION_MAX_LENGTH =
+  2000;
+
+const MAX_IMAGES =
+  10;
+
+
+/*
+ * ============================================================
+ * CORES
+ * ============================================================
+ */
+
+const COLORS = {
+  /*
+   * MODO ESCURO
+   */
+
+  darkBackground:
+    '#141414',
+
+  darkText:
+    '#F5F5F5',
+
+  darkTextSecondary:
+    '#AEB8BD',
+
+  darkCard:
+    '#141414',
+
+  darkBorder:
+    'rgba(245, 245, 245, 0.28)',
+
+
+  /*
+   * MODO CLARO
+   */
+
+  lightBackground:
+    '#F5F5F5',
+
+  lightText:
+    '#141414',
+
+  lightTextSecondary:
+    'rgba(20, 20, 20, 0.68)',
+
+  lightCard:
+    '#FFFFFF',
+
+  lightBorder:
+    'rgba(20, 20, 20, 0.25)',
+
+
+  /*
+   * CORES COMPARTILHADAS
+   */
+
+  primary:
+    '#3AC2F8',
+
+  error:
+    '#EF4444',
+
+  white:
+    '#FFFFFF',
+
+  black:
+    '#141414',
+};
+
+
+/*
+ * ============================================================
+ * EXTENSÃO DO ARQUIVO
+ * ============================================================
+ */
 
 function getFileExtension(
   asset,
@@ -44,11 +134,13 @@ function getFileExtension(
       ?.split('?')[0] ||
     '';
 
+
   const extension =
     fileName
       .split('.')
       .pop()
       ?.toLowerCase();
+
 
   const validExtensions = [
     'jpg',
@@ -56,6 +148,7 @@ function getFileExtension(
     'png',
     'webp',
   ];
+
 
   if (
     extension &&
@@ -66,12 +159,14 @@ function getFileExtension(
     return extension;
   }
 
+
   if (
     asset?.mimeType ===
     'image/png'
   ) {
     return 'png';
   }
+
 
   if (
     asset?.mimeType ===
@@ -80,8 +175,16 @@ function getFileExtension(
     return 'webp';
   }
 
+
   return 'jpg';
 }
+
+
+/*
+ * ============================================================
+ * MIME TYPE
+ * ============================================================
+ */
 
 function getMimeType(
   asset,
@@ -94,6 +197,7 @@ function getMimeType(
     'image/webp',
   ];
 
+
   if (
     asset?.mimeType &&
     acceptedMimeTypes.includes(
@@ -103,16 +207,32 @@ function getMimeType(
     return asset.mimeType;
   }
 
-  if (extension === 'png') {
+
+  if (
+    extension ===
+    'png'
+  ) {
     return 'image/png';
   }
 
-  if (extension === 'webp') {
+
+  if (
+    extension ===
+    'webp'
+  ) {
     return 'image/webp';
   }
 
+
   return 'image/jpeg';
 }
+
+
+/*
+ * ============================================================
+ * CRIAR ARQUIVO DA IMAGEM
+ * ============================================================
+ */
 
 function createImageFile(
   asset,
@@ -124,11 +244,13 @@ function createImageFile(
     );
   }
 
+
   const extension =
     getFileExtension(
       asset,
       index
     );
+
 
   const mimeType =
     getMimeType(
@@ -136,9 +258,11 @@ function createImageFile(
       extension
     );
 
+
   const originalFileName =
     asset.fileName ||
     `post-${Date.now()}-${index}.${extension}`;
+
 
   const fileName =
     originalFileName
@@ -149,104 +273,206 @@ function createImageFile(
       ? originalFileName
       : `post-${Date.now()}-${index}.${extension}`;
 
-  let uri = asset.uri;
+
+  let uri =
+    asset.uri;
+
 
   if (
-    Platform.OS === 'ios' &&
-    uri.startsWith('file://')
+    Platform.OS ===
+      'ios' &&
+    uri.startsWith(
+      'file://'
+    )
   ) {
-    uri = uri.replace(
-      'file://',
-      ''
-    );
+    uri =
+      uri.replace(
+        'file://',
+        ''
+      );
   }
+
 
   return {
     uri,
-    name: fileName,
-    type: mimeType,
+
+    name:
+      fileName,
+
+    type:
+      mimeType,
   };
 }
 
+
+/*
+ * ============================================================
+ * PUBLISH SCREEN
+ * ============================================================
+ */
+
 export default function PublishScreen() {
   /*
-   * Mantemos a tela de Publicar no mesmo
-   * visual escuro definido para o restante
-   * do aplicativo.
+   * ==========================================================
+   * TEMA
+   * ==========================================================
    */
-  const theme = {
-    background: '#141414',
-    text: '#F5F5F5',
-    textSecondary: '#AEB8BD',
-    primary: '#3AC2F8',
-    card: '#141414',
-    border: 'rgba(245, 245, 245, 0.28)',
-  };
+
+  const {
+    theme,
+    darkMode,
+  } = useTheme();
+
+
+  /*
+   * ==========================================================
+   * CORES CONFORME O TEMA
+   * ==========================================================
+   */
+
+  const screenBackgroundColor =
+    theme?.background ||
+    (
+      darkMode
+        ? COLORS.darkBackground
+        : COLORS.lightBackground
+    );
+
+
+  const mainTextColor =
+    theme?.text ||
+    (
+      darkMode
+        ? COLORS.darkText
+        : COLORS.lightText
+    );
+
+
+  const secondaryTextColor =
+    theme?.textSecondary ||
+    (
+      darkMode
+        ? COLORS.darkTextSecondary
+        : COLORS.lightTextSecondary
+    );
+
+
+  const cardBackgroundColor =
+    theme?.card ||
+    (
+      darkMode
+        ? COLORS.darkCard
+        : COLORS.lightCard
+    );
+
+
+  const borderColor =
+    theme?.border ||
+    (
+      darkMode
+        ? COLORS.darkBorder
+        : COLORS.lightBorder
+    );
+
+
+  const primaryColor =
+    theme?.primary ||
+    COLORS.primary;
+
+
+  /*
+   * ==========================================================
+   * ESTADOS
+   * ==========================================================
+   */
 
   const [
     images,
     setImages,
   ] = useState([]);
 
+
   const [
     summary,
     setSummary,
   ] = useState('');
+
 
   const [
     description,
     setDescription,
   ] = useState('');
 
+
   const [
     loading,
     setLoading,
   ] = useState(false);
 
+
   /*
+   * ==========================================================
    * SELECIONAR IMAGENS
+   * ==========================================================
    */
+
   async function handlePickImages() {
     try {
       const permission =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
+        await ImagePicker
+          .requestMediaLibraryPermissionsAsync();
 
-      if (!permission.granted) {
+
+      if (
+        !permission.granted
+      ) {
         Alert.alert(
           'Permissão necessária',
           'Permita que o Doalize acesse suas imagens.'
         );
 
+
         return;
       }
+
 
       const result =
-        await ImagePicker.launchImageLibraryAsync({
-          mediaTypes:
-            ImagePicker.MediaTypeOptions.Images,
+        await ImagePicker
+          .launchImageLibraryAsync({
+            mediaTypes:
+              ImagePicker
+                .MediaTypeOptions
+                .Images,
 
-          allowsMultipleSelection:
-            true,
+            allowsMultipleSelection:
+              true,
 
-          quality:
-            0.7,
-        });
+            quality:
+              0.7,
+          });
 
-      if (result.canceled) {
+
+      if (
+        result.canceled
+      ) {
         return;
       }
+
 
       const selectedAssets =
         Array.isArray(
           result.assets
         )
           ? result.assets.filter(
-              (asset) =>
+              (
+                asset
+              ) =>
                 Boolean(
                   asset?.uri
                 )
             )
           : [];
+
 
       if (
         selectedAssets.length ===
@@ -257,8 +483,10 @@ export default function PublishScreen() {
           'Nenhuma imagem válida foi selecionada.'
         );
 
+
         return;
       }
+
 
       if (
         selectedAssets.length >
@@ -269,6 +497,7 @@ export default function PublishScreen() {
           `Selecione no máximo ${MAX_IMAGES} imagens por publicação.`
         );
 
+
         setImages(
           selectedAssets.slice(
             0,
@@ -276,8 +505,10 @@ export default function PublishScreen() {
           )
         );
 
+
         return;
       }
+
 
       setImages(
         selectedAssets
@@ -288,6 +519,7 @@ export default function PublishScreen() {
         error
       );
 
+
       Alert.alert(
         'Erro',
         'Não foi possível selecionar as imagens.'
@@ -295,14 +527,20 @@ export default function PublishScreen() {
     }
   }
 
+
   /*
-   * REMOVER UMA IMAGEM DA PRÉVIA
+   * ==========================================================
+   * REMOVER UMA IMAGEM
+   * ==========================================================
    */
+
   function handleRemoveImage(
     indexToRemove
   ) {
     setImages(
-      (currentImages) =>
+      (
+        currentImages
+      ) =>
         currentImages.filter(
           (
             _,
@@ -314,22 +552,49 @@ export default function PublishScreen() {
     );
   }
 
+
   /*
-   * UPLOAD DAS IMAGENS
+   * ==========================================================
+   * REMOVER TODAS AS IMAGENS
+   * ==========================================================
    */
+
+  function handleClearImages() {
+    if (loading) {
+      return;
+    }
+
+
+    setImages(
+      []
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * UPLOAD DAS IMAGENS
+   * ==========================================================
+   */
+
   async function uploadImages() {
-    const uploadedUrls = [];
+    const uploadedUrls =
+      [];
+
 
     const token =
-      await AsyncStorage.getItem(
-        '@doalize_token'
-      );
+      await AsyncStorage
+        .getItem(
+          '@doalize_token'
+        );
+
 
     if (!token) {
       throw new Error(
         'Usuário não autenticado.'
       );
     }
+
 
     for (
       let index = 0;
@@ -339,22 +604,27 @@ export default function PublishScreen() {
       const asset =
         images[index];
 
+
       const file =
         createImageFile(
           asset,
           index
         );
 
+
       const formData =
         new FormData();
+
 
       formData.append(
         'file',
         file
       );
 
+
       const uploadUrl =
         `${api.defaults.baseURL}/upload`;
+
 
       console.log(
         'INICIANDO UPLOAD DA IMAGEM:',
@@ -380,14 +650,17 @@ export default function PublishScreen() {
         }
       );
 
+
       let response;
+
 
       try {
         response =
           await fetch(
             uploadUrl,
             {
-              method: 'POST',
+              method:
+                'POST',
 
               headers: {
                 Accept:
@@ -415,6 +688,7 @@ export default function PublishScreen() {
           }
         );
 
+
         throw new Error(
           `Erro de rede ao enviar a imagem ${
             index + 1
@@ -422,10 +696,14 @@ export default function PublishScreen() {
         );
       }
 
+
       const responseText =
         await response.text();
 
-      let responseData = null;
+
+      let responseData =
+        null;
+
 
       try {
         responseData =
@@ -435,8 +713,10 @@ export default function PublishScreen() {
               )
             : null;
       } catch {
-        responseData = null;
+        responseData =
+          null;
       }
+
 
       console.log(
         'RESPOSTA DO UPLOAD:',
@@ -454,14 +734,16 @@ export default function PublishScreen() {
         }
       );
 
+
       if (!response.ok) {
         throw new Error(
           responseData?.message ||
-            `Erro ao enviar a imagem ${
-              index + 1
-            }.`
+          `Erro ao enviar a imagem ${
+            index + 1
+          }.`
         );
       }
+
 
       const uploadedPath =
         responseData
@@ -471,6 +753,7 @@ export default function PublishScreen() {
           ?.file
           ?.url;
 
+
       if (!uploadedPath) {
         throw new Error(
           `O servidor não retornou o caminho da imagem ${
@@ -479,23 +762,31 @@ export default function PublishScreen() {
         );
       }
 
+
       uploadedUrls.push(
         uploadedPath
       );
     }
 
+
     return uploadedUrls;
   }
 
+
   /*
+   * ==========================================================
    * PUBLICAR
+   * ==========================================================
    */
+
   async function handlePublish() {
     const normalizedSummary =
       summary.trim();
 
+
     const normalizedDescription =
       description.trim();
+
 
     if (!normalizedSummary) {
       Alert.alert(
@@ -503,8 +794,10 @@ export default function PublishScreen() {
         'Digite um resumo para o Feed.'
       );
 
+
       return;
     }
+
 
     if (
       normalizedSummary.length >
@@ -515,8 +808,10 @@ export default function PublishScreen() {
         `O resumo deve possuir no máximo ${SUMMARY_MAX_LENGTH} caracteres.`
       );
 
+
       return;
     }
+
 
     if (
       !normalizedDescription
@@ -526,8 +821,10 @@ export default function PublishScreen() {
         'Digite a descrição completa da publicação.'
       );
 
+
       return;
     }
+
 
     if (
       normalizedDescription.length >
@@ -538,18 +835,29 @@ export default function PublishScreen() {
         `A descrição completa deve possuir no máximo ${DESCRIPTION_MAX_LENGTH} caracteres.`
       );
 
+
       return;
     }
 
+
     try {
-      setLoading(true);
+      setLoading(
+        true
+      );
 
-      let uploadedImages = [];
 
-      if (images.length > 0) {
+      let uploadedImages =
+        [];
+
+
+      if (
+        images.length >
+        0
+      ) {
         uploadedImages =
           await uploadImages();
       }
+
 
       console.log(
         'CRIANDO PUBLICAÇÃO:',
@@ -566,6 +874,7 @@ export default function PublishScreen() {
         }
       );
 
+
       const response =
         await api.post(
           '/posts',
@@ -581,19 +890,32 @@ export default function PublishScreen() {
           }
         );
 
+
       console.log(
         'PUBLICAÇÃO CRIADA:',
         response.data
       );
+
 
       Alert.alert(
         'Sucesso',
         'Publicação criada com sucesso.'
       );
 
-      setImages([]);
-      setSummary('');
-      setDescription('');
+
+      setImages(
+        []
+      );
+
+
+      setSummary(
+        ''
+      );
+
+
+      setDescription(
+        ''
+      );
     } catch (error) {
       console.log(
         'ERRO AO PUBLICAR:',
@@ -611,102 +933,144 @@ export default function PublishScreen() {
         }
       );
 
+
       Alert.alert(
         'Erro',
-        error.response?.data
+        error.response
+          ?.data
           ?.message ||
-          error.message ||
-          'Não foi possível criar a publicação.'
+        error.message ||
+        'Não foi possível criar a publicação.'
       );
     } finally {
-      setLoading(false);
+      setLoading(
+        false
+      );
     }
   }
+
+
+  /*
+   * ============================================================
+   * RENDER
+   * ============================================================
+   */
 
   return (
     <View
       style={[
         styles.container,
+
         {
           backgroundColor:
-            theme.background,
+            screenBackgroundColor,
         },
       ]}
     >
-      <Header title="Publicar" />
+      <Header
+        title="Publicar"
+      />
+
 
       <ScrollView
         showsVerticalScrollIndicator={
           false
         }
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={
-          styles.scrollContent
-        }
+        contentContainerStyle={[
+          styles.scrollContent,
+
+          {
+            backgroundColor:
+              screenBackgroundColor,
+          },
+        ]}
       >
-        {/* IMAGENS */}
+        {/* ====================================================
+            IMAGENS
+            ==================================================== */}
+
         <View
-          style={styles.section}
+          style={
+            styles.section
+          }
         >
           <Text
             style={[
               styles.label,
+
               {
                 color:
-                  theme.text,
+                  mainTextColor,
               },
             ]}
           >
             Imagens (opcional)
           </Text>
 
+
           <Text
             style={[
               styles.helperText,
+
               {
                 color:
-                  theme.textSecondary,
+                  secondaryTextColor,
               },
             ]}
           >
             Selecione até {MAX_IMAGES} imagens. No Feed, elas poderão ser visualizadas deslizando para o lado.
           </Text>
 
+
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={
               handlePickImages
             }
-            disabled={loading}
+            disabled={
+              loading
+            }
             style={[
               styles.imagePicker,
+
               {
                 backgroundColor:
-                  theme.card,
+                  cardBackgroundColor,
 
                 borderColor:
-                  theme.border,
+                  borderColor,
+
+                opacity:
+                  loading
+                    ? 0.6
+                    : 1,
               },
             ]}
           >
             <Ionicons
               name="images-outline"
               size={40}
-              color={theme.primary}
+              color={
+                primaryColor
+              }
             />
+
 
             <Text
               style={[
                 styles.imagePickerText,
+
                 {
                   color:
-                    theme.textSecondary,
+                    secondaryTextColor,
                 },
               ]}
             >
               Selecionar imagens
             </Text>
           </TouchableOpacity>
+
 
           {images.length > 0 ? (
             <>
@@ -718,9 +1082,10 @@ export default function PublishScreen() {
                 <Text
                   style={[
                     styles.selectedImagesText,
+
                     {
                       color:
-                        theme.text,
+                        mainTextColor,
                     },
                   ]}
                 >
@@ -730,18 +1095,28 @@ export default function PublishScreen() {
                     : 'imagens selecionadas'}
                 </Text>
 
+
                 <TouchableOpacity
-                  onPress={() =>
-                    setImages([])
+                  activeOpacity={0.7}
+                  onPress={
+                    handleClearImages
                   }
-                  disabled={loading}
+                  disabled={
+                    loading
+                  }
                 >
                   <Text
                     style={[
                       styles.clearImagesText,
+
                       {
                         color:
-                          theme.primary,
+                          primaryColor,
+
+                        opacity:
+                          loading
+                            ? 0.6
+                            : 1,
                       },
                     ]}
                   >
@@ -749,6 +1124,7 @@ export default function PublishScreen() {
                   </Text>
                 </TouchableOpacity>
               </View>
+
 
               <ScrollView
                 horizontal
@@ -769,9 +1145,17 @@ export default function PublishScreen() {
                   ) => (
                     <View
                       key={`${asset.uri}-${index}`}
-                      style={
-                        styles.previewItem
-                      }
+                      style={[
+                        styles.previewItem,
+
+                        {
+                          backgroundColor:
+                            cardBackgroundColor,
+
+                          borderColor:
+                            borderColor,
+                        },
+                      ]}
                     >
                       <Image
                         source={{
@@ -783,6 +1167,7 @@ export default function PublishScreen() {
                         }
                         resizeMode="cover"
                       />
+
 
                       <View
                         style={
@@ -798,22 +1183,34 @@ export default function PublishScreen() {
                         </Text>
                       </View>
 
+
                       <TouchableOpacity
                         activeOpacity={0.8}
-                        disabled={loading}
+                        disabled={
+                          loading
+                        }
                         onPress={() =>
                           handleRemoveImage(
                             index
                           )
                         }
-                        style={
-                          styles.removeImageButton
-                        }
+                        style={[
+                          styles.removeImageButton,
+
+                          {
+                            opacity:
+                              loading
+                                ? 0.6
+                                : 1,
+                          },
+                        ]}
                       >
                         <Ionicons
                           name="close"
                           size={18}
-                          color="#ffffff"
+                          color={
+                            COLORS.white
+                          }
                         />
                       </TouchableOpacity>
                     </View>
@@ -824,58 +1221,74 @@ export default function PublishScreen() {
           ) : null}
         </View>
 
-        {/* RESUMO PARA O FEED */}
+
+        {/* ====================================================
+            RESUMO PARA O FEED
+            ==================================================== */}
+
         <View
-          style={styles.section}
+          style={
+            styles.section
+          }
         >
           <Text
             style={[
               styles.label,
+
               {
                 color:
-                  theme.text,
+                  mainTextColor,
               },
             ]}
           >
             Resumo para o Feed
           </Text>
 
+
           <Text
             style={[
               styles.helperText,
+
               {
                 color:
-                  theme.textSecondary,
+                  secondaryTextColor,
               },
             ]}
           >
             Escreva uma frase curta que apresente rapidamente a publicação.
           </Text>
 
+
           <Input
             placeholder="Ex.: Estamos arrecadando alimentos para famílias da região."
-            value={summary}
+            value={
+              summary
+            }
             onChangeText={
               setSummary
             }
             multiline
             numberOfLines={3}
-            editable={!loading}
+            editable={
+              !loading
+            }
             maxLength={
               SUMMARY_MAX_LENGTH
             }
             textAlignVertical="top"
           />
 
+
           <Text
             style={[
               styles.characterCount,
+
               {
                 color:
                   summary.length >=
                   SUMMARY_MAX_LENGTH
-                    ? '#ef4444'
-                    : theme.textSecondary,
+                    ? COLORS.error
+                    : secondaryTextColor,
               },
             ]}
           >
@@ -884,58 +1297,74 @@ export default function PublishScreen() {
           </Text>
         </View>
 
-        {/* DESCRIÇÃO COMPLETA */}
+
+        {/* ====================================================
+            DESCRIÇÃO COMPLETA
+            ==================================================== */}
+
         <View
-          style={styles.section}
+          style={
+            styles.section
+          }
         >
           <Text
             style={[
               styles.label,
+
               {
                 color:
-                  theme.text,
+                  mainTextColor,
               },
             ]}
           >
             Descrição completa
           </Text>
 
+
           <Text
             style={[
               styles.helperText,
+
               {
                 color:
-                  theme.textSecondary,
+                  secondaryTextColor,
               },
             ]}
           >
             Informe todos os detalhes da campanha, como objetivo, itens necessários, prazos e formas de colaboração.
           </Text>
 
+
           <Input
             placeholder="Descreva detalhadamente sua publicação..."
-            value={description}
+            value={
+              description
+            }
             onChangeText={
               setDescription
             }
             multiline
             numberOfLines={8}
-            editable={!loading}
+            editable={
+              !loading
+            }
             maxLength={
               DESCRIPTION_MAX_LENGTH
             }
             textAlignVertical="top"
           />
 
+
           <Text
             style={[
               styles.characterCount,
+
               {
                 color:
                   description.length >=
                   DESCRIPTION_MAX_LENGTH
-                    ? '#ef4444'
-                    : theme.textSecondary,
+                    ? COLORS.error
+                    : secondaryTextColor,
               },
             ]}
           >
@@ -944,7 +1373,11 @@ export default function PublishScreen() {
           </Text>
         </View>
 
-        {/* BOTÃO */}
+
+        {/* ====================================================
+            BOTÃO
+            ==================================================== */}
+
         <View
           style={
             styles.buttonContainer
@@ -955,8 +1388,12 @@ export default function PublishScreen() {
             onPress={
               handlePublish
             }
-            loading={loading}
-            disabled={loading}
+            loading={
+              loading
+            }
+            disabled={
+              loading
+            }
           />
         </View>
       </ScrollView>

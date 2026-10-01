@@ -47,20 +47,52 @@ import styles from './style';
  * ============================================================
  * CORES
  * ============================================================
- *
- * O fundo desta tela permanece sempre no mesmo Dark Mode
- * utilizado no restante do aplicativo.
  */
 
 const COLORS = {
-  background:
+  /*
+   * MODO ESCURO
+   */
+
+  darkBackground:
     '#141414',
 
-  text:
+  darkText:
     '#F5F5F5',
 
-  textSecondary:
+  darkTextSecondary:
     'rgba(245, 245, 245, 0.68)',
+
+  darkBorder:
+    'rgba(245, 245, 245, 0.18)',
+
+  darkRefreshBackground:
+    '#155269',
+
+
+  /*
+   * MODO CLARO
+   */
+
+  lightBackground:
+    '#F5F5F5',
+
+  lightText:
+    '#141414',
+
+  lightTextSecondary:
+    'rgba(20, 20, 20, 0.68)',
+
+  lightBorder:
+    'rgba(20, 20, 20, 0.18)',
+
+  lightRefreshBackground:
+    '#E8E8E8',
+
+
+  /*
+   * CORES COMPARTILHADAS
+   */
 
   primary:
     '#3AC2F8',
@@ -70,9 +102,6 @@ const COLORS = {
 
   white:
     '#FFFFFF',
-
-  border:
-    'rgba(245, 245, 245, 0.18)',
 };
 
 
@@ -85,22 +114,51 @@ const COLORS = {
 export default function PublishedScreen({
   navigation,
 }) {
-
   /*
    * ==========================================================
    * TEMA
    * ==========================================================
-   *
-   * Continuamos usando useTheme para manter compatibilidade
-   * com o restante do aplicativo e com o modo claro futuro.
-   *
-   * Porém, o fundo desta tela é controlado diretamente por
-   * COLORS.background para garantir o Dark Mode padrão.
    */
 
   const {
-    theme,
+    darkMode,
   } = useTheme();
+
+
+  /*
+   * ==========================================================
+   * CORES DO TEMA
+   * ==========================================================
+   */
+
+  const backgroundColor =
+    darkMode
+      ? COLORS.darkBackground
+      : COLORS.lightBackground;
+
+
+  const mainTextColor =
+    darkMode
+      ? COLORS.darkText
+      : COLORS.lightText;
+
+
+  const secondaryTextColor =
+    darkMode
+      ? COLORS.darkTextSecondary
+      : COLORS.lightTextSecondary;
+
+
+  const borderColor =
+    darkMode
+      ? COLORS.darkBorder
+      : COLORS.lightBorder;
+
+
+  const refreshBackgroundColor =
+    darkMode
+      ? COLORS.darkRefreshBackground
+      : COLORS.lightRefreshBackground;
 
 
   /*
@@ -160,8 +218,6 @@ export default function PublishedScreen({
    * ==========================================================
    * BUSCAR PUBLICAÇÕES
    * ==========================================================
-   *
-   * A API continua exatamente igual.
    */
 
   const loadPosts =
@@ -169,15 +225,10 @@ export default function PublishedScreen({
       async (
         showLoading = true
       ) => {
-
-        /*
-         * Caso não exista usuário logado,
-         * limpa a lista.
-         */
-
         if (!user?.id) {
-
-          setPosts([]);
+          setPosts(
+            []
+          );
 
           setLoading(
             false
@@ -192,21 +243,14 @@ export default function PublishedScreen({
 
 
         try {
-
           if (
             showLoading
           ) {
-
             setLoading(
               true
             );
-
           }
 
-
-          /*
-           * Buscar todas as publicações.
-           */
 
           const response =
             await api.get(
@@ -214,30 +258,26 @@ export default function PublishedScreen({
             );
 
 
-          /*
-           * Aceitar tanto array direto
-           * quanto resposta contendo posts.
-           */
-
           const receivedPosts =
             Array.isArray(
               response.data
             )
               ? response.data
-              : response.data?.posts ||
-                [];
+              : (
+                  Array.isArray(
+                    response.data?.posts
+                  )
+                    ? response.data.posts
+                    : []
+                );
 
-
-          /*
-           * Filtrar somente as publicações
-           * do usuário atual.
-           */
 
           const userPosts =
             receivedPosts
               .filter(
-                (post) => {
-
+                (
+                  post
+                ) => {
                   const postUserId =
                     post?.user_id ??
                     post?.userId ??
@@ -252,14 +292,34 @@ export default function PublishedScreen({
                       user.id
                     )
                   );
-
                 }
               )
               .map(
-                (post) =>
-                  normalizePost(
-                    post
-                  )
+                (
+                  post
+                ) => {
+                  try {
+                    return normalizePost(
+                      post
+                    );
+                  } catch (error) {
+                    console.log(
+                      'ERRO AO NORMALIZAR PUBLICAÇÃO:',
+                      {
+                        postId:
+                          post?.id,
+
+                        message:
+                          error?.message,
+                      }
+                    );
+
+                    return post;
+                  }
+                }
+              )
+              .filter(
+                Boolean
               );
 
 
@@ -278,9 +338,7 @@ export default function PublishedScreen({
           setPosts(
             userPosts
           );
-
         } catch (error) {
-
           console.log(
             'ERRO AO BUSCAR PUBLICAÇÕES DO USUÁRIO:',
             {
@@ -300,14 +358,12 @@ export default function PublishedScreen({
 
           Alert.alert(
             'Erro',
-
-            error.response?.data
+            error.response
+              ?.data
               ?.message ||
-              'Não foi possível carregar suas publicações.'
+            'Não foi possível carregar suas publicações.'
           );
-
         } finally {
-
           setLoading(
             false
           );
@@ -315,9 +371,7 @@ export default function PublishedScreen({
           setRefreshing(
             false
           );
-
         }
-
       },
       [
         user?.id,
@@ -332,18 +386,13 @@ export default function PublishedScreen({
    */
 
   useFocusEffect(
-    useCallback(
-      () => {
-
-        loadPosts(
-          true
-        );
-
-      },
-      [
-        loadPosts,
-      ]
-    )
+    useCallback(() => {
+      loadPosts(
+        true
+      );
+    }, [
+      loadPosts,
+    ])
   );
 
 
@@ -354,15 +403,22 @@ export default function PublishedScreen({
    */
 
   function handleRefresh() {
+    if (
+      refreshing ||
+      loading
+    ) {
+      return;
+    }
+
 
     setRefreshing(
       true
     );
 
+
     loadPosts(
       false
     );
-
   }
 
 
@@ -375,6 +431,10 @@ export default function PublishedScreen({
   function handleOpenPost(
     post
   ) {
+    if (!post) {
+      return;
+    }
+
 
     navigation.navigate(
       'DetailsScreen',
@@ -382,7 +442,6 @@ export default function PublishedScreen({
         post,
       }
     );
-
   }
 
 
@@ -395,19 +454,50 @@ export default function PublishedScreen({
   async function handlePromote(
     post
   ) {
+    if (!post?.id) {
+      Alert.alert(
+        'Erro',
+        'A publicação selecionada é inválida.'
+      );
+
+      return;
+    }
+
 
     try {
-
       const response =
         await api.post(
           `/posts/promote/${post.id}`
         );
 
 
+      const responseData =
+        response.data ||
+        {};
+
+
       const promoted =
         Boolean(
-          response.data
-            ?.promoted
+          responseData
+            .promoted
+        );
+
+
+      const promotedByMe =
+        Boolean(
+          responseData
+            .promoted_by_me
+        );
+
+
+      const promotionCount =
+        Math.max(
+          0,
+          Number(
+            responseData
+              .promotion_count ||
+            0
+          )
         );
 
 
@@ -418,37 +508,46 @@ export default function PublishedScreen({
           currentPosts.map(
             (
               currentPost
-            ) =>
+            ) => {
+              if (
+                Number(
+                  currentPost.id
+                ) !==
+                Number(
+                  post.id
+                )
+              ) {
+                return currentPost;
+              }
 
-              currentPost.id ===
-              post.id
 
-                ? {
-                    ...currentPost,
+              return {
+                ...currentPost,
 
-                    promoted,
-                  }
+                promoted,
 
-                : currentPost
+                promoted_by_me:
+                  promotedByMe,
 
+                promotion_count:
+                  promotionCount,
+              };
+            }
           )
       );
 
 
       Alert.alert(
         'Sucesso',
-
-        response.data
+        responseData
           ?.message ||
-          (
-            promoted
-              ? 'Publicação promovida.'
-              : 'Promoção removida.'
-          )
+        (
+          promotedByMe
+            ? 'Publicação promovida.'
+            : 'Promoção removida.'
+        )
       );
-
     } catch (error) {
-
       console.log(
         'ERRO AO PROMOVER PUBLICAÇÃO:',
         {
@@ -457,6 +556,10 @@ export default function PublishedScreen({
 
           message:
             error.message,
+
+          status:
+            error.response
+              ?.status,
 
           response:
             error.response
@@ -467,14 +570,12 @@ export default function PublishedScreen({
 
       Alert.alert(
         'Erro',
-
-        error.response?.data
+        error.response
+          ?.data
           ?.message ||
-          'Não foi possível promover a publicação.'
+        'Não foi possível promover a publicação.'
       );
-
     }
-
   }
 
 
@@ -487,12 +588,9 @@ export default function PublishedScreen({
   function handleDelete(
     post
   ) {
-
     Alert.alert(
       'Excluir publicação',
-
       'Deseja realmente excluir esta publicação? Essa ação não poderá ser desfeita.',
-
       [
         {
           text:
@@ -510,16 +608,13 @@ export default function PublishedScreen({
             'destructive',
 
           onPress: () => {
-
             confirmDelete(
               post
             );
-
           },
         },
       ]
     );
-
   }
 
 
@@ -532,12 +627,9 @@ export default function PublishedScreen({
   async function confirmDelete(
     post
   ) {
-
     if (!post?.id) {
-
       Alert.alert(
         'Erro',
-
         'A publicação selecionada é inválida.'
       );
 
@@ -546,7 +638,6 @@ export default function PublishedScreen({
 
 
     try {
-
       setDeletingPostId(
         post.id
       );
@@ -558,10 +649,6 @@ export default function PublishedScreen({
         );
 
 
-      /*
-       * Remove imediatamente da tela.
-       */
-
       setPosts(
         (
           currentPosts
@@ -570,22 +657,23 @@ export default function PublishedScreen({
             (
               currentPost
             ) =>
-              currentPost.id !==
-              post.id
+              Number(
+                currentPost.id
+              ) !==
+              Number(
+                post.id
+              )
           )
       );
 
 
       Alert.alert(
         'Sucesso',
-
         response.data
           ?.message ||
-          'Publicação excluída.'
+        'Publicação excluída.'
       );
-
     } catch (error) {
-
       console.log(
         'ERRO AO EXCLUIR PUBLICAÇÃO:',
         {
@@ -608,20 +696,16 @@ export default function PublishedScreen({
 
       Alert.alert(
         'Erro',
-
-        error.response?.data
+        error.response
+          ?.data
           ?.message ||
-          'Não foi possível excluir a publicação.'
+        'Não foi possível excluir a publicação.'
       );
-
     } finally {
-
       setDeletingPostId(
         null
       );
-
     }
-
   }
 
 
@@ -632,13 +716,10 @@ export default function PublishedScreen({
    */
 
   function handleShare() {
-
     Alert.alert(
       'Compartilhar',
-
       'A função de compartilhamento será adicionada em breve.'
     );
-
   }
 
 
@@ -651,67 +732,58 @@ export default function PublishedScreen({
   function renderItem({
     item,
   }) {
-
     const isDeleting =
-      deletingPostId ===
-      item.id;
+      Number(
+        deletingPostId
+      ) ===
+      Number(
+        item.id
+      );
 
 
     return (
-
       <View
-        style={
-          localStyles.postContainer
-        }
+        style={[
+          localStyles.postContainer,
+
+          {
+            backgroundColor:
+              backgroundColor,
+          },
+        ]}
       >
-
         <PostCard
-
           post={
             item
           }
-
           onPress={() =>
             handleOpenPost(
               item
             )
           }
-
           onShare={() =>
             handleShare(
               item
             )
           }
-
           onPromote={() =>
             handlePromote(
               item
             )
           }
-
         />
 
 
-        {/* ==================================================
-            BOTÃO EXCLUIR
-            ================================================== */}
-
         <TouchableOpacity
-
-          activeOpacity={
-            0.8
-          }
-
+          activeOpacity={0.8}
           disabled={
             isDeleting
           }
-
           onPress={() =>
             handleDelete(
               item
             )
           }
-
           style={[
             localStyles.removeButton,
 
@@ -722,54 +794,43 @@ export default function PublishedScreen({
                   : 1,
             },
           ]}
-
+          accessibilityRole="button"
+          accessibilityLabel="Excluir publicação"
         >
-
-          {
-            isDeleting ? (
-
-              <ActivityIndicator
-                size="small"
+          {isDeleting ? (
+            <ActivityIndicator
+              size="small"
+              color={
+                COLORS.white
+              }
+            />
+          ) : (
+            <View
+              style={
+                localStyles.removeButtonContent
+              }
+            >
+              <Ionicons
+                name="trash-outline"
+                size={20}
                 color={
                   COLORS.white
                 }
               />
 
-            ) : (
 
-              <View
+              <Text
                 style={
-                  localStyles.removeButtonContent
+                  localStyles.removeButtonText
                 }
               >
-
-                <Ionicons
-                  name="trash-outline"
-                  size={20}
-                  color={
-                    COLORS.white
-                  }
-                />
-
-                <Text
-                  style={
-                    localStyles.removeButtonText
-                  }
-                >
-                  Excluir publicação
-                </Text>
-
-              </View>
-
-            )
-          }
-
+                Excluir publicação
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
-
       </View>
-
     );
-
   }
 
 
@@ -777,22 +838,22 @@ export default function PublishedScreen({
    * ==========================================================
    * LOADING
    * ==========================================================
-   *
-   * O fundo é explicitamente #141414.
    */
 
   if (loading) {
-
     return (
-
       <View
         style={[
           styles.container,
 
           localStyles.loadingContainer,
+
+          {
+            backgroundColor:
+              backgroundColor,
+          },
         ]}
       >
-
         <Header
           title="Publicados"
           showBackButton
@@ -800,11 +861,15 @@ export default function PublishedScreen({
 
 
         <View
-          style={
-            localStyles.loadingContent
-          }
-        >
+          style={[
+            localStyles.loadingContent,
 
+            {
+              backgroundColor:
+                backgroundColor,
+            },
+          ]}
+        >
           <ActivityIndicator
             size="large"
             color={
@@ -814,19 +879,20 @@ export default function PublishedScreen({
 
 
           <Text
-            style={
-              localStyles.loadingText
-            }
+            style={[
+              localStyles.loadingText,
+
+              {
+                color:
+                  secondaryTextColor,
+              },
+            ]}
           >
             Carregando publicações...
           </Text>
-
         </View>
-
       </View>
-
     );
-
   }
 
 
@@ -837,13 +903,16 @@ export default function PublishedScreen({
    */
 
   return (
-
     <View
-      style={
-        styles.container
-      }
-    >
+      style={[
+        styles.container,
 
+        {
+          backgroundColor:
+            backgroundColor,
+        },
+      ]}
+    >
       <Header
         title="Publicados"
         showBackButton
@@ -851,7 +920,6 @@ export default function PublishedScreen({
 
 
       <FlatList
-
         data={
           posts
         }
@@ -862,13 +930,18 @@ export default function PublishedScreen({
         ) =>
           String(
             item?.id ??
-              index
+            index
           )
         }
 
         renderItem={
           renderItem
         }
+
+        style={{
+          backgroundColor:
+            backgroundColor,
+        }}
 
         showsVerticalScrollIndicator={
           false
@@ -877,80 +950,94 @@ export default function PublishedScreen({
         contentContainerStyle={[
           localStyles.list,
 
-          posts.length ===
-          0
-            ? localStyles.emptyList
+          {
+            backgroundColor:
+              backgroundColor,
+          },
+
+          posts.length === 0
+            ? [
+                localStyles.emptyList,
+
+                {
+                  backgroundColor:
+                    backgroundColor,
+                },
+              ]
             : null,
         ]}
 
         refreshControl={
-
           <RefreshControl
-
             refreshing={
               refreshing
             }
-
             onRefresh={
               handleRefresh
             }
-
             colors={[
               COLORS.primary,
             ]}
-
             tintColor={
               COLORS.primary
             }
-
+            progressBackgroundColor={
+              refreshBackgroundColor
+            }
           />
-
         }
 
         ListEmptyComponent={
-
           <View
-            style={
-              localStyles.emptyContainer
-            }
-          >
+            style={[
+              localStyles.emptyContainer,
 
+              {
+                backgroundColor:
+                  backgroundColor,
+              },
+            ]}
+          >
             <Ionicons
               name="images-outline"
               size={58}
               color={
-                COLORS.textSecondary
+                secondaryTextColor
               }
             />
 
 
             <Text
-              style={
-                localStyles.emptyTitle
-              }
+              style={[
+                localStyles.emptyTitle,
+
+                {
+                  color:
+                    mainTextColor,
+                },
+              ]}
             >
               Nenhuma publicação
             </Text>
 
 
             <Text
-              style={
-                localStyles.emptyDescription
-              }
+              style={[
+                localStyles.emptyDescription,
+
+                {
+                  color:
+                    secondaryTextColor,
+                },
+              ]}
             >
               As publicações criadas por você aparecerão aqui.
             </Text>
-
           </View>
-
         }
-
       />
-
     </View>
-
   );
-
 }
 
 
@@ -962,7 +1049,6 @@ export default function PublishedScreen({
 
 const localStyles =
   StyleSheet.create({
-
     /*
      * ========================================================
      * LISTA
@@ -980,7 +1066,7 @@ const localStyles =
         35,
 
       backgroundColor:
-        '#141414',
+        COLORS.darkBackground,
     },
 
 
@@ -989,7 +1075,7 @@ const localStyles =
         1,
 
       backgroundColor:
-        '#141414',
+        COLORS.darkBackground,
     },
 
 
@@ -1007,13 +1093,13 @@ const localStyles =
         20,
 
       backgroundColor:
-        '#141414',
+        COLORS.darkBackground,
     },
 
 
     /*
      * ========================================================
-     * BOTÃO REMOVER
+     * BOTÃO EXCLUIR
      * ========================================================
      */
 
@@ -1037,7 +1123,7 @@ const localStyles =
         'center',
 
       backgroundColor:
-        '#D83A3A',
+        COLORS.danger,
 
       overflow:
         'hidden',
@@ -1061,7 +1147,7 @@ const localStyles =
         8,
 
       color:
-        '#FFFFFF',
+        COLORS.white,
 
       fontSize:
         15,
@@ -1088,7 +1174,7 @@ const localStyles =
         1,
 
       backgroundColor:
-        '#141414',
+        COLORS.darkBackground,
     },
 
 
@@ -1103,7 +1189,7 @@ const localStyles =
         'center',
 
       backgroundColor:
-        '#141414',
+        COLORS.darkBackground,
     },
 
 
@@ -1118,7 +1204,7 @@ const localStyles =
         20,
 
       color:
-        '#AEB8BD',
+        COLORS.darkTextSecondary,
 
       textAlign:
         'center',
@@ -1151,7 +1237,7 @@ const localStyles =
         60,
 
       backgroundColor:
-        '#141414',
+        COLORS.darkBackground,
     },
 
 
@@ -1169,7 +1255,7 @@ const localStyles =
         '700',
 
       color:
-        '#F5F5F5',
+        COLORS.darkText,
 
       textAlign:
         'center',
@@ -1190,7 +1276,7 @@ const localStyles =
         21,
 
       color:
-        '#AEB8BD',
+        COLORS.darkTextSecondary,
 
       textAlign:
         'center',
@@ -1198,5 +1284,4 @@ const localStyles =
       includeFontPadding:
         false,
     },
-
   });

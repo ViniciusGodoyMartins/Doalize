@@ -10,11 +10,8 @@ export default StyleSheet.create({
    * PUBLICAÇÃO
    * ============================================================
    *
-   * O container acompanha somente o conteúdo real do post.
-   *
-   * A linha inferior não fica mais aqui. Ela foi transferida
-   * para a área de ações, ficando imediatamente abaixo dos
-   * ícones e da data.
+   * As cores são substituídas dinamicamente
+   * pelo index.js conforme o tema.
    */
 
   container: {
@@ -203,9 +200,6 @@ export default StyleSheet.create({
    * ============================================================
    * IMAGEM
    * ============================================================
-   *
-   * A altura continua sendo calculada pela proporção real
-   * da imagem no index.js do PostCard.
    */
 
   postImage: {
@@ -293,12 +287,6 @@ export default StyleSheet.create({
    * ============================================================
    * AÇÕES
    * ============================================================
-   *
-   * A linha inferior agora pertence diretamente à área de ações.
-   *
-   * Dessa forma, a linha aparece imediatamente abaixo dos
-   * ícones e da data, independentemente do espaço restante
-   * existente na tela.
    */
 
   actions: {

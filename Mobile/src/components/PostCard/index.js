@@ -44,26 +44,58 @@ import imageUserDark from '../../../assets/imageuserdark.png';
  */
 
 const COLORS = {
-  background:
+  /*
+   * MODO ESCURO
+   */
+
+  darkBackground:
     '#141414',
 
-  text:
+  darkText:
     '#F5F5F5',
 
-  textSecondary:
+  darkTextSecondary:
     'rgba(245, 245, 245, 0.65)',
+
+  darkDivider:
+    'rgba(245, 245, 245, 0.22)',
+
+  darkUnavailableBackground:
+    '#155269',
+
+
+  /*
+   * MODO CLARO
+   */
+
+  lightBackground:
+    '#F5F5F5',
+
+  lightText:
+    '#141414',
+
+  lightTextSecondary:
+    'rgba(20, 20, 20, 0.65)',
+
+  lightDivider:
+    'rgba(20, 20, 20, 0.22)',
+
+  lightUnavailableBackground:
+    '#E8E8E8',
+
+
+  /*
+   * CORES COMPARTILHADAS
+   */
 
   primary:
     '#3AC2F8',
 
-  deepBlue:
-    '#155269',
-
-  divider:
-    'rgba(245, 245, 245, 0.22)',
-
   white:
     '#FFFFFF',
+
+  black:
+    '#141414',
 };
 
 
@@ -80,9 +112,51 @@ export default function PostCard({
   onPromote,
 }) {
 
+  /*
+   * ==========================================================
+   * TEMA
+   * ==========================================================
+   */
+
   const {
     darkMode,
   } = useTheme();
+
+
+  const cardBackgroundColor =
+    darkMode
+      ? COLORS.darkBackground
+      : COLORS.lightBackground;
+
+
+  const mainTextColor =
+    darkMode
+      ? COLORS.darkText
+      : COLORS.lightText;
+
+
+  const secondaryTextColor =
+    darkMode
+      ? COLORS.darkTextSecondary
+      : COLORS.lightTextSecondary;
+
+
+  const dividerColor =
+    darkMode
+      ? COLORS.darkDivider
+      : COLORS.lightDivider;
+
+
+  const unavailableBackgroundColor =
+    darkMode
+      ? COLORS.darkUnavailableBackground
+      : COLORS.lightUnavailableBackground;
+
+
+  const actionIconColor =
+    darkMode
+      ? COLORS.white
+      : COLORS.black;
 
 
   /*
@@ -370,12 +444,6 @@ export default function PostCard({
    * ==========================================================
    * ALTURA DO CARROSSEL
    * ==========================================================
-   *
-   * A altura precisa ser definida explicitamente.
-   *
-   * Sem uma altura explícita, a FlatList horizontal pode
-   * ocupar o espaço vertical restante da Home e empurrar
-   * a próxima publicação para o final da tela.
    */
 
   const activeImageRatio =
@@ -652,7 +720,8 @@ export default function PostCard({
     const offsetX =
       event.nativeEvent
         ?.contentOffset
-        ?.x || 0;
+        ?.x ||
+      0;
 
 
     const calculatedIndex =
@@ -667,7 +736,8 @@ export default function PostCard({
         0,
         Math.min(
           calculatedIndex,
-          postImages.length - 1
+          postImages.length -
+            1
         )
       );
 
@@ -890,6 +960,9 @@ export default function PostCard({
 
               height:
                 carouselHeight,
+
+              backgroundColor:
+                unavailableBackgroundColor,
             },
           ]}
         >
@@ -898,15 +971,20 @@ export default function PostCard({
             name="image-outline"
             size={46}
             color={
-              COLORS.textSecondary
+              secondaryTextColor
             }
           />
 
 
           <Text
-            style={
-              localStyles.unavailableText
-            }
+            style={[
+              localStyles.unavailableText,
+
+              {
+                color:
+                  secondaryTextColor,
+              },
+            ]}
           >
             Imagem indisponível
           </Text>
@@ -935,6 +1013,9 @@ export default function PostCard({
 
             height:
               carouselHeight,
+
+            backgroundColor:
+              cardBackgroundColor,
           },
         ]}
       >
@@ -953,6 +1034,9 @@ export default function PostCard({
 
               height:
                 '100%',
+
+              backgroundColor:
+                cardBackgroundColor,
             },
           ]}
           resizeMode="contain"
@@ -985,9 +1069,14 @@ export default function PostCard({
   return (
 
     <View
-      style={
-        styles.container
-      }
+      style={[
+        styles.container,
+
+        {
+          backgroundColor:
+            cardBackgroundColor,
+        },
+      ]}
     >
 
       {/* ======================================================
@@ -999,9 +1088,14 @@ export default function PostCard({
         onPress={
           handleOpenPost
         }
-        style={
-          styles.header
-        }
+        style={[
+          styles.header,
+
+          {
+            backgroundColor:
+              cardBackgroundColor,
+          },
+        ]}
       >
 
         <View
@@ -1071,9 +1165,14 @@ export default function PostCard({
 
             <Text
               numberOfLines={1}
-              style={
-                styles.username
-              }
+              style={[
+                styles.username,
+
+                {
+                  color:
+                    mainTextColor,
+                },
+              ]}
             >
               {
                 post?.user?.name ||
@@ -1142,6 +1241,9 @@ export default function PostCard({
               {
                 height:
                   carouselHeight,
+
+                backgroundColor:
+                  cardBackgroundColor,
               },
             ]}
           >
@@ -1176,10 +1278,16 @@ export default function PostCard({
 
                     flexShrink:
                       0,
+
+                    backgroundColor:
+                      cardBackgroundColor,
                   }}
                   contentContainerStyle={{
                     height:
                       carouselHeight,
+
+                    backgroundColor:
+                      cardBackgroundColor,
                   }}
                   keyExtractor={(
                     item,
@@ -1226,6 +1334,9 @@ export default function PostCard({
 
                       height:
                         carouselHeight,
+
+                      backgroundColor:
+                        cardBackgroundColor,
                     },
                   ]}
                 />
@@ -1279,9 +1390,14 @@ export default function PostCard({
         postImages.length > 1 ? (
 
           <View
-            style={
-              localStyles.pagination
-            }
+            style={[
+              localStyles.pagination,
+
+              {
+                backgroundColor:
+                  cardBackgroundColor,
+              },
+            ]}
           >
 
             {
@@ -1314,7 +1430,7 @@ export default function PostCard({
                           backgroundColor:
                             isActive
                               ? COLORS.primary
-                              : COLORS.textSecondary,
+                              : secondaryTextColor,
 
                           opacity:
                             isActive
@@ -1348,16 +1464,26 @@ export default function PostCard({
             onPress={
               handleOpenPost
             }
-            style={
-              styles.content
-            }
+            style={[
+              styles.content,
+
+              {
+                backgroundColor:
+                  cardBackgroundColor,
+              },
+            ]}
           >
 
             <Text
               numberOfLines={3}
-              style={
-                styles.description
-              }
+              style={[
+                styles.description,
+
+                {
+                  color:
+                    mainTextColor,
+                },
+              ]}
             >
               {
                 feedSummary
@@ -1375,9 +1501,17 @@ export default function PostCard({
           ====================================================== */}
 
       <View
-        style={
-          styles.actions
-        }
+        style={[
+          styles.actions,
+
+          {
+            backgroundColor:
+              cardBackgroundColor,
+
+            borderBottomColor:
+              dividerColor,
+          },
+        ]}
       >
 
         <View
@@ -1406,7 +1540,7 @@ export default function PostCard({
               name="paper-plane-outline"
               size={24}
               color={
-                COLORS.white
+                actionIconColor
               }
             />
 
@@ -1441,7 +1575,7 @@ export default function PostCard({
               color={
                 promotedByMe
                   ? COLORS.primary
-                  : COLORS.white
+                  : actionIconColor
               }
             />
 
@@ -1454,9 +1588,14 @@ export default function PostCard({
 
         <Text
           numberOfLines={1}
-          style={
-            styles.date
-          }
+          style={[
+            styles.date,
+
+            {
+              color:
+                secondaryTextColor,
+            },
+          ]}
         >
           {
             formatDate(
@@ -1483,12 +1622,6 @@ export default function PostCard({
 
 const localStyles =
   StyleSheet.create({
-
-    /*
-     * ========================================================
-     * AVATAR PADRÃO
-     * ========================================================
-     */
 
     defaultAvatarContainer: {
       width:
@@ -1530,12 +1663,6 @@ const localStyles =
     },
 
 
-    /*
-     * ========================================================
-     * AVATAR REAL
-     * ========================================================
-     */
-
     remoteAvatarContainer: {
       width:
         48,
@@ -1569,12 +1696,6 @@ const localStyles =
     },
 
 
-    /*
-     * ========================================================
-     * TEXTO DO USUÁRIO
-     * ========================================================
-     */
-
     userTextContainer: {
       flex:
         1,
@@ -1583,12 +1704,6 @@ const localStyles =
         0,
     },
 
-
-    /*
-     * ========================================================
-     * SELO DE PROMOÇÃO
-     * ========================================================
-     */
 
     promotedBadge: {
       maxWidth:
@@ -1650,12 +1765,6 @@ const localStyles =
     },
 
 
-    /*
-     * ========================================================
-     * CARROSSEL
-     * ========================================================
-     */
-
     carouselContainer: {
       position:
         'relative',
@@ -1673,7 +1782,7 @@ const localStyles =
         'hidden',
 
       backgroundColor:
-        COLORS.background,
+        COLORS.darkBackground,
     },
 
 
@@ -1691,15 +1800,9 @@ const localStyles =
         'hidden',
 
       backgroundColor:
-        COLORS.background,
+        COLORS.darkBackground,
     },
 
-
-    /*
-     * ========================================================
-     * IMAGEM INDISPONÍVEL
-     * ========================================================
-     */
 
     unavailableImage: {
       alignItems:
@@ -1709,7 +1812,7 @@ const localStyles =
         'center',
 
       backgroundColor:
-        COLORS.deepBlue,
+        COLORS.darkUnavailableBackground,
     },
 
 
@@ -1724,18 +1827,12 @@ const localStyles =
         '500',
 
       color:
-        COLORS.textSecondary,
+        COLORS.darkTextSecondary,
 
       includeFontPadding:
         false,
     },
 
-
-    /*
-     * ========================================================
-     * CONTADOR DA IMAGEM
-     * ========================================================
-     */
 
     imageCounter: {
       position:
@@ -1788,12 +1885,6 @@ const localStyles =
     },
 
 
-    /*
-     * ========================================================
-     * PAGINAÇÃO
-     * ========================================================
-     */
-
     pagination: {
       minHeight:
         25,
@@ -1817,7 +1908,7 @@ const localStyles =
         4,
 
       backgroundColor:
-        COLORS.background,
+        COLORS.darkBackground,
     },
 
 
@@ -1833,12 +1924,6 @@ const localStyles =
     },
 
 
-    /*
-     * ========================================================
-     * GRUPO DOS BOTÕES
-     * ========================================================
-     */
-
     actionGroup: {
       flexDirection:
         'row',
@@ -1853,12 +1938,6 @@ const localStyles =
         0,
     },
 
-
-    /*
-     * ========================================================
-     * ESPAÇO ENTRE OS BOTÕES
-     * ========================================================
-     */
 
     shareActionButton: {
       marginRight:

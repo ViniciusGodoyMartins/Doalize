@@ -462,6 +462,9 @@ export default function ContactsScreen() {
   /*
    * O fallback garante as cores mesmo se alguma
    * propriedade não existir dentro de theme.
+   *
+   * O fundo dos contatos usa a mesma cor da tela,
+   * sem utilizar theme.card.
    */
 
   const currentTheme =
@@ -476,11 +479,11 @@ export default function ContactsScreen() {
           ),
 
         card:
-          theme?.card ||
+          theme?.background ||
           (
             darkMode
-              ? COLORS.darkCard
-              : COLORS.lightCard
+              ? COLORS.darkBackground
+              : COLORS.lightBackground
           ),
 
         text:

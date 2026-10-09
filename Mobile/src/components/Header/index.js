@@ -14,352 +14,185 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 
+import Animated, {
+  interpolateColor,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
+
 import {
   useTheme,
 } from '../../hooks/useTheme';
 
 import styles from './styles';
 
-
-/*
- * ============================================================
- * LOGOS
- * ============================================================
- *
- * Modo escuro:
- *
- * assets/logo.png
- *
- * Modo claro:
- *
- * assets/logomodoclaro.png
- */
-
 import logoModoEscuro from '../../../assets/logo.png';
-
 import logoModoClaro from '../../../assets/logomodoclaro.png';
 
 
-/*
- * ============================================================
- * CORES
- * ============================================================
- */
+const AnimatedIonicons =
+  Animated.createAnimatedComponent(Ionicons);
 
-const COLORS = {
-  /*
-   * MODO ESCURO
-   */
-
-  darkBackground:
-    '#141414',
-
-  darkIcon:
-    '#F5F5F5',
-
-  darkDivider:
-    '#F5F5F5',
-
-
-  /*
-   * MODO CLARO
-   */
-
-  lightBackground:
-    '#F5F5F5',
-
-  lightIcon:
-    '#141414',
-
-  lightDivider:
-    'rgba(20, 20, 20, 0.45)',
-};
-
-
-/*
- * ============================================================
- * HEADER
- * ============================================================
- */
 
 export default function Header({
-
   title,
-
   showBackButton = false,
-
-  /*
-   * AÇÃO PERSONALIZADA DA SETA
-   *
-   * Quando não for informada,
-   * será utilizado navigation.goBack().
-   */
-
   onBackPress = null,
-
-  /*
-   * ÍCONE DA DIREITA
-   */
-
   rightIcon = null,
-
-  /*
-   * AÇÃO DO ÍCONE DA DIREITA
-   */
-
   onRightPress = null,
-
 }) {
-
-  const navigation =
-    useNavigation();
-
+  const navigation = useNavigation();
 
   const {
-    darkMode,
+    themeProgress,
   } = useTheme();
 
 
   /*
-   * ==========================================================
-   * CORES DO TEMA
-   * ==========================================================
+   * As cores usam o mesmo progresso do ProfileScreen.
+   * Nenhuma animação independente é iniciada aqui.
    */
 
-  const headerBackgroundColor =
-    darkMode
-      ? COLORS.darkBackground
-      : COLORS.lightBackground;
+  const animatedContainerStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(
+      themeProgress.value,
+      [0, 1],
+      ['#F5F5F5', '#141414']
+    ),
 
+    borderBottomColor: interpolateColor(
+      themeProgress.value,
+      [0, 1],
+      ['rgba(20, 20, 20, 0.45)', '#F5F5F5']
+    ),
+  }));
 
-  const iconColor =
-    darkMode
-      ? COLORS.darkIcon
-      : COLORS.lightIcon;
-
-
-  const dividerColor =
-    darkMode
-      ? COLORS.darkDivider
-      : COLORS.lightDivider;
+  const animatedIconStyle = useAnimatedStyle(() => ({
+    color: interpolateColor(
+      themeProgress.value,
+      [0, 1],
+      ['#141414', '#F5F5F5']
+    ),
+  }));
 
 
   /*
-   * ==========================================================
-   * LOGO DO TEMA
-   * ==========================================================
+   * As duas logos ocupam a mesma área.
+   * Apenas a opacidade muda durante a troca.
    */
 
-  const logoSource =
-    darkMode
-      ? logoModoEscuro
-      : logoModoClaro;
+  const animatedDarkLogoStyle = useAnimatedStyle(() => ({
+    opacity: themeProgress.value,
+  }));
 
+  const animatedLightLogoStyle = useAnimatedStyle(() => ({
+    opacity: 1 - themeProgress.value,
+  }));
 
-  /*
-   * ==========================================================
-   * VOLTAR
-   * ==========================================================
-   */
 
   function handleBackPress() {
-
-    /*
-     * Se existir uma ação personalizada,
-     * ela tem prioridade.
-     */
-
-    if (
-      typeof onBackPress ===
-      'function'
-    ) {
-
+    if (typeof onBackPress === 'function') {
       onBackPress();
-
       return;
-
     }
 
-
-    /*
-     * Comportamento padrão.
-     */
-
-    if (
-      navigation.canGoBack()
-    ) {
-
+    if (navigation.canGoBack()) {
       navigation.goBack();
-
     }
-
   }
 
-
-  /*
-   * ==========================================================
-   * AÇÃO DO ÍCONE DA DIREITA
-   * ==========================================================
-   */
 
   function handleRightPress() {
-
-    if (
-      typeof onRightPress ===
-      'function'
-    ) {
-
+    if (typeof onRightPress === 'function') {
       onRightPress();
-
     }
-
   }
 
 
-  /*
-   * ==========================================================
-   * HEADER
-   * ==========================================================
-   */
-
   return (
-
-    <View
+    <Animated.View
       style={[
         styles.container,
-
-        {
-          backgroundColor:
-            headerBackgroundColor,
-
-          borderBottomColor:
-            dividerColor,
-        },
+        animatedContainerStyle,
       ]}
     >
-
-      {/* ====================================================
-          ÁREA ESQUERDA
-          ==================================================== */}
-
-      <View
-        style={
-          styles.leftContainer
-        }
-      >
-
-        {
-          showBackButton ? (
-
-            <TouchableOpacity
-              activeOpacity={
-                0.7
-              }
-              onPress={
-                handleBackPress
-              }
-              style={
-                styles.iconButton
-              }
-              accessibilityRole="button"
-              accessibilityLabel="Voltar"
-            >
-
-              <Ionicons
-                name="arrow-back"
-                size={24}
-                color={
-                  iconColor
-                }
-              />
-
-            </TouchableOpacity>
-
-          ) : null
-        }
-
+      <View style={styles.leftContainer}>
+        {showBackButton ? (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={handleBackPress}
+            style={styles.iconButton}
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+          >
+            <AnimatedIonicons
+              name="arrow-back"
+              size={24}
+              style={animatedIconStyle}
+            />
+          </TouchableOpacity>
+        ) : null}
       </View>
 
-
-      {/* ====================================================
-          LOGO CENTRAL
-          ==================================================== */}
-
-      <View
-        style={
-          styles.centerContainer
-        }
-      >
-
-        <Image
-          source={
-            logoSource
-          }
-          style={
-            styles.logoImage
-          }
-          resizeMode="contain"
+      <View style={styles.centerContainer}>
+        <View
           accessible
           accessibilityLabel={
-            title
-              ? `Doalize - ${title}`
-              : 'Doalize'
+            title ? `Doalize - ${title}` : 'Doalize'
           }
-        />
+          style={styles.logoImage}
+        >
+          <Animated.Image
+            source={logoModoClaro}
+            resizeMode="contain"
+            accessible={false}
+            style={[
+              {
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+              },
+              animatedLightLogoStyle,
+            ]}
+          />
 
+          <Animated.Image
+            source={logoModoEscuro}
+            resizeMode="contain"
+            accessible={false}
+            style={[
+              {
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+              },
+              animatedDarkLogoStyle,
+            ]}
+          />
+        </View>
       </View>
 
-
-      {/* ====================================================
-          ÁREA DIREITA
-          ==================================================== */}
-
-      <View
-        style={
-          styles.rightContainer
-        }
-      >
-
-        {
-          rightIcon ? (
-
-            <TouchableOpacity
-              activeOpacity={
-                0.7
-              }
-              onPress={
-                handleRightPress
-              }
-              disabled={
-                typeof onRightPress !==
-                'function'
-              }
-              style={
-                styles.iconButton
-              }
-              accessibilityRole="button"
-              accessibilityLabel="Ação do cabeçalho"
-            >
-
-              <Ionicons
-                name={
-                  rightIcon
-                }
-                size={24}
-                color={
-                  iconColor
-                }
-              />
-
-            </TouchableOpacity>
-
-          ) : null
-        }
-
+      <View style={styles.rightContainer}>
+        {rightIcon ? (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={handleRightPress}
+            disabled={typeof onRightPress !== 'function'}
+            style={styles.iconButton}
+            accessibilityRole="button"
+            accessibilityLabel="Ação do cabeçalho"
+          >
+            <AnimatedIonicons
+              name={rightIcon}
+              size={24}
+              style={animatedIconStyle}
+            />
+          </TouchableOpacity>
+        ) : null}
       </View>
-
-    </View>
-
+    </Animated.View>
   );
-
 }

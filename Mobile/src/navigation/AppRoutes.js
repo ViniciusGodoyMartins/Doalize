@@ -2,10 +2,12 @@ import React from 'react';
 
 import {
   View,
+  StyleSheet,
 } from 'react-native';
 
 import {
   createMaterialTopTabNavigator,
+  MaterialTopTabBar,
 } from '@react-navigation/material-top-tabs';
 
 import {
@@ -19,6 +21,11 @@ import {
 import {
   FontAwesome6,
 } from '@expo/vector-icons';
+
+import Animated, {
+  interpolateColor,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
 
 import {
   useTheme,
@@ -87,10 +94,6 @@ import TwoFactorSettingsScreen from '../screens/Settings/TwoFactorSettingsScreen
  */
 
 const COLORS = {
-  /*
-   * MODO ESCURO
-   */
-
   darkBackground:
     '#141414',
 
@@ -103,11 +106,6 @@ const COLORS = {
   darkPress:
     'rgba(245, 245, 245, 0.06)',
 
-
-  /*
-   * MODO CLARO
-   */
-
   lightBackground:
     '#F5F5F5',
 
@@ -119,11 +117,6 @@ const COLORS = {
 
   lightPress:
     'rgba(20, 20, 20, 0.06)',
-
-
-  /*
-   * COR PRINCIPAL
-   */
 
   primary:
     '#3AC2F8',
@@ -168,35 +161,22 @@ const stackScreenOptions = {
  */
 
 function HomeStack() {
-
   return (
-
     <Stack.Navigator
       initialRouteName="HomeScreen"
-      screenOptions={
-        stackScreenOptions
-      }
+      screenOptions={stackScreenOptions}
     >
-
       <Stack.Screen
         name="HomeScreen"
-        component={
-          HomeScreen
-        }
+        component={HomeScreen}
       />
-
 
       <Stack.Screen
         name="DetailsScreen"
-        component={
-          DetailsScreen
-        }
+        component={DetailsScreen}
       />
-
     </Stack.Navigator>
-
   );
-
 }
 
 
@@ -207,35 +187,22 @@ function HomeStack() {
  */
 
 function ContactsStack() {
-
   return (
-
     <Stack.Navigator
       initialRouteName="ContactsScreen"
-      screenOptions={
-        stackScreenOptions
-      }
+      screenOptions={stackScreenOptions}
     >
-
       <Stack.Screen
         name="ContactsScreen"
-        component={
-          ContactsScreen
-        }
+        component={ContactsScreen}
       />
-
 
       <Stack.Screen
         name="ChatScreen"
-        component={
-          ChatScreen
-        }
+        component={ChatScreen}
       />
-
     </Stack.Navigator>
-
   );
-
 }
 
 
@@ -246,67 +213,42 @@ function ContactsStack() {
  */
 
 function ProfileStack() {
-
   return (
-
     <Stack.Navigator
       initialRouteName="ProfileScreen"
-      screenOptions={
-        stackScreenOptions
-      }
+      screenOptions={stackScreenOptions}
     >
-
       <Stack.Screen
         name="ProfileScreen"
-        component={
-          ProfileScreen
-        }
+        component={ProfileScreen}
       />
-
 
       <Stack.Screen
         name="PublishedScreen"
-        component={
-          PublishedScreen
-        }
+        component={PublishedScreen}
       />
-
 
       <Stack.Screen
         name="DetailsScreen"
-        component={
-          DetailsScreen
-        }
+        component={DetailsScreen}
       />
-
 
       <Stack.Screen
         name="SettingsScreen"
-        component={
-          SettingsScreen
-        }
+        component={SettingsScreen}
       />
-
 
       <Stack.Screen
         name="EmailChangeScreen"
-        component={
-          EmailChangeScreen
-        }
+        component={EmailChangeScreen}
       />
-
 
       <Stack.Screen
         name="TwoFactorSettingsScreen"
-        component={
-          TwoFactorSettingsScreen
-        }
+        component={TwoFactorSettingsScreen}
       />
-
     </Stack.Navigator>
-
   );
-
 }
 
 
@@ -320,25 +262,70 @@ function isStackOnMainScreen(
   route,
   mainScreenName
 ) {
-
   const focusedRouteName =
-    getFocusedRouteNameFromRoute(
-      route
-    );
-
+    getFocusedRouteNameFromRoute(route);
 
   if (!focusedRouteName) {
-
     return true;
-
   }
-
 
   return (
     focusedRouteName ===
     mainScreenName
   );
+}
 
+
+/*
+ * ============================================================
+ * FUNDO ANIMADO DO RODAPÉ
+ * ============================================================
+ *
+ * A barra padrão continua sendo MaterialTopTabBar.
+ *
+ * A camada animada fica atrás dela, sem interceptar toques.
+ * Não acrescenta altura, padding ou borda ao layout.
+ */
+
+function ThemeTabBar(props) {
+  const {
+    themeProgress,
+  } = useTheme();
+
+  const animatedBackgroundStyle =
+    useAnimatedStyle(() => ({
+      backgroundColor: interpolateColor(
+        themeProgress.value,
+        [0, 1],
+        [
+          COLORS.lightBackground,
+          COLORS.darkBackground,
+        ]
+      ),
+
+      borderTopColor: interpolateColor(
+        themeProgress.value,
+        [0, 1],
+        [
+          COLORS.lightBorder,
+          COLORS.darkBorder,
+        ]
+      ),
+    }));
+
+  return (
+    <View style={localStyles.tabBarContainer}>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          localStyles.tabBarBackground,
+          animatedBackgroundStyle,
+        ]}
+      />
+
+      <MaterialTopTabBar {...props} />
+    </View>
+  );
 }
 
 
@@ -346,6 +333,15 @@ function isStackOnMainScreen(
  * ============================================================
  * COMPONENTE DO ÍCONE DA BARRA
  * ============================================================
+ *
+ * Mantém a propriedade color no FontAwesome6.
+ *
+ * Para os ícones não selecionados:
+ * - versão escura para o modo claro;
+ * - versão branca para o modo escuro.
+ *
+ * Apenas a opacidade das duas versões é animada.
+ * Não há animação de cor diretamente no FontAwesome6.
  */
 
 function TabIcon({
@@ -353,48 +349,68 @@ function TabIcon({
   color,
   size,
   solid,
+  focused,
 }) {
+  const {
+    themeProgress,
+  } = useTheme();
+
+  const animatedLightStyle =
+    useAnimatedStyle(() => ({
+      opacity:
+        1 - themeProgress.value,
+    }));
+
+  const animatedDarkStyle =
+    useAnimatedStyle(() => ({
+      opacity:
+        themeProgress.value,
+    }));
 
   return (
+    <View style={localStyles.iconContainer}>
+      {focused ? (
+        <FontAwesome6
+          name={name}
+          size={size}
+          color={color}
+          solid={solid}
+        />
+      ) : (
+        <>
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              localStyles.iconLayer,
+              animatedLightStyle,
+            ]}
+          >
+            <FontAwesome6
+              name={name}
+              size={size}
+              color={COLORS.lightInactiveIcon}
+              solid={solid}
+            />
+          </Animated.View>
 
-    <View
-      style={{
-        width:
-          32,
-
-        height:
-          32,
-
-        alignItems:
-          'center',
-
-        justifyContent:
-          'center',
-
-        overflow:
-          'visible',
-      }}
-    >
-
-      <FontAwesome6
-        name={
-          name
-        }
-        size={
-          size
-        }
-        color={
-          color
-        }
-        solid={
-          solid
-        }
-      />
-
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              localStyles.iconLayer,
+              animatedDarkStyle,
+            ]}
+          >
+            <FontAwesome6
+              name={name}
+              size={size}
+              color={COLORS.darkInactiveIcon}
+              solid={solid}
+            />
+          </Animated.View>
+        </>
+      )}
     </View>
-
   );
-
 }
 
 
@@ -405,7 +421,6 @@ function TabIcon({
  */
 
 export default function AppRoutes() {
-
   /*
    * ==========================================================
    * TEMA
@@ -423,23 +438,10 @@ export default function AppRoutes() {
    * ==========================================================
    */
 
-  const tabBarBackgroundColor =
-    darkMode
-      ? COLORS.darkBackground
-      : COLORS.lightBackground;
-
-
   const tabBarInactiveColor =
     darkMode
       ? COLORS.darkInactiveIcon
       : COLORS.lightInactiveIcon;
-
-
-  const tabBarBorderColor =
-    darkMode
-      ? COLORS.darkBorder
-      : COLORS.lightBorder;
-
 
   const tabBarPressColor =
     darkMode
@@ -448,10 +450,14 @@ export default function AppRoutes() {
 
 
   return (
-
     <Tab.Navigator
       initialRouteName="Home"
       tabBarPosition="bottom"
+
+      tabBar={(props) => (
+        <ThemeTabBar {...props} />
+      )}
+
       screenOptions={{
         /*
          * Navegação por gesto.
@@ -460,14 +466,12 @@ export default function AppRoutes() {
         swipeEnabled:
           true,
 
-
         /*
          * Carregamento preguiçoso.
          */
 
         lazy:
           true,
-
 
         /*
          * Mostrar ícones.
@@ -476,14 +480,12 @@ export default function AppRoutes() {
         tabBarShowIcon:
           true,
 
-
         /*
          * Não usar rolagem horizontal.
          */
 
         tabBarScrollEnabled:
           false,
-
 
         /*
          * Não mostrar os textos.
@@ -492,14 +494,12 @@ export default function AppRoutes() {
         tabBarShowLabel:
           false,
 
-
         /*
          * ÍCONE SELECIONADO
          */
 
         tabBarActiveTintColor:
           COLORS.primary,
-
 
         /*
          * ÍCONE NÃO SELECIONADO
@@ -508,9 +508,13 @@ export default function AppRoutes() {
         tabBarInactiveTintColor:
           tabBarInactiveColor,
 
-
         /*
          * BARRA INFERIOR
+         *
+         * Todas as medidas originais são mantidas.
+         *
+         * O fundo e a borda ficam transparentes aqui,
+         * pois são desenhados pela camada animada atrás.
          */
 
         tabBarStyle: {
@@ -536,13 +540,13 @@ export default function AppRoutes() {
             0,
 
           backgroundColor:
-            tabBarBackgroundColor,
+            'transparent',
 
           borderTopWidth:
             1,
 
           borderTopColor:
-            tabBarBorderColor,
+            'transparent',
 
           borderBottomWidth:
             0,
@@ -571,7 +575,6 @@ export default function AppRoutes() {
             'visible',
         },
 
-
         /*
          * INDICADOR DESATIVADO
          */
@@ -586,7 +589,6 @@ export default function AppRoutes() {
           opacity:
             0,
         },
-
 
         /*
          * ITENS DA BARRA
@@ -636,7 +638,6 @@ export default function AppRoutes() {
             'visible',
         },
 
-
         /*
          * TEXTO OCULTO
          */
@@ -658,7 +659,6 @@ export default function AppRoutes() {
             'none',
         },
 
-
         /*
          * EFEITO DE TOQUE
          */
@@ -670,21 +670,14 @@ export default function AppRoutes() {
           0.75,
       }}
     >
-
-      {/*
-       * ======================================================
-       * INÍCIO
-       * ======================================================
-       */}
+      {/* ======================================================
+          INÍCIO
+          ====================================================== */}
 
       <Tab.Screen
         name="Home"
-        component={
-          HomeStack
-        }
-        options={({
-          route,
-        }) => ({
+        component={HomeStack}
+        options={({ route }) => ({
           title:
             'Início',
 
@@ -698,29 +691,17 @@ export default function AppRoutes() {
             color,
             focused,
           }) => (
-
             <TabIcon
               name="house"
-              color={
-                color
-              }
-              size={
-                focused
-                  ? 25
-                  : 24
-              }
-              solid={
-                focused
-              }
+              color={color}
+              focused={focused}
+              size={focused ? 25 : 24}
+              solid={focused}
             />
-
           ),
         })}
-        listeners={({
-          navigation,
-        }) => ({
+        listeners={({ navigation }) => ({
           tabPress: () => {
-
             navigation.navigate(
               'Home',
               {
@@ -728,23 +709,17 @@ export default function AppRoutes() {
                   'HomeScreen',
               }
             );
-
           },
         })}
       />
 
-
-      {/*
-       * ======================================================
-       * PUBLICAR
-       * ======================================================
-       */}
+      {/* ======================================================
+          PUBLICAR
+          ====================================================== */}
 
       <Tab.Screen
         name="Publicar"
-        component={
-          PublishScreen
-        }
+        component={PublishScreen}
         options={{
           title:
             'Publicar',
@@ -754,36 +729,27 @@ export default function AppRoutes() {
 
           tabBarIcon: ({
             color,
+            focused,
           }) => (
-
             <TabIcon
               name="feather"
-              color={
-                color
-              }
+              color={color}
+              focused={focused}
               size={24}
               solid
             />
-
           ),
         }}
       />
 
-
-      {/*
-       * ======================================================
-       * CONTATOS
-       * ======================================================
-       */}
+      {/* ======================================================
+          CONTATOS
+          ====================================================== */}
 
       <Tab.Screen
         name="Contatos"
-        component={
-          ContactsStack
-        }
-        options={({
-          route,
-        }) => ({
+        component={ContactsStack}
+        options={({ route }) => ({
           title:
             'Contatos',
 
@@ -797,29 +763,17 @@ export default function AppRoutes() {
             color,
             focused,
           }) => (
-
             <TabIcon
               name="comment"
-              color={
-                color
-              }
-              size={
-                focused
-                  ? 25
-                  : 24
-              }
-              solid={
-                focused
-              }
+              color={color}
+              focused={focused}
+              size={focused ? 25 : 24}
+              solid={focused}
             />
-
           ),
         })}
-        listeners={({
-          navigation,
-        }) => ({
+        listeners={({ navigation }) => ({
           tabPress: () => {
-
             navigation.navigate(
               'Contatos',
               {
@@ -827,26 +781,18 @@ export default function AppRoutes() {
                   'ContactsScreen',
               }
             );
-
           },
         })}
       />
 
-
-      {/*
-       * ======================================================
-       * CONTA
-       * ======================================================
-       */}
+      {/* ======================================================
+          CONTA
+          ====================================================== */}
 
       <Tab.Screen
         name="Conta"
-        component={
-          ProfileStack
-        }
-        options={({
-          route,
-        }) => ({
+        component={ProfileStack}
+        options={({ route }) => ({
           title:
             'Conta',
 
@@ -865,29 +811,17 @@ export default function AppRoutes() {
             color,
             focused,
           }) => (
-
             <TabIcon
               name="circle-user"
-              color={
-                color
-              }
-              size={
-                focused
-                  ? 26
-                  : 25
-              }
-              solid={
-                focused
-              }
+              color={color}
+              focused={focused}
+              size={focused ? 26 : 25}
+              solid={focused}
             />
-
           ),
         })}
-        listeners={({
-          navigation,
-        }) => ({
+        listeners={({ navigation }) => ({
           tabPress: () => {
-
             navigation.navigate(
               'Conta',
               {
@@ -895,13 +829,57 @@ export default function AppRoutes() {
                   'ProfileScreen',
               }
             );
-
           },
         })}
       />
-
     </Tab.Navigator>
-
   );
-
 }
+
+
+/*
+ * ============================================================
+ * ESTILOS VISUAIS DA ANIMAÇÃO
+ * ============================================================
+ */
+
+const localStyles = StyleSheet.create({
+  tabBarContainer: {
+    position:
+      'relative',
+  },
+
+  tabBarBackground: {
+    ...StyleSheet.absoluteFillObject,
+
+    borderTopWidth:
+      1,
+  },
+
+  iconContainer: {
+    width:
+      32,
+
+    height:
+      32,
+
+    alignItems:
+      'center',
+
+    justifyContent:
+      'center',
+
+    overflow:
+      'visible',
+  },
+
+  iconLayer: {
+    ...StyleSheet.absoluteFillObject,
+
+    alignItems:
+      'center',
+
+    justifyContent:
+      'center',
+  },
+});

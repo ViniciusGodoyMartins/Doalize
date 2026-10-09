@@ -1,188 +1,145 @@
 import React, {
   createContext,
+  useCallback,
   useEffect,
+  useMemo,
+  useRef,
   useState,
 } from 'react';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import {
+  Easing,
+  ReduceMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+
 import lightTheme from '../styles/theme';
 import darkTheme from '../styles/darkTheme';
 
 
-// CONTEXT
-export const ThemeContext = createContext({});
+export const ThemeContext = createContext(null);
 
-
-// CHAVE ATUAL DO TEMA
-// A versão nova evita que a preferência "light"
-// antiga continue deixando o aplicativo claro.
 const THEME_STORAGE_KEY = '@doalize_theme_v3';
 
-
-// PROVIDER
-export function ThemeProvider({
-  children,
-}) {
-
-  // DARK É O PADRÃO
-  const [
-    theme,
-    setTheme,
-  ] = useState(
-    darkTheme
-  );
-
-  const [
-    darkMode,
-    setDarkMode,
-  ] = useState(
-    true
-  );
-
-  const [
-    loadingTheme,
-    setLoadingTheme,
-  ] = useState(
-    true
-  );
+const TRANSITION_DURATION = 320;
 
 
-  // CARREGAR TEMA
-  async function loadTheme() {
+export function ThemeProvider({ children }) {
+  const [darkMode, setDarkMode] = useState(true);
+  const [loadingTheme, setLoadingTheme] = useState(true);
 
-    try {
+  const darkModeRef = useRef(true);
 
-      const savedTheme =
-        await AsyncStorage.getItem(
+  /*
+   * 0 = modo claro
+   * 1 = modo escuro
+   *
+   * Os componentes animados leem este valor
+   * sem atualizar o estado React a cada quadro.
+   */
+  const themeProgress = useSharedValue(1);
+
+
+  /*
+   * CARREGAR PREFERÊNCIA
+   */
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadTheme() {
+      try {
+        const savedTheme = await AsyncStorage.getItem(
           THEME_STORAGE_KEY
         );
 
+        if (!active) {
+          return;
+        }
 
-      // SOMENTE "light" ABRE O TEMA CLARO.
-      // SEM PREFERÊNCIA SALVA = DARK.
-      if (
-        savedTheme === 'light'
-      ) {
+        const nextDarkMode = savedTheme !== 'light';
 
-        setTheme(
-          lightTheme
-        );
+        darkModeRef.current = nextDarkMode;
 
-        setDarkMode(
-          false
-        );
+        // A abertura do aplicativo não precisa de animação.
+        themeProgress.value = nextDarkMode ? 1 : 0;
 
-      } else {
-
-        setTheme(
-          darkTheme
-        );
-
-        setDarkMode(
-          true
-        );
-
+        setDarkMode(nextDarkMode);
+      } catch (error) {
+        console.log('Erro ao carregar tema:', error);
+      } finally {
+        if (active) {
+          setLoadingTheme(false);
+        }
       }
-
-    } catch (error) {
-
-      console.log(
-        'Erro ao carregar tema:',
-        error
-      );
-
-      // Em caso de erro, mantém DARK
-      setTheme(
-        darkTheme
-      );
-
-      setDarkMode(
-        true
-      );
-
-    } finally {
-
-      setLoadingTheme(
-        false
-      );
-
     }
-  }
-
-
-  // ALTERAR TEMA
-  async function toggleTheme() {
-
-    try {
-
-      if (
-        darkMode
-      ) {
-
-        // DARK -> LIGHT
-        setTheme(
-          lightTheme
-        );
-
-        setDarkMode(
-          false
-        );
-
-        await AsyncStorage.setItem(
-          THEME_STORAGE_KEY,
-          'light'
-        );
-
-      } else {
-
-        // LIGHT -> DARK
-        setTheme(
-          darkTheme
-        );
-
-        setDarkMode(
-          true
-        );
-
-        await AsyncStorage.setItem(
-          THEME_STORAGE_KEY,
-          'dark'
-        );
-
-      }
-
-    } catch (error) {
-
-      console.log(
-        'Erro ao alterar tema:',
-        error
-      );
-
-    }
-  }
-
-
-  // INIT
-  useEffect(() => {
 
     loadTheme();
 
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [themeProgress]);
+
+
+  /*
+   * ALTERNAR TEMA
+   */
+
+  const toggleTheme = useCallback(() => {
+    if (loadingTheme) {
+      return;
+    }
+
+    const nextDarkMode = !darkModeRef.current;
+
+    darkModeRef.current = nextDarkMode;
+
+    themeProgress.value = withTiming(
+      nextDarkMode ? 1 : 0,
+      {
+        duration: TRANSITION_DURATION,
+        easing: Easing.inOut(Easing.quad),
+        reduceMotion: ReduceMotion.System,
+      }
+    );
+
+    setDarkMode(nextDarkMode);
+
+    AsyncStorage.setItem(
+      THEME_STORAGE_KEY,
+      nextDarkMode ? 'dark' : 'light'
+    ).catch((error) => {
+      console.log('Erro ao salvar tema:', error);
+    });
+  }, [loadingTheme, themeProgress]);
+
+
+  const theme = darkMode ? darkTheme : lightTheme;
+
+  const contextValue = useMemo(
+    () => ({
+      theme,
+      darkMode,
+      loadingTheme,
+      toggleTheme,
+      themeProgress,
+    }),
+    [
+      theme,
+      darkMode,
+      loadingTheme,
+      toggleTheme,
+      themeProgress,
+    ]
+  );
 
 
   return (
-    <ThemeContext.Provider
-      value={{
-        theme,
-
-        darkMode,
-
-        loadingTheme,
-
-        toggleTheme,
-      }}
-    >
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   );

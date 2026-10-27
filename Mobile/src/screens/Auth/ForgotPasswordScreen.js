@@ -5,6 +5,7 @@ import React, {
 import {
   View,
   Text,
+  Image,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
@@ -29,6 +30,11 @@ import api from '../../services/api';
 
 import styles from './styles';
 
+import logoModoEscuro from '../../../assets/logo.png';
+
+import logoModoClaro from '../../../assets/logomodoclaro.png';
+
+
 export default function ForgotPasswordScreen() {
   const navigation =
     useNavigation();
@@ -38,7 +44,30 @@ export default function ForgotPasswordScreen() {
 
   const {
     theme,
+    darkMode,
   } = useTheme();
+
+
+  /*
+   * ==========================================================
+   * LOGO DE ACORDO COM O TEMA
+   * ==========================================================
+   *
+   * Modo escuro:
+   * logo.png
+   *
+   * Modo claro:
+   * logomodoclaro.png
+   *
+   * As duas imagens utilizam exatamente
+   * o mesmo estilo e as mesmas dimensões.
+   */
+
+  const logoSource =
+    darkMode
+      ? logoModoEscuro
+      : logoModoClaro;
+
 
   /*
    * Se o usuário já tiver digitado
@@ -46,6 +75,7 @@ export default function ForgotPasswordScreen() {
    * o campo será preenchido
    * automaticamente.
    */
+
   const initialEmail =
     typeof route?.params?.email ===
       'string'
@@ -66,9 +96,13 @@ export default function ForgotPasswordScreen() {
     setLoading,
   ] = useState(false);
 
+
   /*
+   * ==========================================================
    * VALIDAR O FORMATO DO E-MAIL
+   * ==========================================================
    */
+
   function isValidEmail(
     emailValue
   ) {
@@ -80,14 +114,18 @@ export default function ForgotPasswordScreen() {
     );
   }
 
+
   /*
+   * ==========================================================
    * SOLICITAR O CÓDIGO
+   * ==========================================================
    *
    * Rota pública:
    *
    * POST
    * /users/password/forgot/request-code
    */
+
   async function handleRequestCode() {
     if (loading) {
       return;
@@ -121,7 +159,9 @@ export default function ForgotPasswordScreen() {
     }
 
     try {
-      setLoading(true);
+      setLoading(
+        true
+      );
 
       const response =
         await api.post(
@@ -145,8 +185,10 @@ export default function ForgotPasswordScreen() {
 
       Alert.alert(
         'Código solicitado',
+
         response.data?.message ||
           'Se o e-mail estiver cadastrado, você receberá um código de verificação.',
+
         [
           {
             text:
@@ -163,8 +205,10 @@ export default function ForgotPasswordScreen() {
             },
           },
         ],
+
         {
-          cancelable: false,
+          cancelable:
+            false,
         }
       );
     } catch (error) {
@@ -186,18 +230,25 @@ export default function ForgotPasswordScreen() {
 
       Alert.alert(
         'Erro',
+
         error.response?.data
           ?.message ||
           'Não foi possível solicitar o código de recuperação.'
       );
     } finally {
-      setLoading(false);
+      setLoading(
+        false
+      );
     }
   }
 
+
   /*
+   * ==========================================================
    * VOLTAR PARA O LOGIN
+   * ==========================================================
    */
+
   function handleBackToLogin() {
     if (loading) {
       return;
@@ -212,7 +263,8 @@ export default function ForgotPasswordScreen() {
     }
 
     navigation.reset({
-      index: 0,
+      index:
+        0,
 
       routes: [
         {
@@ -223,10 +275,18 @@ export default function ForgotPasswordScreen() {
     });
   }
 
+
+  /*
+   * ==========================================================
+   * RENDER
+   * ==========================================================
+   */
+
   return (
     <KeyboardAvoidingView
       style={[
         styles.container,
+
         {
           backgroundColor:
             theme.background,
@@ -247,27 +307,31 @@ export default function ForgotPasswordScreen() {
         }
         keyboardShouldPersistTaps="handled"
       >
-        {/* LOGO */}
+        {/* ====================================================
+            LOGO
+            ==================================================== */}
+
         <View
           style={
             styles.logoContainer
           }
         >
-          <Text
-            style={[
-              styles.logo,
-              {
-                color:
-                  theme.primary,
-              },
-            ]}
-          >
-            DOALIZE
-          </Text>
+          <Image
+            source={
+              logoSource
+            }
+            style={
+              localStyles.logoImage
+            }
+            resizeMode="contain"
+            accessible
+            accessibilityLabel="Logo do Doalize"
+          />
 
           <Text
             style={[
               styles.subtitle,
+
               {
                 color:
                   theme.textSecondary,
@@ -278,7 +342,11 @@ export default function ForgotPasswordScreen() {
           </Text>
         </View>
 
-        {/* FORMULÁRIO */}
+
+        {/* ====================================================
+            FORMULÁRIO
+            ==================================================== */}
+
         <View
           style={
             styles.form
@@ -287,6 +355,7 @@ export default function ForgotPasswordScreen() {
           <Text
             style={[
               localStyles.title,
+
               {
                 color:
                   theme.text,
@@ -299,6 +368,7 @@ export default function ForgotPasswordScreen() {
           <Text
             style={[
               localStyles.description,
+
               {
                 color:
                   theme.textSecondary,
@@ -310,14 +380,20 @@ export default function ForgotPasswordScreen() {
 
           <Input
             placeholder="E-mail da conta"
-            value={email}
+            value={
+              email
+            }
             onChangeText={
               setEmail
             }
             keyboardType="email-address"
             autoCapitalize="none"
-            autoCorrect={false}
-            editable={!loading}
+            autoCorrect={
+              false
+            }
+            editable={
+              !loading
+            }
             returnKeyType="send"
             onSubmitEditing={
               handleRequestCode
@@ -329,12 +405,20 @@ export default function ForgotPasswordScreen() {
             onPress={
               handleRequestCode
             }
-            loading={loading}
-            disabled={loading}
+            loading={
+              loading
+            }
+            disabled={
+              loading
+            }
           />
         </View>
 
-        {/* VOLTAR PARA O LOGIN */}
+
+        {/* ====================================================
+            VOLTAR PARA O LOGIN
+            ==================================================== */}
+
         <View
           style={
             styles.footer
@@ -343,6 +427,7 @@ export default function ForgotPasswordScreen() {
           <Text
             style={[
               styles.footerText,
+
               {
                 color:
                   theme.textSecondary,
@@ -357,11 +442,14 @@ export default function ForgotPasswordScreen() {
             onPress={
               handleBackToLogin
             }
-            disabled={loading}
+            disabled={
+              loading
+            }
           >
             <Text
               style={[
                 styles.registerText,
+
                 {
                   color:
                     theme.primary,
@@ -382,26 +470,90 @@ export default function ForgotPasswordScreen() {
   );
 }
 
+
+/*
+ * ============================================================
+ * ESTILOS LOCAIS
+ * ============================================================
+ */
+
 const localStyles = {
-  title: {
-    marginBottom: 10,
+  /*
+   * ==========================================================
+   * LOGO
+   * ==========================================================
+   *
+   * Este estilo é o mesmo para os dois temas.
+   *
+   * Não existe scale, largura ou altura
+   * diferente entre modo claro e escuro.
+   */
 
-    fontSize: 24,
+  logoImage: {
+    width:
+      190,
 
-    fontWeight: '800',
+    height:
+      70,
 
-    textAlign: 'center',
+    maxWidth:
+      '100%',
+
+    alignSelf:
+      'center',
+
+    margin:
+      0,
+
+    padding:
+      0,
+
+    backgroundColor:
+      'transparent',
   },
 
+
+  /*
+   * ==========================================================
+   * TÍTULO
+   * ==========================================================
+   */
+
+  title: {
+    marginBottom:
+      10,
+
+    fontSize:
+      24,
+
+    fontWeight:
+      '800',
+
+    textAlign:
+      'center',
+  },
+
+
+  /*
+   * ==========================================================
+   * DESCRIÇÃO
+   * ==========================================================
+   */
+
   description: {
-    marginBottom: 24,
+    marginBottom:
+      24,
 
-    paddingHorizontal: 4,
+    paddingHorizontal:
+      4,
 
-    fontSize: 14,
+    fontSize:
+      14,
 
-    lineHeight: 21,
+    lineHeight:
+      21,
 
-    textAlign: 'center',
+    textAlign:
+      'center',
   },
 };
